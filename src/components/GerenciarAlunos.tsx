@@ -1,0 +1,509 @@
+import {
+  useMemo,
+  useState,
+  type FormEvent
+} from 'react';
+import {
+  FolderOpen,
+  LoaderCircle,
+  Sparkles,
+  UserPlus
+} from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import './GerenciarAlunos.css';
+
+interface AlunoResumo {
+  id: number;
+  codigoPasta: string;
+  numero: number;
+}
+
+interface GerenciarAlunosProps {
+  alunos: AlunoResumo[];
+}
+
+function encontrarPrimeiroDisponivel(
+  alunos: AlunoResumo[],
+  codigoPasta: string
+): number {
+  if (!codigoPasta) {
+    return 1;
+  }
+
+  const numerosOcupados = new Set(
+    alunos
+      .filter(
+        (aluno) =>
+          aluno.codigoPasta === codigoPasta
+      )
+      .map((aluno) => aluno.numero)
+  );
+
+  let primeiroDisponivel = 1;
+
+  while (
+    numerosOcupados.has(
+      primeiroDisponivel
+    )
+  ) {
+    primeiroDisponivel += 1;
+  }
+
+  return primeiroDisponivel;
+}
+
+export default function GerenciarAlunos({
+  alunos
+}: GerenciarAlunosProps) {
+  const [nome, setNome] = useState('');
+
+  const [dataNascimento, setDataNascimento] =
+    useState('');
+
+  const [pastaSelecionada, setPastaSelecionada] =
+    useState('');
+
+  const [numero, setNumero] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState('');
+  const [erro, setErro] = useState('');
+
+  const pastasOrdenadas = useMemo(() => {
+    const quantidades = new Map<
+      string,
+      number
+    >();
+
+    for (const aluno of alunos) {
+      const quantidadeAtual =
+        quantidades.get(
+          aluno.codigoPasta
+        ) ?? 0;
+
+      quantidades.set(
+        aluno.codigoPasta,
+        quantidadeAtual + 1
+      );
+    }
+
+    return Array.from(
+      quantidades.entries()
+    )
+      .map(([codigo, quantidade]) => ({
+        codigo,
+        quantidade
+      }))
+      .sort((pastaA, pastaB) =>
+        pastaA.codigo.localeCompare(
+          pastaB.codigo,
+          'pt-BR',
+          {
+            numeric: true
+          }
+        )
+      );
+  }, [alunos]);
+
+  const pastaRecomendada = useMemo(() => {
+    const nomeDigitado = nome
+      .trim()
+      .normalize('NFD')
+      .replace(/[\\u0300-\\u036f]/g, '');
+
+    if (
+      !nomeDigitado ||
+      pastasOrdenadas.length === 0
+    ) {
+      return null;
+    }
+
+    const primeiraLetra =
+      nomeDigitado.charAt(0).toLocaleUpperCase('pt-BR');
+
+    const pastasDaLetra =
+      pastasOrdenadas.filter((pasta) => {
+        const letraDaPasta = pasta.codigo
+          .trim()
+          .charAt(0)
+          .toLocaleUpperCase('pt-BR');
+
+        return letraDaPasta === primeiraLetra;
+      });
+
+    if (pastasDaLetra.length === 0) {
+      return null;
+    }
+
+    return [...pastasDaLetra].sort(
+      (pastaA, pastaB) => {
+        if (
+          pastaA.quantidade !==
+          pastaB.quantidade
+        ) {
+          return (
+            pastaA.quantidade -
+            pastaB.quantidade
+          );
+        }
+
+        return pastaA.codigo.localeCompare(
+          pastaB.codigo,
+          'pt-BR',
+          {
+            numeric: true
+          }
+        );
+      }
+    )[0];
+  }, [alunos, nome, pastasOrdenadas]);
+
+  const pastaAtual =
+    pastaSelecionada ||
+    pastaRecomendada?.codigo ||
+    '';
+
+  const numeroSugerido = useMemo(
+    () =>
+      encontrarPrimeiroDisponivel(
+        alunos,
+        pastaAtual
+      ),
+    [alunos, pastaAtual]
+  );
+
+  const numeroAtual =
+    numero || String(numeroSugerido);
+
+  function selecionarPasta(
+    novaPasta: string
+  ) {
+    setPastaSelecionada(novaPasta);
+
+    setNumero(
+      String(
+        encontrarPrimeiroDisponivel(
+          alunos,
+          novaPasta
+        )
+      )
+    );
+
+    setMensagem('');
+    setErro('');
+  }
+
+  function usarRecomendacao() {
+    if (!pastaRecomendada) {
+      return;
+    }
+
+    selecionarPasta(
+      pastaRecomendada.codigo
+    );
+
+    setMensagem(
+      `Pasta ${pastaRecomendada.codigo} selecionada.`
+    );
+  }
+
+  async function cadastrarAluno(
+    evento: FormEvent<HTMLFormElement>
+  ) {
+    evento.preventDefault();
+    setMensagem('');
+    setErro('');
+
+    const nomeTratado = nome
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLocaleUpperCase('pt-BR');
+
+    const numeroTratado =
+      Number(numeroAtual);
+
+    if (!nomeTratado) {
+      setErro(
+        'Informe o nome do aluno.'
+      );
+
+      return;
+    }
+
+    if (!pastaAtual) {
+      setErro(
+        'Selecione uma pasta.'
+      );
+
+      return;
+    }
+
+    if (
+      !Number.isInteger(numeroTratado) ||
+      numeroTratado <= 0
+    ) {
+      setErro(
+        'Informe um número de arquivo válido.'
+      );
+
+      return;
+    }
+
+    setSalvando(true);
+
+    try {
+      const {
+        data: numeroExistente,
+        error: erroConsulta
+      } = await supabase
+        .from('alunos')
+        .select('id')
+        .eq(
+          'codigo_pasta',
+          pastaAtual
+        )
+        .eq('numero', numeroTratado)
+        .limit(1);
+
+      if (erroConsulta) {
+        throw erroConsulta;
+      }
+
+      if (
+        numeroExistente &&
+        numeroExistente.length > 0
+      ) {
+        setErro(
+          `O número ${numeroTratado} já está ocupado na pasta ${pastaAtual}.`
+        );
+
+        return;
+      }
+
+      const { error: erroCadastro } =
+        await supabase
+          .from('alunos')
+          .insert({
+            nome: nomeTratado,
+            data_nascimento:
+              dataNascimento || null,
+            codigo_pasta: pastaAtual,
+            numero: numeroTratado,
+            status: 'Arquivado'
+          });
+
+      if (erroCadastro) {
+        throw erroCadastro;
+      }
+
+      setMensagem(
+        `${nomeTratado} foi cadastrado na pasta ${pastaAtual}, número ${numeroTratado}.`
+      );
+
+      setNome('');
+      setDataNascimento('');
+
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (erroEncontrado) {
+      console.error(erroEncontrado);
+
+      setErro(
+        'Não foi possível cadastrar o aluno. Tente novamente.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <section className="gerenciar-container">
+      <div className="gerenciar-titulo">
+        <div>
+          <h2>Gerenciar alunos</h2>
+
+          <p>
+            Cadastre novos registros no
+            arquivo permanente.
+          </p>
+        </div>
+
+        <UserPlus size={30} />
+      </div>
+
+      {pastaRecomendada && (
+        <div className="recomendacao-card">
+          <div className="recomendacao-icone">
+            <Sparkles size={24} />
+          </div>
+
+          <div>
+            <span>
+              Recomendação inteligente
+            </span>
+
+            <strong>
+              Pasta {
+                pastaRecomendada.codigo
+              }
+            </strong>
+
+            <p>
+              Para nomes começando com{' '}
+              <strong>
+                {nome.trim().charAt(0).toLocaleUpperCase('pt-BR')}
+              </strong>
+              , esta é a pasta com menos registros:
+              {' '}
+              {pastaRecomendada.quantidade} alunos.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={usarRecomendacao}
+          >
+            Usar pasta
+          </button>
+        </div>
+      )}
+
+      <form
+        className="gerenciar-formulario"
+        onSubmit={cadastrarAluno}
+      >
+        <div className="campo campo-largo">
+          <label htmlFor="aluno-nome">
+            Nome completo
+          </label>
+
+          <input
+            id="aluno-nome"
+            type="text"
+            value={nome}
+            onChange={(evento) =>
+              setNome(
+                evento.target.value
+              )
+            }
+            placeholder="Digite o nome completo"
+            required
+          />
+        </div>
+
+        <div className="campo">
+          <label htmlFor="aluno-nascimento">
+            Data de nascimento
+          </label>
+
+          <input
+            id="aluno-nascimento"
+            type="date"
+            value={dataNascimento}
+            onChange={(evento) =>
+              setDataNascimento(
+                evento.target.value
+              )
+            }
+          />
+        </div>
+
+        <div className="campo">
+          <label htmlFor="aluno-pasta">
+            Pasta
+          </label>
+
+          <div className="campo-com-icone">
+            <FolderOpen size={19} />
+
+            <select
+              id="aluno-pasta"
+              value={pastaAtual}
+              onChange={(evento) =>
+                selecionarPasta(
+                  evento.target.value
+                )
+              }
+              required
+            >
+              <option value="">
+                Selecione uma pasta
+              </option>
+
+              {pastasOrdenadas.map(
+                (pasta) => (
+                  <option
+                    key={pasta.codigo}
+                    value={pasta.codigo}
+                  >
+                    {pasta.codigo} —{' '}
+                    {pasta.quantidade}{' '}
+                    alunos
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+        </div>
+
+        <div className="campo">
+          <label htmlFor="aluno-numero">
+            Número do arquivo
+          </label>
+
+          <input
+            id="aluno-numero"
+            type="number"
+            min="1"
+            value={numeroAtual}
+            onChange={(evento) =>
+              setNumero(
+                evento.target.value
+              )
+            }
+            required
+          />
+
+          <small>
+            Primeiro disponível:{' '}
+            {numeroSugerido}
+          </small>
+        </div>
+
+        {erro && (
+          <p className="gerenciar-erro">
+            {erro}
+          </p>
+        )}
+
+        {mensagem && (
+          <p className="gerenciar-sucesso">
+            {mensagem}
+          </p>
+        )}
+
+        <button
+          className="salvar-aluno"
+          type="submit"
+          disabled={salvando}
+        >
+          {salvando ? (
+            <>
+              <LoaderCircle
+                className="gerenciar-spinner"
+                size={20}
+              />
+
+              Salvando...
+            </>
+          ) : (
+            <>
+              <UserPlus size={20} />
+              Cadastrar aluno
+            </>
+          )}
+        </button>
+      </form>
+    </section>
+  );
+}
