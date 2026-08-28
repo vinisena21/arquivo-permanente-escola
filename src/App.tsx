@@ -3,8 +3,11 @@ import type { Session } from '@supabase/supabase-js';
 import {
   Archive,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Folder,
   FolderTree,
+  BarChart2,
   Layers,
   List,
   LogOut,
@@ -42,42 +45,30 @@ interface AlunoBanco {
   status: string;
 }
 
-type AbaAtiva = 'consulta' | 'gerenciamento' | 'dashboard';
+type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento';
 
 function formatarData(data: string | null): string {
-  if (!data) {
-    return '';
-  }
-
+  if (!data) return '';
   const partes = data.split('-');
-
-  if (partes.length !== 3) {
-    return data;
-  }
-
+  if (partes.length !== 3) return data;
   const [ano, mes, dia] = partes;
-
   return `${dia}/${mes}/${ano}`;
 }
 
 export default function App() {
   const [sessao, setSessao] = useState<Session | null>(null);
-
   const [verificandoSessao, setVerificandoSessao] = useState(true);
-
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('consulta');
-
   const [busca, setBusca] = useState('');
-
   const [alunos, setAlunos] = useState<AlunoArquivo[]>([]);
-
   const [carregando, setCarregando] = useState(true);
-
   const [erro, setErro] = useState('');
-
   const [alunoEditando, setAlunoEditando] = useState<AlunoEditavel | null>(null);
-
   const [excluindoId, setExcluindoId] = useState<number | null>(null);
+
+  // Estados de Paginação
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -98,9 +89,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!sessao) {
-      return;
-    }
+    if (!sessao) return;
 
     async function carregarAlunos() {
       setCarregando(true);
@@ -116,33 +105,23 @@ export default function App() {
 
           const { data, error } = await supabase
             .from('alunos')
-            .select(
-              `
-                id,
-                nome,
-                data_nascimento,
-                codigo_pasta,
-                numero,
-                status
-              `
-            )
-            .order('id', {
-              ascending: true
-            })
+            .select(`
+              id,
+              nome,
+              data_nascimento,
+              codigo_pasta,
+              numero,
+              status
+            `)
+            .order('id', { ascending: true })
             .range(inicio, fim);
 
-          if (error) {
-            throw error;
-          }
+          if (error) throw error;
 
           const lote = (data ?? []) as AlunoBanco[];
-
           todosOsAlunos.push(...lote);
 
-          if (lote.length < tamanhoLote) {
-            break;
-          }
-
+          if (lote.length < tamanhoLote) break;
           inicio += tamanhoLote;
         }
 
@@ -158,10 +137,7 @@ export default function App() {
         );
       } catch (erroEncontrado) {
         console.error(erroEncontrado);
-
-        setErro(
-          'Não foi possível carregar os alunos do banco de dados.'
-        );
+        setErro('Não foi possível carregar os alunos do banco de dados.');
       } finally {
         setCarregando(false);
       }
@@ -170,9 +146,12 @@ export default function App() {
     carregarAlunos();
   }, [sessao]);
 
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [busca]);
+
   async function sairDoSistema() {
     await supabase.auth.signOut();
-
     setAbaAtiva('consulta');
     setBusca('');
     setAlunoEditando(null);
@@ -184,7 +163,6 @@ export default function App() {
         aluno.id === alunoAtualizado.id ? alunoAtualizado : aluno
       )
     );
-
     setAlunoEditando(null);
   }
 
@@ -195,9 +173,7 @@ export default function App() {
       ).padStart(2, '0')}\n\nEssa ação não poderá ser desfeita.`
     );
 
-    if (!confirmou) {
-      return;
-    }
+    if (!confirmou) return;
 
     setExcluindoId(aluno.id);
 
@@ -207,9 +183,7 @@ export default function App() {
         .delete()
         .eq('id', aluno.id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setAlunos((alunosAtuais) =>
         alunosAtuais.filter((item) => item.id !== aluno.id)
@@ -218,7 +192,6 @@ export default function App() {
       window.alert(`${aluno.nome} foi excluído com sucesso.`);
     } catch (erroEncontrado) {
       console.error(erroEncontrado);
-
       window.alert('Não foi possível excluir o aluno.');
     } finally {
       setExcluindoId(null);
@@ -234,13 +207,20 @@ export default function App() {
       String(item.numero).includes(textoBusca)
   );
 
+  // Cálculos da Paginação
+  const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina) || 1;
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+  const alunosPaginados = alunosFiltrados.slice(
+    indiceInicial,
+    indiceInicial + itensPorPagina
+  );
+
   const pastasDisponiveis = Array.from(
     new Set(alunos.map((aluno) => aluno.codigoPasta))
   ).sort((pastaA, pastaB) =>
     pastaA.localeCompare(pastaB, 'pt-BR', { numeric: true })
   );
 
-  // Montagem da árvore de arquivos baseada nas pastas e alunos carregados
   const arvoreAcervo: TreeNodeData[] = pastasDisponiveis.map((codigoPasta) => ({
     id: codigoPasta,
     name: `Pasta ${codigoPasta}`,
@@ -313,8 +293,21 @@ export default function App() {
               }
               onClick={() => setAbaAtiva('dashboard')}
             >
+              <BarChart2 size={19} />
+              Painel Geral
+            </button>
+
+            <button
+              type="button"
+              className={
+                abaAtiva === 'arvore'
+                  ? 'navigation-button active'
+                  : 'navigation-button'
+              }
+              onClick={() => setAbaAtiva('arvore')}
+            >
               <FolderTree size={19} />
-              Painel & Árvore
+              Visão em Árvore
             </button>
 
             <button
@@ -403,91 +396,135 @@ export default function App() {
               )}
 
               {!erro && !carregando && alunosFiltrados.length > 0 && (
-                <div className="table-responsive">
-                  <table className="custom-table">
-                    <thead>
-                      <tr>
-                        <th>
-                          <User size={16} />
-                          Nome do Aluno
-                        </th>
+                <>
+                  <div className="table-responsive">
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>
+                            <User size={16} />
+                            Nome do Aluno
+                          </th>
 
-                        <th>
-                          <Calendar size={16} />
-                          Data Nasc.
-                        </th>
+                          <th>
+                            <Calendar size={16} />
+                            Data Nasc.
+                          </th>
 
-                        <th>
-                          <Layers size={16} />
-                          Pasta
-                        </th>
+                          <th>
+                            <Layers size={16} />
+                            Pasta
+                          </th>
 
-                        <th>Nº Arquivo</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {alunosFiltrados.map((item) => (
-                        <tr key={item.id}>
-                          <td className="font-bold">{item.nome}</td>
-
-                          <td>
-                            {item.dataNascimento || 'Não informada'}
-                          </td>
-
-                          <td>
-                            <span className="badge-pasta">
-                              {item.codigoPasta}
-                            </span>
-                          </td>
-
-                          <td>
-                            <strong>
-                              {String(item.numero).padStart(2, '0')}
-                            </strong>
-                          </td>
-
-                          <td>
-                            <span className="badge-status">
-                              {item.status}
-                            </span>
-                          </td>
-
-                          <td>
-                            <div className="acoes-aluno">
-                              <button
-                                type="button"
-                                className="acao-editar"
-                                onClick={() => setAlunoEditando(item)}
-                                title="Editar aluno"
-                              >
-                                <Pencil size={17} />
-                                <span>Editar</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                className="acao-excluir"
-                                onClick={() => excluirAluno(item)}
-                                disabled={excluindoId === item.id}
-                                title="Excluir aluno"
-                              >
-                                <Trash2 size={17} />
-                                <span>
-                                  {excluindoId === item.id
-                                    ? 'Excluindo'
-                                    : 'Excluir'}
-                                </span>
-                              </button>
-                            </div>
-                          </td>
+                          <th>Nº Arquivo</th>
+                          <th>Status</th>
+                          <th>Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+
+                      <tbody>
+                        {alunosPaginados.map((item) => (
+                          <tr key={item.id}>
+                            <td className="font-bold">{item.nome}</td>
+
+                            <td>
+                              {item.dataNascimento || 'Não informada'}
+                            </td>
+
+                            <td>
+                              <span className="badge-pasta">
+                                {item.codigoPasta}
+                              </span>
+                            </td>
+
+                            <td>
+                              <strong>
+                                {String(item.numero).padStart(2, '0')}
+                              </strong>
+                            </td>
+
+                            <td>
+                              <span className="badge-status">
+                                {item.status}
+                              </span>
+                            </td>
+
+                            <td>
+                              <div className="acoes-aluno">
+                                <button
+                                  type="button"
+                                  className="acao-editar"
+                                  onClick={() => setAlunoEditando(item)}
+                                  title="Editar aluno"
+                                >
+                                  <Pencil size={17} />
+                                  <span>Editar</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="acao-excluir"
+                                  onClick={() => excluirAluno(item)}
+                                  disabled={excluindoId === item.id}
+                                  title="Excluir aluno"
+                                >
+                                  <Trash2 size={17} />
+                                  <span>
+                                    {excluindoId === item.id
+                                      ? 'Excluindo'
+                                      : 'Excluir'}
+                                  </span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Controles de Paginação */}
+                  <div className="flex items-center justify-between mt-4 p-3 bg-white rounded-lg border border-gray-200">
+                    <span className="text-sm text-gray-600">
+                      Mostrando {indiceInicial + 1} até{' '}
+                      {Math.min(
+                        indiceInicial + itensPorPagina,
+                        alunosFiltrados.length
+                      )}{' '}
+                      de {alunosFiltrados.length} registros
+                    </span>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPaginaAtual((prev) => Math.max(prev - 1, 1))
+                        }
+                        disabled={paginaAtual === 1}
+                        className="p-2 rounded border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+
+                      <span className="text-sm font-medium px-3 text-gray-700">
+                        Página {paginaAtual} de {totalPaginas}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPaginaAtual((prev) =>
+                            Math.min(prev + 1, totalPaginas)
+                          )
+                        }
+                        disabled={paginaAtual === totalPaginas}
+                        className="p-2 rounded border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
 
               {!erro && !carregando && alunosFiltrados.length === 0 && (
@@ -502,26 +539,24 @@ export default function App() {
           </>
         )}
 
-        {abaAtiva === 'dashboard' && (
-          <div className="space-y-6">
-            <DashboardMetrics />
-            
-            <section className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FolderTree size={20} className="text-blue-600" />
-                Estrutura Física do Acervo (Visão em Árvore)
-              </h2>
-              <TreeView
-                data={arvoreAcervo}
-                onSelectNode={(node) => {
-                  if (node.type === 'documento') {
-                    setBusca(node.name.split(' - ')[1] || node.name);
-                    setAbaAtiva('consulta');
-                  }
-                }}
-              />
-            </section>
-          </div>
+        {abaAtiva === 'dashboard' && <DashboardMetrics />}
+
+        {abaAtiva === 'arvore' && (
+          <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FolderTree size={20} className="text-blue-600" />
+              Estrutura Física do Acervo (Visão em Árvore)
+            </h2>
+            <TreeView
+              data={arvoreAcervo}
+              onSelectNode={(node) => {
+                if (node.type === 'documento') {
+                  setBusca(node.name.split(' - ')[1] || node.name);
+                  setAbaAtiva('consulta');
+                }
+              }}
+            />
+          </section>
         )}
 
         {abaAtiva === 'gerenciamento' && (
