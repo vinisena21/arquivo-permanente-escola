@@ -25,6 +25,8 @@ import GerenciarAlunos from './components/GerenciarAlunos';
 import Login from './components/Login';
 import { DashboardMetrics } from './components/DashboardMetrics';
 import { TreeView, type TreeNodeData } from './components/TreeView';
+import { ConfirmModal } from './components/ConfirmModal';
+import { Toast, type ToastData } from './components/Toast';
 import { supabase } from './lib/supabase';
 
 interface AlunoArquivo {
@@ -65,6 +67,10 @@ export default function App() {
   const [erro, setErro] = useState('');
   const [alunoEditando, setAlunoEditando] = useState<AlunoEditavel | null>(null);
   const [excluindoId, setExcluindoId] = useState<number | null>(null);
+
+  // Estados de Notificação e Modal
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const [alunoParaExcluir, setAlunoParaExcluir] = useState<AlunoArquivo | null>(null);
 
   // Estados de Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -164,37 +170,42 @@ export default function App() {
       )
     );
     setAlunoEditando(null);
+    setToast({
+      message: 'Cadastro de aluno atualizado com sucesso!',
+      type: 'success'
+    });
   }
 
-  async function excluirAluno(aluno: AlunoArquivo) {
-    const confirmou = window.confirm(
-      `Tem certeza que deseja excluir o aluno:\n\n${aluno.nome}\n\nPasta: ${aluno.codigoPasta}\nNúmero: ${String(
-        aluno.numero
-      ).padStart(2, '0')}\n\nEssa ação não poderá ser desfeita.`
-    );
+  async function confirmarExclusao() {
+    if (!alunoParaExcluir) return;
 
-    if (!confirmou) return;
-
-    setExcluindoId(aluno.id);
+    setExcluindoId(alunoParaExcluir.id);
 
     try {
       const { error } = await supabase
         .from('alunos')
         .delete()
-        .eq('id', aluno.id);
+        .eq('id', alunoParaExcluir.id);
 
       if (error) throw error;
 
       setAlunos((alunosAtuais) =>
-        alunosAtuais.filter((item) => item.id !== aluno.id)
+        alunosAtuais.filter((item) => item.id !== alunoParaExcluir.id)
       );
 
-      window.alert(`${aluno.nome} foi excluído com sucesso.`);
+      setToast({
+        message: `${alunoParaExcluir.nome} foi excluído com sucesso.`,
+        type: 'success'
+      });
     } catch (erroEncontrado) {
       console.error(erroEncontrado);
-      window.alert('Não foi possível excluir o aluno.');
+      setToast({
+        message: 'Não foi possível excluir o registro do aluno.',
+        type: 'error'
+      });
     } finally {
       setExcluindoId(null);
+      setAlunoParaExcluir(null);
     }
   }
 
@@ -207,7 +218,6 @@ export default function App() {
       String(item.numero).includes(textoBusca)
   );
 
-  // Cálculos da Paginação
   const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina) || 1;
   const indiceInicial = (paginaAtual - 1) * itensPorPagina;
   const alunosPaginados = alunosFiltrados.slice(
@@ -464,16 +474,12 @@ export default function App() {
                                 <button
                                   type="button"
                                   className="acao-excluir"
-                                  onClick={() => excluirAluno(item)}
+                                  onClick={() => setAlunoParaExcluir(item)}
                                   disabled={excluindoId === item.id}
                                   title="Excluir aluno"
                                 >
                                   <Trash2 size={17} />
-                                  <span>
-                                    {excluindoId === item.id
-                                      ? 'Excluindo'
-                                      : 'Excluir'}
-                                  </span>
+                                  <span>Excluir</span>
                                 </button>
                               </div>
                             </td>
@@ -483,7 +489,6 @@ export default function App() {
                     </table>
                   </div>
 
-                  {/* Controles de Paginação */}
                   <div className="flex items-center justify-between mt-4 p-3 bg-white rounded-lg border border-gray-200">
                     <span className="text-sm text-gray-600">
                       Mostrando {indiceInicial + 1} até{' '}
@@ -579,6 +584,24 @@ export default function App() {
           aoSalvar={atualizarAlunoNaTela}
         />
       )}
+
+      {/* Modal de Confirmação para Exclusão */}
+      <ConfirmModal
+        isOpen={Boolean(alunoParaExcluir)}
+        title="Excluir Aluno"
+        message={
+          alunoParaExcluir
+            ? `Tem certeza que deseja excluir o aluno:\n\n• ${alunoParaExcluir.nome}\n• Pasta: ${alunoParaExcluir.codigoPasta}\n• Número: ${String(alunoParaExcluir.numero).padStart(2, '0')}\n\nEssa ação não poderá ser desfeita.`
+            : ''
+        }
+        confirmText="Excluir"
+        loading={Boolean(excluindoId)}
+        onConfirm={confirmarExclusao}
+        onCancel={() => setAlunoParaExcluir(null)}
+      />
+
+      {/* Componente Toast de Notificações */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
