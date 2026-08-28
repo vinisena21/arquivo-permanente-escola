@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Folder, FileText, CheckCircle } from 'lucide-react';
+import { Users, Folder, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Metrics {
@@ -21,18 +21,15 @@ export const DashboardMetrics: React.FC = () => {
       try {
         setLoading(true);
 
-        // Busca o total geral na tabela 'alunos'
         const { count: total } = await supabase
           .from('alunos')
           .select('*', { count: 'exact', head: true });
 
-        // Busca registros ativos
         const { count: ativos } = await supabase
           .from('alunos')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'ativo');
 
-        // Busca registros inativos/arquivados
         const { count: inativos } = await supabase
           .from('alunos')
           .select('*', { count: 'exact', head: true })
