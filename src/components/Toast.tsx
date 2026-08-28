@@ -25,20 +25,26 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   const isSuccess = toast.type === 'success';
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-3 bg-white border border-gray-200 px-4 py-3 rounded-xl shadow-lg">
-      {isSuccess ? (
-        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-      ) : (
-        <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-      )}
-      <p className="text-sm font-medium text-gray-800">{toast.message}</p>
-      <button
-        type="button"
-        onClick={onClose}
-        className="text-gray-400 hover:text-gray-600 p-1 rounded-lg ml-2"
-      >
-        <X className="w-4 h-4" />
+    <div style={toastContainerStyle}>
+      {isSuccess ? <CheckCircle2 color="#059669" size={20} /> : <AlertCircle color="#dc2626" size={20} />}
+      <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>
+        {toast.message}
+      </p>
+      <button type="button" onClick={onClose} style={toastCloseBtnStyle}>
+        <X size={16} />
       </button>
     </div>
   );
+};
+
+// Estilos Nativos
+const toastContainerStyle: React.CSSProperties = {
+  position: 'fixed', bottom: '24px', right: '24px', backgroundColor: '#fff', 
+  border: '1px solid #e5e7eb', padding: '12px 16px', borderRadius: '8px', 
+  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', 
+  alignItems: 'center', gap: '12px', zIndex: 1050
+};
+const toastCloseBtnStyle: React.CSSProperties = {
+  background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', 
+  display: 'flex', alignItems: 'center', padding: 0 
 };

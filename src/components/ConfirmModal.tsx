@@ -25,41 +25,25 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-red-100 text-red-600 rounded-full">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+    <div style={overlayStyle}>
+      <div style={modalStyle}>
+        <div style={headerStyle}>
+          <div style={titleContainerStyle}>
+            <AlertTriangle color="#dc2626" size={24} />
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#111827' }}>{title}</h3>
           </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
-          >
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onCancel} style={closeBtnStyle}>
+            <X size={20} />
           </button>
         </div>
-
-        <p className="text-sm text-gray-600 whitespace-pre-line">{message}</p>
-
-        <div className="flex justify-end space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
+        
+        <p style={messageStyle}>{message}</p>
+        
+        <div style={actionsStyle}>
+          <button type="button" onClick={onCancel} disabled={loading} style={cancelBtnStyle}>
             {cancelText}
           </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
+          <button type="button" onClick={onConfirm} disabled={loading} style={confirmBtnStyle(loading)}>
             {loading ? 'Processando...' : confirmText}
           </button>
         </div>
@@ -67,3 +51,38 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     </div>
   );
 };
+
+// Estilos Nativos
+const overlayStyle: React.CSSProperties = {
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+  backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', 
+  alignItems: 'center', justifyContent: 'center', zIndex: 1000 
+};
+const modalStyle: React.CSSProperties = {
+  backgroundColor: '#fff', padding: '24px', borderRadius: '8px', 
+  maxWidth: '400px', width: '90%', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+};
+const headerStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' 
+};
+const titleContainerStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '8px' 
+};
+const closeBtnStyle: React.CSSProperties = {
+  background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' 
+};
+const messageStyle: React.CSSProperties = {
+  fontSize: '14px', color: '#4b5563', marginBottom: '24px', whiteSpace: 'pre-line', lineHeight: '1.5' 
+};
+const actionsStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'flex-end', gap: '12px' 
+};
+const cancelBtnStyle: React.CSSProperties = {
+  padding: '8px 16px', border: '1px solid #d1d5db', background: '#fff', 
+  borderRadius: '6px', cursor: 'pointer', color: '#374151', fontWeight: 500
+};
+const confirmBtnStyle = (loading: boolean): React.CSSProperties => ({
+  padding: '8px 16px', border: 'none', background: '#dc2626', color: '#fff', 
+  borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', 
+  opacity: loading ? 0.6 : 1, fontWeight: 500
+});
