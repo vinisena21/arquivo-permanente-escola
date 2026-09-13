@@ -267,7 +267,7 @@ export default function App() {
               <Archive className="logo-icon" size={36} />
 
               <div>
-                <h1>Site Arquivos Permanentes</h1>
+                <h1>Guia Escolar</h1>
                 <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</p>
               </div>
             </div>
@@ -588,7 +588,7 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Site Arquivos Permanentes &copy; {new Date().getFullYear()} — E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO — Todos os direitos reservados.
+          Guia Escolar &copy; {new Date().getFullYear()} — E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO — Todos os direitos reservados.
         </p>
       </footer>
 
