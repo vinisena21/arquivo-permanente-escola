@@ -15,7 +15,8 @@ import {
   Search,
   Settings,
   Trash2,
-  User
+  User,
+  FileText
 } from 'lucide-react';
 import './App.css';
 import EditarAlunoModal, {
@@ -27,6 +28,7 @@ import { DashboardMetrics } from './components/DashboardMetrics';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
+import GeradorHistorico from './components/GeradorHistorico';
 import { supabase } from './lib/supabase';
 
 interface AlunoArquivo {
@@ -47,7 +49,7 @@ interface AlunoBanco {
   status: string;
 }
 
-type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento';
+type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento' | 'historico';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -266,7 +268,7 @@ export default function App() {
 
               <div>
                 <h1>Site Arquivos Permanentes</h1>
-                <p>Sistema de Consulta e Gestão de Arquivos</p>
+                <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</p>
               </div>
             </div>
 
@@ -318,6 +320,19 @@ export default function App() {
             >
               <FolderTree size={19} />
               Visão em Árvore
+            </button>
+
+            <button
+              type="button"
+              className={
+                abaAtiva === 'historico'
+                  ? 'navigation-button active'
+                  : 'navigation-button'
+              }
+              onClick={() => setAbaAtiva('historico')}
+            >
+              <FileText size={19} />
+              Gerador de Históricos
             </button>
 
             <button
@@ -564,6 +579,8 @@ export default function App() {
           </section>
         )}
 
+        {abaAtiva === 'historico' && <GeradorHistorico />}
+
         {abaAtiva === 'gerenciamento' && (
           <GerenciarAlunos alunos={alunos} />
         )}
@@ -571,8 +588,7 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Site Arquivos Permanentes &copy; {new Date().getFullYear()} - Todos
-          os direitos reservados.
+          Site Arquivos Permanentes &copy; {new Date().getFullYear()} — E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO — Todos os direitos reservados.
         </p>
       </footer>
 
@@ -585,7 +601,6 @@ export default function App() {
         />
       )}
 
-      {/* Modal de Confirmação para Exclusão */}
       <ConfirmModal
         isOpen={Boolean(alunoParaExcluir)}
         title="Excluir Aluno"
@@ -600,7 +615,6 @@ export default function App() {
         onCancel={() => setAlunoParaExcluir(null)}
       />
 
-      {/* Componente Toast de Notificações */}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
