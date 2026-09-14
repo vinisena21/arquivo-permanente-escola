@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import {
-  Archive,
+  GraduationCap,
   LoaderCircle,
   LockKeyhole,
   Mail
@@ -39,7 +39,7 @@ export default function Login() {
       <section className="login-card">
         <div className="login-brand">
           <div className="login-icon">
-            <Archive size={36} />
+            <GraduationCap size={38} />
           </div>
 
           <h1>Guia Escolar</h1>
