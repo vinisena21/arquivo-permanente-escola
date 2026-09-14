@@ -42,7 +42,7 @@ export default function Login() {
             <Archive size={36} />
           </div>
 
-          <h1>Arquivo Permanente</h1>
+          <h1>Guia Escolar</h1>
           <p>Entre para consultar e gerenciar os registros.</p>
         </div>
 
