@@ -20,7 +20,7 @@ const estadoInicial: Record<string, string> = {
   sexo: '', data_nascimento: '', nome_pai: '', nome_mae: '',
   rg: '', orgao_rg: '', status_curso: '', ano_curso: '',
   data_extenso: '16 de setembro de 2026',
-  historico_escolar: '', // Variável para você escolher o título
+  historico_escolar: '', 
   fundamentacao_legal: 'Lei Federal nº 9.394/1996 (LDBEN); Resolução CNE/CP nº 02/2017 (BNCC); Resolução CEE/MG nº 481/2021; Currículo Referência de Minas Gerais (CRMG). Instituição registrada sob o Código INEP nº 31353426.',
 };
 
@@ -83,7 +83,7 @@ export default function GeradorHistorico() {
         const zip = new PizZip(content);
         const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
 
-        // Agora injeta exatamente o que você escolheu na tela
+        // Envia todos os dados preenchidos (incluindo o título e as leis)
         doc.render(dados);
 
         const out = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
@@ -129,10 +129,10 @@ export default function GeradorHistorico() {
 
       <form onSubmit={gerarDocumento} style={{ display: 'flex', flexDirection: 'column' }}>
         <details open style={cssCaixa}>
-          <summary style={cssTitulo}>👤 Identificação do Aluno</summary>
+          <summary style={cssTitulo}>👤 Identificação do Aluno e Configurações</summary>
           <div style={cssGrid2}>
             
-            {/* NOVO CAMPO: TÍTULO DO DOCUMENTO VISÍVEL PARA ESCOLHA */}
+            {/* CAMPO DO TÍTULO */}
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ fontSize: '13px', fontWeight: '800', color: '#be123c' }}>Título do Documento (Cabeçalho):</label>
               <select name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={{ ...cssInput, border: '1px solid #fda4af', backgroundColor: '#fff1f2' }} required>
@@ -141,6 +141,12 @@ export default function GeradorHistorico() {
                 <option value="CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA">CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA</option>
                 <option value="HISTÓRICO ESCOLAR - ENSINO FUNDAMENTAL">HISTÓRICO ESCOLAR - ENSINO FUNDAMENTAL</option>
               </select>
+            </div>
+
+            {/* CAMPO DA FUNDAMENTAÇÃO LEGAL (LEIS) */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>Fundamentação Legal (Leis do Cabeçalho):</label>
+              <textarea name="fundamentacao_legal" value={dados.fundamentacao_legal} onChange={handleChange} rows={2} style={{ ...cssInput, border: '1px solid #bfdbfe', backgroundColor: '#eff6ff' }} required />
             </div>
             
             <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Nome do Aluno:</label><input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={cssInput} required /></div>
