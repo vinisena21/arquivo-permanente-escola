@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Ícones - Guia Escolar</title>
+</head>
+<body style="font-family: system-ui; text-align: center; padding-top: 50px; background: #f1f5f9;">
+  <h2>Gerador Automático de Ícones — Guia Escolar</h2>
+  <p>Clique no botão para gerar e baixar instantaneamente os ícones atualizados:</p>
+  <button onclick="gerar()" style="padding: 16px 32px; font-size: 16px; font-weight: bold; background: #1e3a8a; color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    Gerar e Baixar icon-192.png e icon-512.png
+  </button>
+
+  <script>
+    function desenhar(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Fundo com gradiente azul institucional
+      const grad = ctx.createLinearGradient(0, 0, 0, size);
+      grad.addColorStop(0, '#1e3a8a');
+      grad.addColorStop(1, '#2563eb');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, size * 0.22);
+      ctx.fill();
+
+      // Fundo do Livro / Documento central
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(size * 0.18, size * 0.22, size * 0.64, size * 0.56, size * 0.08);
+      ctx.fill();
+
+      // Linhas simulando texto no documento
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(size * 0.28, size * 0.32, size * 0.44, size * 0.04);
+      ctx.fillRect(size * 0.28, size * 0.40, size * 0.35, size * 0.04);
+
+      // Siglas GE (Guia Escolar) em destaque
+      ctx.fillStyle = '#1e3a8a';
+      ctx.font = `900 ${size * 0.26}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('GE', size / 2, size * 0.62);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function gerar() {
+      const link192 = document.createElement('a');
+      link192.download = 'icon-192.png';
+      link192.href = desenhar(192);
+      link192.click();
+
+      setTimeout(() => {
+        const link512 = document.createElement('a');
+        link512.download = 'icon-512.png';
+        link512.href = desenhar(512);
+        link512.click();
+      }, 400);
+    }
+  </script>
+</body>
+</html>

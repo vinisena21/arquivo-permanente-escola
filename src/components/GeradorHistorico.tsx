@@ -19,7 +19,9 @@ const estadoInicial: Record<string, string> = {
   nome_aluno: '', naturalidade: '', uf: '', nacionalidade: '',
   sexo: '', data_nascimento: '', nome_pai: '', nome_mae: '',
   rg: '', orgao_rg: '', status_curso: '', ano_curso: '',
-  data_extenso: '13 de setembro de 2026',
+  data_extenso: '16 de setembro de 2026',
+  historico_escolar: '',
+  fundamentacao_legal: 'Lei Federal nº 9.394/1996 (LDBEN); Resolução CNE/CP nº 02/2017 (BNCC); Resolução CEE/MG nº 481/2021; Currículo Referência de Minas Gerais (CRMG). Instituição registrada sob o Código INEP nº 31353426.',
 };
 
 ANOS_CONFIG.forEach((ano) => {
@@ -81,7 +83,15 @@ export default function GeradorHistorico() {
         const zip = new PizZip(content);
         const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
 
-        doc.render(dados);
+        // Nova lógica de placeholders dinâmicos (Título e Fundamentação)
+        const dadosCompletos = {
+          ...dados,
+          historico_escolar: (dados.status_curso === 'EM CURSO' || dados.status_curso === 'TRANSFERIDO')
+            ? 'HISTÓRICO ESCOLAR DE TRANSFERÊNCIA'
+            : 'CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA'
+        };
+
+        doc.render(dadosCompletos);
 
         const out = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const nomeArquivo = dados.nome_aluno ? dados.nome_aluno.replace(/\s+/g, '_') : 'Aluno';
@@ -154,11 +164,12 @@ export default function GeradorHistorico() {
                 <option value="">Selecione...</option>
                 <option value="CURSANDO">CURSANDO</option>
                 <option value="CONCLUIU">CONCLUIU</option>
+                <option value="TRANSFERIDO">TRANSFERIDO</option>
               </select>
             </div>
             
             <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Série Atual (Ex: O 1º ANO):</label><input name="ano_curso" value={dados.ano_curso} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Data de Expedição (Extenso):</label><input name="data_extenso" value={dados.data_extenso} onChange={handleChange} placeholder="Ex: 13 de setembro de 2026" style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Data de Expedição (Extenso):</label><input name="data_extenso" value={dados.data_extenso} onChange={handleChange} placeholder="Ex: 16 de setembro de 2026" style={cssInput} /></div>
           </div>
         </details>
 
