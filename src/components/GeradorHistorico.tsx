@@ -20,7 +20,7 @@ const estadoInicial: Record<string, string> = {
   sexo: '', data_nascimento: '', nome_pai: '', nome_mae: '',
   rg: '', orgao_rg: '', status_curso: '', ano_curso: '',
   data_extenso: '16 de setembro de 2026',
-  historico_escolar: '',
+  historico_escolar: '', // Variável para você escolher o título
   fundamentacao_legal: 'Lei Federal nº 9.394/1996 (LDBEN); Resolução CNE/CP nº 02/2017 (BNCC); Resolução CEE/MG nº 481/2021; Currículo Referência de Minas Gerais (CRMG). Instituição registrada sob o Código INEP nº 31353426.',
 };
 
@@ -83,15 +83,8 @@ export default function GeradorHistorico() {
         const zip = new PizZip(content);
         const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
 
-        // Nova lógica de placeholders dinâmicos (Título e Fundamentação)
-        const dadosCompletos = {
-          ...dados,
-          historico_escolar: (dados.status_curso === 'EM CURSO' || dados.status_curso === 'TRANSFERIDO')
-            ? 'HISTÓRICO ESCOLAR DE TRANSFERÊNCIA'
-            : 'CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA'
-        };
-
-        doc.render(dadosCompletos);
+        // Agora injeta exatamente o que você escolheu na tela
+        doc.render(dados);
 
         const out = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const nomeArquivo = dados.nome_aluno ? dados.nome_aluno.replace(/\s+/g, '_') : 'Aluno';
@@ -138,6 +131,18 @@ export default function GeradorHistorico() {
         <details open style={cssCaixa}>
           <summary style={cssTitulo}>👤 Identificação do Aluno</summary>
           <div style={cssGrid2}>
+            
+            {/* NOVO CAMPO: TÍTULO DO DOCUMENTO VISÍVEL PARA ESCOLHA */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '13px', fontWeight: '800', color: '#be123c' }}>Título do Documento (Cabeçalho):</label>
+              <select name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={{ ...cssInput, border: '1px solid #fda4af', backgroundColor: '#fff1f2' }} required>
+                <option value="">Selecione o título que vai sair no documento...</option>
+                <option value="HISTÓRICO ESCOLAR - TRANSFERÊNCIA">HISTÓRICO ESCOLAR - TRANSFERÊNCIA</option>
+                <option value="CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA">CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA</option>
+                <option value="HISTÓRICO ESCOLAR - ENSINO FUNDAMENTAL">HISTÓRICO ESCOLAR - ENSINO FUNDAMENTAL</option>
+              </select>
+            </div>
+            
             <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Nome do Aluno:</label><input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={cssInput} required /></div>
             <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Data de Nascimento:</label><input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={cssInput} required /></div>
             <div><label style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Nome da Mãe:</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} required /></div>
