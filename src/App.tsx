@@ -572,7 +572,9 @@ export default function App() {
           </section>
         )}
 
-        {abaAtiva === 'historico' && <GeradorHistorico />}
+        {abaAtiva === 'historico' && (
+          <GeradorHistorico alunos={alunos} />
+        )}
 
         {abaAtiva === 'gerenciamento' && (
           <GerenciarAlunos
