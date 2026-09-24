@@ -32,24 +32,7 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
 import GeradorHistorico from './components/GeradorHistorico';
 import { supabase } from './lib/supabase';
-
-interface AlunoArquivo {
-  id: number;
-  nome: string;
-  dataNascimento: string;
-  codigoPasta: string;
-  numero: number;
-  status: string;
-}
-
-interface AlunoBanco {
-  id: number;
-  nome: string;
-  data_nascimento: string | null;
-  codigo_pasta: string;
-  numero: number;
-  status: string;
-}
+import type { AlunoArquivo, AlunoRow } from './types/database';
 
 type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento' | 'historico';
 
@@ -106,7 +89,7 @@ export default function App() {
       setErro('');
 
       try {
-        const todosOsAlunos: AlunoBanco[] = [];
+        const todosOsAlunos: AlunoRow[] = [];
         const tamanhoLote = 1000;
         let inicio = 0;
 
@@ -128,7 +111,7 @@ export default function App() {
 
           if (error) throw error;
 
-          const lote = (data ?? []) as AlunoBanco[];
+          const lote = data ?? [];
           todosOsAlunos.push(...lote);
 
           if (lote.length < tamanhoLote) break;
