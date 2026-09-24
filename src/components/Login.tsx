@@ -6,6 +6,7 @@ import {
   Mail
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { validarEmail, validarSenha } from '../lib/validacao';
 import './Login.css';
 
 export default function Login() {
@@ -13,11 +14,24 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
+  const [erroEmail, setErroEmail] = useState('');
+  const [erroSenha, setErroSenha] = useState('');
 
   async function entrar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    setCarregando(true);
     setErro('');
+
+    const eEmail = validarEmail(email);
+    const eSenha = validarSenha(senha);
+
+    setErroEmail(eEmail ?? '');
+    setErroSenha(eSenha ?? '');
+
+    if (eEmail || eSenha) {
+      return;
+    }
+
+    setCarregando(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -46,7 +60,7 @@ export default function Login() {
           <p>Entre para consultar e gerenciar os registros.</p>
         </div>
 
-        <form className="login-form" onSubmit={entrar}>
+        <form className="login-form" onSubmit={entrar} noValidate>
           <label htmlFor="login-email">E-mail</label>
 
           <div className="login-input">
@@ -56,12 +70,20 @@ export default function Login() {
               id="login-email"
               type="email"
               value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
+              onChange={(evento) => {
+                setEmail(evento.target.value);
+                if (erroEmail) setErroEmail('');
+              }}
               placeholder="Digite seu e-mail"
               autoComplete="email"
-              required
+              aria-invalid={Boolean(erroEmail)}
             />
           </div>
+          {erroEmail && (
+            <p className="login-error-campo" role="alert">
+              {erroEmail}
+            </p>
+          )}
 
           <label htmlFor="login-senha">Senha</label>
 
@@ -72,12 +94,20 @@ export default function Login() {
               id="login-senha"
               type="password"
               value={senha}
-              onChange={(evento) => setSenha(evento.target.value)}
+              onChange={(evento) => {
+                setSenha(evento.target.value);
+                if (erroSenha) setErroSenha('');
+              }}
               placeholder="Digite sua senha"
               autoComplete="current-password"
-              required
+              aria-invalid={Boolean(erroSenha)}
             />
           </div>
+          {erroSenha && (
+            <p className="login-error-campo" role="alert">
+              {erroSenha}
+            </p>
+          )}
 
           {erro && (
             <p className="login-error" role="alert">
