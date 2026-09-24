@@ -18,8 +18,26 @@ interface AlunoResumo {
   numero: number;
 }
 
+export interface AlunoCadastrado {
+  id: number;
+  nome: string;
+  dataNascimento: string;
+  codigoPasta: string;
+  numero: number;
+  status: string;
+}
+
 interface GerenciarAlunosProps {
   alunos: AlunoResumo[];
+  onAlunoCadastrado: (aluno: AlunoCadastrado) => void;
+}
+
+function formatarDataParaExibicao(data: string | null): string {
+  if (!data) return '';
+  const partes = data.split('-');
+  if (partes.length !== 3) return data;
+  const [ano, mes, dia] = partes;
+  return `${dia}/${mes}/${ano}`;
 }
 
 function encontrarPrimeiroDisponivel(
@@ -53,7 +71,8 @@ function encontrarPrimeiroDisponivel(
 }
 
 export default function GerenciarAlunos({
-  alunos
+  alunos,
+  onAlunoCadastrado
 }: GerenciarAlunosProps) {
   const [nome, setNome] = useState('');
 
@@ -108,7 +127,7 @@ export default function GerenciarAlunos({
     const nomeDigitado = nome
       .trim()
       .normalize('NFD')
-      .replace(/[\\u0300-\\u036f]/g, '');
+      .replace(/[\u0300-\u036f]/g, '');
 
     if (
       !nomeDigitado ||
@@ -279,7 +298,7 @@ export default function GerenciarAlunos({
         return;
       }
 
-      const { error: erroCadastro } =
+      const { data: novoAluno, error: erroCadastro } =
         await supabase
           .from('alunos')
           .insert({
@@ -289,10 +308,23 @@ export default function GerenciarAlunos({
             codigo_pasta: pastaAtual,
             numero: numeroTratado,
             status: 'Arquivado'
-          });
+          })
+          .select('id, nome, data_nascimento, codigo_pasta, numero, status')
+          .single();
 
       if (erroCadastro) {
         throw erroCadastro;
+      }
+
+      if (novoAluno) {
+        onAlunoCadastrado({
+          id: novoAluno.id,
+          nome: novoAluno.nome,
+          dataNascimento: formatarDataParaExibicao(novoAluno.data_nascimento),
+          codigoPasta: novoAluno.codigo_pasta,
+          numero: novoAluno.numero,
+          status: novoAluno.status
+        });
       }
 
       setMensagem(
@@ -301,10 +333,8 @@ export default function GerenciarAlunos({
 
       setNome('');
       setDataNascimento('');
-
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 1200);
+      setPastaSelecionada('');
+      setNumero('');
     } catch (erroEncontrado) {
       console.error(erroEncontrado);
 
