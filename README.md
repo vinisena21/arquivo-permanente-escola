@@ -14,7 +14,7 @@ Aplicação web para consulta, cadastro, edição e organização dos prontuári
 
 - **Autenticação** — Login com e-mail e senha (Supabase Auth)
 - **Consulta de arquivos** — Busca por nome, pasta ou número + listagem paginada
-- **Painel Geral** — Métricas do acervo (total, ativos e arquivados)
+- **Painel Geral** — Métricas do acervo (total, arquivados, pendentes e transferidos)
 - **Visão em Árvore** — Estrutura hierárquica das pastas e alunos
 - **Gerenciar alunos** — Cadastro com recomendação inteligente de pasta e número
 - **Edição e exclusão** — Modal de edição + confirmação de exclusão
@@ -34,6 +34,41 @@ Aplicação web para consulta, cadastro, edição e organização dos prontuári
 | Docxtemplater + PizZip  | Geração de documentos Word       |
 | FileSaver               | Download dos arquivos gerados    |
 | vite-plugin-pwa         | Suporte a Progressive Web App    |
+
+---
+
+## Design System
+
+O projeto possui um pequeno Design System centralizado em:
+
+```
+src/styles/tokens.css
+```
+
+Ele define tokens de design (variáveis CSS) para:
+
+- **Cores** (primárias, semânticas e neutras)
+- **Tipografia** (fontes, tamanhos e pesos)
+- **Espaçamentos** (escala de 4px)
+- **Raios de borda**
+- **Sombras**
+- **Transições**
+- **Z-index**
+
+Os tokens são mapeados para utilitários do Tailwind CSS 4 via `@theme` no arquivo `src/index.css`.
+
+**Como usar:**
+
+```css
+/* CSS puro */
+background: var(--color-primary-600);
+border-radius: var(--radius-lg);
+
+/* Ou com classes Tailwind */
+bg-primary-600 rounded-lg
+```
+
+Isso facilita manter a consistência visual em todo o sistema.
 
 ---
 
