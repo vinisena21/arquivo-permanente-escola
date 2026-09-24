@@ -10,6 +10,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import type { AlunoArquivo } from '../types/database';
 import './GerenciarAlunos.css';
 
 interface AlunoResumo {
@@ -18,18 +19,12 @@ interface AlunoResumo {
   numero: number;
 }
 
-export interface AlunoCadastrado {
-  id: number;
-  nome: string;
-  dataNascimento: string;
-  codigoPasta: string;
-  numero: number;
-  status: string;
-}
+/** @deprecated Use AlunoArquivo from types/database */
+export type AlunoCadastrado = AlunoArquivo;
 
 interface GerenciarAlunosProps {
   alunos: AlunoResumo[];
-  onAlunoCadastrado: (aluno: AlunoCadastrado) => void;
+  onAlunoCadastrado: (aluno: AlunoArquivo) => void;
 }
 
 function formatarDataParaExibicao(data: string | null): string {
