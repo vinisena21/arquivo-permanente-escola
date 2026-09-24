@@ -22,7 +22,9 @@ import './App.css';
 import EditarAlunoModal, {
   type AlunoEditavel
 } from './components/EditarAlunoModal';
-import GerenciarAlunos from './components/GerenciarAlunos';
+import GerenciarAlunos, {
+  type AlunoCadastrado
+} from './components/GerenciarAlunos';
 import Login from './components/Login';
 import { DashboardMetrics } from './components/DashboardMetrics';
 import { TreeView, type TreeNodeData } from './components/TreeView';
@@ -174,6 +176,14 @@ export default function App() {
     setAlunoEditando(null);
     setToast({
       message: 'Cadastro de aluno atualizado com sucesso!',
+      type: 'success'
+    });
+  }
+
+  function adicionarAlunoNaTela(novoAluno: AlunoCadastrado) {
+    setAlunos((alunosAtuais) => [...alunosAtuais, novoAluno]);
+    setToast({
+      message: `${novoAluno.nome} foi cadastrado com sucesso!`,
       type: 'success'
     });
   }
@@ -582,7 +592,10 @@ export default function App() {
         {abaAtiva === 'historico' && <GeradorHistorico />}
 
         {abaAtiva === 'gerenciamento' && (
-          <GerenciarAlunos alunos={alunos} />
+          <GerenciarAlunos
+            alunos={alunos}
+            onAlunoCadastrado={adicionarAlunoNaTela}
+          />
         )}
       </main>
 
