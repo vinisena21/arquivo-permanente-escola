@@ -1,75 +1,128 @@
-# React + TypeScript + Vite
+# Guia Escolar — Arquivo Permanente
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gerenciamento do **Arquivo Permanente Escolar** da  
+**E.M. Maria Geralda Miranda Brito Salomão**  
+Ponto dos Volantes — MG
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Sobre o projeto
 
-## React Compiler
+Aplicação web para consulta, cadastro, edição e organização dos prontuários do arquivo permanente da escola, além de geração de históricos escolares em formato Word (`.docx`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Funcionalidades principais
 
-## Expanding the ESLint configuration
+- **Autenticação** — Login com e-mail e senha (Supabase Auth)
+- **Consulta de arquivos** — Busca por nome, pasta ou número + listagem paginada
+- **Painel Geral** — Métricas do acervo (total, ativos e arquivados)
+- **Visão em Árvore** — Estrutura hierárquica das pastas e alunos
+- **Gerenciar alunos** — Cadastro com recomendação inteligente de pasta e número
+- **Edição e exclusão** — Modal de edição + confirmação de exclusão
+- **Gerador de Históricos** — Preenchimento completo e geração de documento oficial em `.docx`
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tecnologias utilizadas
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Tecnologia              | Uso                              |
+|-------------------------|----------------------------------|
+| React 19 + TypeScript   | Frontend                         |
+| Vite                    | Build e desenvolvimento          |
+| Tailwind CSS 4          | Estilização                      |
+| Supabase                | Autenticação + Banco de dados    |
+| Lucide React            | Ícones                           |
+| Docxtemplater + PizZip  | Geração de documentos Word       |
+| FileSaver               | Download dos arquivos gerados    |
+| vite-plugin-pwa         | Suporte a Progressive Web App    |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
 
+## Como rodar o projeto localmente
+
+### Pré-requisitos
+
+- Node.js 18+ 
+- Conta no [Supabase](https://supabase.com)
+
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/vinisena21/arquivo-permanente-escola.git
+cd arquivo-permanente-escola
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Instale as dependências
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm install
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 3. Configure as variáveis de ambiente
+
+Crie um arquivo `.env.local` na raiz do projeto:
+
+```env
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_PUBLISHABLE_KEY=sua_chave_publica_do_supabase
+```
+
+### 4. Execute o projeto
+
+```bash
+npm run dev
+```
+
+Acesse: [http://localhost:5173](http://localhost:5173)
+
+---
+
+## Estrutura do banco de dados (Supabase)
+
+Tabela principal: **`alunos`**
+
+| Coluna            | Tipo          | Descrição                          |
+|-------------------|---------------|------------------------------------|
+| `id`              | integer       | Identificador único                |
+| `nome`            | text          | Nome completo do aluno             |
+| `data_nascimento` | date          | Data de nascimento                 |
+| `codigo_pasta`    | text          | Código da pasta física             |
+| `numero`          | integer       | Número do arquivo dentro da pasta  |
+| `status`          | text          | Status do registro (Arquivado, Pendente, Transferido) |
+
+> **Importante:** Ative o Row Level Security (RLS) na tabela e configure as políticas de acesso adequadas.
+
+---
+
+## Scripts disponíveis
+
+| Comando           | Descrição                          |
+|-------------------|------------------------------------|
+| `npm run dev`     | Inicia o servidor de desenvolvimento |
+| `npm run build`   | Gera a build de produção           |
+| `npm run preview` | Visualiza a build de produção      |
+| `npm run lint`    | Executa o ESLint                   |
+
+---
+
+## Geração de Histórico Escolar
+
+O sistema utiliza o arquivo modelo localizado em:
 
 ```
+public/modelo_historico.docx
+```
+
+Preencha os dados no formulário e o sistema gera automaticamente o documento oficial com as informações do aluno.
+
+---
+
+## Observações
+
+- O sistema foi desenvolvido prioritariamente para uso interno da escola.
+- O nome da escola e dados legais estão atualmente fixos no código.
+- Para produção, recomenda-se configurar corretamente as políticas de segurança no Supabase.
+
+---
+
+Desenvolvido para a **E.M. Maria Geralda Miranda Brito Salomão**  
+Ponto dos Volantes — MG
