@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { Json } from '../types/database';
 
 const STORAGE_KEY = 'guia-escolar-historicos-gerados';
 
@@ -30,6 +31,19 @@ function escreverLocal(lista: HistoricoSalvo[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
 }
 
+function dadosComoRecord(valor: Json | null | undefined): Record<string, string> {
+  if (!valor || typeof valor !== 'object' || Array.isArray(valor)) {
+    return {};
+  }
+
+  const resultado: Record<string, string> = {};
+  for (const [chave, item] of Object.entries(valor)) {
+    if (item === null || item === undefined) continue;
+    resultado[chave] = String(item);
+  }
+  return resultado;
+}
+
 /** Salva o histórico no navegador e tenta gravar no Supabase (se a tabela existir). */
 export async function salvarHistoricoGerado(
   dados: Record<string, string>
@@ -53,10 +67,10 @@ export async function salvarHistoricoGerado(
     await supabase.from('historicos_gerados').insert({
       id_local: registro.id,
       nome_aluno: registro.nomeAluno,
-      titulo_documento: registro.tituloDocumento,
+      titulo_documento: registro.tituloDocumento || null,
       data_nascimento: registro.dataNascimento || null,
       data_geracao: registro.dataGeracao,
-      dados: registro.dados,
+      dados: registro.dados as Json,
     });
   } catch {
     // Tabela pode não existir ainda — ok
@@ -72,26 +86,21 @@ export async function listarHistoricosSalvos(): Promise<HistoricoSalvo[]> {
   try {
     const { data, error } = await supabase
       .from('historicos_gerados')
-      .select('id_local, nome_aluno, titulo_documento, data_nascimento, data_geracao, dados')
+      .select(
+        'id_local, nome_aluno, titulo_documento, data_nascimento, data_geracao, dados'
+      )
       .order('data_geracao', { ascending: false })
       .limit(200);
 
     if (error || !data) return locais;
 
-    const remotos: HistoricoSalvo[] = data.map((row: {
-      id_local?: string;
-      nome_aluno?: string;
-      titulo_documento?: string;
-      data_nascimento?: string | null;
-      data_geracao?: string;
-      dados?: Record<string, string>;
-    }) => ({
+    const remotos: HistoricoSalvo[] = data.map((row) => ({
       id: row.id_local || gerarId(),
       nomeAluno: row.nome_aluno || 'Sem nome',
       tituloDocumento: row.titulo_documento || '',
       dataNascimento: row.data_nascimento || '',
       dataGeracao: row.data_geracao || new Date().toISOString(),
-      dados: (row.dados as Record<string, string>) || {},
+      dados: dadosComoRecord(row.dados),
     }));
 
     // Mescla por id, priorizando remoto
