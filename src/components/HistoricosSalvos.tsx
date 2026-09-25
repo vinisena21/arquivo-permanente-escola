@@ -3,6 +3,7 @@ import {
   Download,
   FileText,
   LoaderCircle,
+  Pencil,
   Search,
   Trash2,
   RefreshCw,
@@ -17,7 +18,13 @@ import {
   type HistoricoSalvo,
 } from '../lib/historicosSalvos';
 
-export default function HistoricosSalvos() {
+interface HistoricosSalvosProps {
+  onContinuarEditando?: (dados: Record<string, string>) => void;
+}
+
+export default function HistoricosSalvos({
+  onContinuarEditando,
+}: HistoricosSalvosProps) {
   const [lista, setLista] = useState<HistoricoSalvo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState('');
@@ -90,6 +97,11 @@ export default function HistoricosSalvos() {
     }
   }
 
+  function continuarEditando(item: HistoricoSalvo) {
+    if (!onContinuarEditando) return;
+    onContinuarEditando(item.dados);
+  }
+
   async function excluir(item: HistoricoSalvo) {
     if (
       !window.confirm(
@@ -122,7 +134,7 @@ export default function HistoricosSalvos() {
           </h2>
           <p className="text-sm text-gray-500 mt-1">
             Toda vez que um histórico é gerado, ele fica registrado aqui. Você
-            pode baixar de novo ou excluir.
+            pode continuar editando, baixar de novo ou excluir.
           </p>
         </div>
 
@@ -192,7 +204,10 @@ export default function HistoricosSalvos() {
                   <td className="py-3 pr-3 font-semibold text-gray-900">
                     {item.nomeAluno}
                   </td>
-                  <td className="py-3 pr-3 text-gray-600 max-w-[220px] truncate" title={item.tituloDocumento}>
+                  <td
+                    className="py-3 pr-3 text-gray-600 max-w-[220px] truncate"
+                    title={item.tituloDocumento}
+                  >
                     {item.tituloDocumento || '—'}
                   </td>
                   <td className="py-3 pr-3 text-gray-600">
@@ -202,7 +217,18 @@ export default function HistoricosSalvos() {
                     {formatarDataHora(item.dataGeracao)}
                   </td>
                   <td className="py-3">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2 flex-wrap">
+                      {onContinuarEditando && (
+                        <button
+                          type="button"
+                          onClick={() => continuarEditando(item)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                          title="Abrir no gerador para continuar editando"
+                        >
+                          <Pencil size={14} />
+                          Continuar
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => regenerarDocx(item)}
