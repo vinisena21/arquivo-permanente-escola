@@ -75,6 +75,9 @@ export interface AlunoOpcao {
 
 interface GeradorHistoricoProps {
   alunos?: AlunoOpcao[];
+  /** Dados de um histórico salvo para continuar editando */
+  dadosParaCarregar?: Record<string, string> | null;
+  onDadosCarregados?: () => void;
 }
 
 function carregarRascunho(): Record<string, string> | null {
@@ -88,11 +91,25 @@ function carregarRascunho(): Record<string, string> | null {
   }
 }
 
-export default function GeradorHistorico({ alunos = [] }: GeradorHistoricoProps) {
+export default function GeradorHistorico({
+  alunos = [],
+  dadosParaCarregar = null,
+  onDadosCarregados,
+}: GeradorHistoricoProps) {
   const [dados, setDados] = useState<Record<string, string>>(() => carregarRascunho() ?? { ...estadoInicial });
   const [buscaAluno, setBuscaAluno] = useState('');
   const [rascunhoSalvo, setRascunhoSalvo] = useState(false);
   const [errosValidacao, setErrosValidacao] = useState<string[]>([]);
+
+  // Carrega histórico salvo para continuar editando
+  useEffect(() => {
+    if (!dadosParaCarregar) return;
+    setDados({ ...estadoInicial, ...dadosParaCarregar });
+    setErrosValidacao([]);
+    setBuscaAluno('');
+    onDadosCarregados?.();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [dadosParaCarregar, onDadosCarregados]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -184,7 +201,6 @@ export default function GeradorHistorico({ alunos = [] }: GeradorHistoricoProps)
         const nomeArquivo = dados.nome_aluno ? dados.nome_aluno.replace(/\s+/g, '_') : 'Aluno';
         saveAs(out, `Historico_${nomeArquivo}.docx`);
 
-        // Salva automaticamente no sistema (navegador + Supabase se a tabela existir)
         void salvarHistoricoGerado(dados).catch((err) =>
           console.error('Falha ao salvar historico:', err)
         );
