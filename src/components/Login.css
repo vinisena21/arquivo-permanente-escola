@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 6px;
   padding: 0 14px;
   color: #94a3b8;
   background: #f8fafc;
@@ -86,6 +86,18 @@
   border: none;
   outline: none;
   font-size: 1rem;
+}
+
+.login-input:has(input[aria-invalid="true"]) {
+  border-color: #f87171;
+  background: #fef2f2;
+}
+
+.login-error-campo {
+  margin: 0 0 14px;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .login-error {

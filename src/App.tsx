@@ -16,40 +16,27 @@ import {
   Settings,
   Trash2,
   User,
-  FileText
+  FileText,
+  History
 } from 'lucide-react';
 import './App.css';
 import EditarAlunoModal, {
   type AlunoEditavel
 } from './components/EditarAlunoModal';
-import GerenciarAlunos from './components/GerenciarAlunos';
+import GerenciarAlunos, {
+  type AlunoCadastrado
+} from './components/GerenciarAlunos';
 import Login from './components/Login';
 import { DashboardMetrics } from './components/DashboardMetrics';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
 import GeradorHistorico from './components/GeradorHistorico';
+import HistoricosSalvos from './components/HistoricosSalvos';
 import { supabase } from './lib/supabase';
+import type { AlunoArquivo, AlunoRow } from './types/database';
 
-interface AlunoArquivo {
-  id: number;
-  nome: string;
-  dataNascimento: string;
-  codigoPasta: string;
-  numero: number;
-  status: string;
-}
-
-interface AlunoBanco {
-  id: number;
-  nome: string;
-  data_nascimento: string | null;
-  codigo_pasta: string;
-  numero: number;
-  status: string;
-}
-
-type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento' | 'historico';
+type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento' | 'historico' | 'historicos-salvos';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -70,13 +57,16 @@ export default function App() {
   const [alunoEditando, setAlunoEditando] = useState<AlunoEditavel | null>(null);
   const [excluindoId, setExcluindoId] = useState<number | null>(null);
 
-  // Estados de Notificação e Modal
   const [toast, setToast] = useState<ToastData | null>(null);
   const [alunoParaExcluir, setAlunoParaExcluir] = useState<AlunoArquivo | null>(null);
 
-  // Estados de Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 20;
+
+  /** Dados de histórico salvo para abrir no gerador e continuar editando */
+  const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<
+    Record<string, string> | null
+  >(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -104,7 +94,7 @@ export default function App() {
       setErro('');
 
       try {
-        const todosOsAlunos: AlunoBanco[] = [];
+        const todosOsAlunos: AlunoRow[] = [];
         const tamanhoLote = 1000;
         let inicio = 0;
 
@@ -126,7 +116,7 @@ export default function App() {
 
           if (error) throw error;
 
-          const lote = (data ?? []) as AlunoBanco[];
+          const lote = data ?? [];
           todosOsAlunos.push(...lote);
 
           if (lote.length < tamanhoLote) break;
@@ -174,6 +164,14 @@ export default function App() {
     setAlunoEditando(null);
     setToast({
       message: 'Cadastro de aluno atualizado com sucesso!',
+      type: 'success'
+    });
+  }
+
+  function adicionarAlunoNaTela(novoAluno: AlunoCadastrado) {
+    setAlunos((alunosAtuais) => [...alunosAtuais, novoAluno]);
+    setToast({
+      message: `${novoAluno.nome} foi cadastrado com sucesso!`,
       type: 'success'
     });
   }
@@ -333,6 +331,19 @@ export default function App() {
             >
               <FileText size={19} />
               Gerador de Históricos
+            </button>
+
+            <button
+              type="button"
+              className={
+                abaAtiva === 'historicos-salvos'
+                  ? 'navigation-button active'
+                  : 'navigation-button'
+              }
+              onClick={() => setAbaAtiva('historicos-salvos')}
+            >
+              <History size={19} />
+              Históricos salvos
             </button>
 
             <button
@@ -579,10 +590,33 @@ export default function App() {
           </section>
         )}
 
-        {abaAtiva === 'historico' && <GeradorHistorico />}
+        {abaAtiva === 'historico' && (
+          <GeradorHistorico
+            alunos={alunos}
+            dadosParaCarregar={dadosHistoricoEdicao}
+            onDadosCarregados={() => setDadosHistoricoEdicao(null)}
+          />
+        )}
+
+        {abaAtiva === 'historicos-salvos' && (
+          <HistoricosSalvos
+            onContinuarEditando={(dados) => {
+              setDadosHistoricoEdicao(dados);
+              setAbaAtiva('historico');
+              setToast({
+                message:
+                  'Histórico carregado no gerador. Continue editando e gere novamente quando quiser.',
+                type: 'success',
+              });
+            }}
+          />
+        )}
 
         {abaAtiva === 'gerenciamento' && (
-          <GerenciarAlunos alunos={alunos} />
+          <GerenciarAlunos
+            alunos={alunos}
+            onAlunoCadastrado={adicionarAlunoNaTela}
+          />
         )}
       </main>
 

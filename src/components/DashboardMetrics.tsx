@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Folder, CheckCircle } from 'lucide-react';
+import { Users, Folder, Clock, ArrowRightLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Metrics {
   totalAlunos: number;
-  totalAtivos: number;
-  totalInativos: number;
+  totalArquivados: number;
+  totalPendentes: number;
+  totalTransferidos: number;
 }
 
 export const DashboardMetrics: React.FC = () => {
   const [metrics, setMetrics] = useState<Metrics>({
     totalAlunos: 0,
-    totalAtivos: 0,
-    totalInativos: 0,
+    totalArquivados: 0,
+    totalPendentes: 0,
+    totalTransferidos: 0,
   });
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -25,20 +27,26 @@ export const DashboardMetrics: React.FC = () => {
           .from('alunos')
           .select('*', { count: 'exact', head: true });
 
-        const { count: ativos } = await supabase
+        const { count: arquivados } = await supabase
           .from('alunos')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'ativo');
+          .eq('status', 'Arquivado');
 
-        const { count: inativos } = await supabase
+        const { count: pendentes } = await supabase
           .from('alunos')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'inativo');
+          .eq('status', 'Pendente');
+
+        const { count: transferidos } = await supabase
+          .from('alunos')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'Transferido');
 
         setMetrics({
           totalAlunos: total || 0,
-          totalAtivos: ativos || 0,
-          totalInativos: inativos || 0,
+          totalArquivados: arquivados || 0,
+          totalPendentes: pendentes || 0,
+          totalTransferidos: transferidos || 0,
         });
       } catch (error) {
         console.error('Erro ao carregar métricas:', error);
@@ -58,16 +66,22 @@ export const DashboardMetrics: React.FC = () => {
       color: 'bg-blue-600',
     },
     {
-      title: 'Cadastros Ativos',
-      value: metrics.totalAtivos,
-      icon: CheckCircle,
+      title: 'Arquivados',
+      value: metrics.totalArquivados,
+      icon: Folder,
       color: 'bg-emerald-600',
     },
     {
-      title: 'Prontuários Arquivados',
-      value: metrics.totalInativos,
-      icon: Folder,
-      color: 'bg-amber-600',
+      title: 'Pendentes',
+      value: metrics.totalPendentes,
+      icon: Clock,
+      color: 'bg-amber-500',
+    },
+    {
+      title: 'Transferidos',
+      value: metrics.totalTransferidos,
+      icon: ArrowRightLeft,
+      color: 'bg-violet-600',
     },
   ];
 
@@ -78,7 +92,7 @@ export const DashboardMetrics: React.FC = () => {
         <p className="text-gray-500 text-sm">Visão geral do acervo e estatísticas</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card, index) => {
           const IconComponent = card.icon;
           return (
