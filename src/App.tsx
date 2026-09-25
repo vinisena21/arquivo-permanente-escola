@@ -63,6 +63,11 @@ export default function App() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 20;
 
+  /** Dados de histórico salvo para abrir no gerador e continuar editando */
+  const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<
+    Record<string, string> | null
+  >(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSessao(data.session);
@@ -586,10 +591,26 @@ export default function App() {
         )}
 
         {abaAtiva === 'historico' && (
-          <GeradorHistorico alunos={alunos} />
+          <GeradorHistorico
+            alunos={alunos}
+            dadosParaCarregar={dadosHistoricoEdicao}
+            onDadosCarregados={() => setDadosHistoricoEdicao(null)}
+          />
         )}
 
-        {abaAtiva === 'historicos-salvos' && <HistoricosSalvos />}
+        {abaAtiva === 'historicos-salvos' && (
+          <HistoricosSalvos
+            onContinuarEditando={(dados) => {
+              setDadosHistoricoEdicao(dados);
+              setAbaAtiva('historico');
+              setToast({
+                message:
+                  'Histórico carregado no gerador. Continue editando e gere novamente quando quiser.',
+                type: 'success',
+              });
+            }}
+          />
+        )}
 
         {abaAtiva === 'gerenciamento' && (
           <GerenciarAlunos
