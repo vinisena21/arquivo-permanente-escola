@@ -8,6 +8,17 @@ import {
   validarObrigatorio,
 } from '../lib/validacao';
 import { salvarHistoricoGerado } from '../lib/historicosSalvos';
+import {
+  carregarAlunosParaHistorico,
+  type AlunoSecretariaResumo,
+} from '../lib/alunosSecretaria';
+import {
+  chaveTexto,
+  isoParaDataBR,
+  mapearParaHistorico,
+  ROTULOS_CAMPOS_HISTORICO,
+  type AlunoParaHistorico,
+} from '../lib/importacaoSecretaria';
 
 const STORAGE_KEY = 'guia-escolar-historico-rascunho';
 
@@ -78,7 +89,45 @@ interface GeradorHistoricoProps {
   /** Dados de um histórico salvo para continuar editando */
   dadosParaCarregar?: Record<string, string> | null;
   onDadosCarregados?: () => void;
+  /** Aluno da secretaria escolhido na aba "Alunos da Secretaria" */
+  alunoSecretariaParaCarregar?: AlunoParaHistorico | null;
+  onAlunoSecretariaCarregado?: () => void;
 }
+
+interface PreenchimentoPendente {
+  nomeAluno: string;
+  campos: Record<string, string>;
+  /** Campos já preenchidos no formulário com valor diferente */
+  conflitos: string[];
+}
+
+function prepararPreenchimento(
+  atuais: Record<string, string>,
+  aluno: AlunoParaHistorico
+): PreenchimentoPendente {
+  const campos = mapearParaHistorico(aluno);
+  const conflitos = Object.keys(campos).filter((chave) => {
+    const atual = (atuais[chave] ?? '').trim();
+    return atual !== '' && atual !== campos[chave];
+  });
+  return { nomeAluno: aluno.nome, campos, conflitos };
+}
+
+function aplicarPreenchimento(
+  atuais: Record<string, string>,
+  pendente: PreenchimentoPendente,
+  substituirPreenchidos: boolean
+): Record<string, string> {
+  const novos = { ...atuais };
+  for (const [chave, valor] of Object.entries(pendente.campos)) {
+    if (!substituirPreenchidos && (atuais[chave] ?? '').trim() !== '') continue;
+    novos[chave] = valor;
+  }
+  return novos;
+}
+
+const AVISO_FILIACAO =
+  'Confira os dados preenchidos: "Filiação 2" da Secretaria foi usada como Nome do Pai (1º no histórico) e "Filiação 1" como Nome da Mãe (2º no histórico). As notas continuam manuais.';
 
 function carregarRascunho(): Record<string, string> | null {
   try {
@@ -95,21 +144,60 @@ export default function GeradorHistorico({
   alunos = [],
   dadosParaCarregar = null,
   onDadosCarregados,
+  alunoSecretariaParaCarregar = null,
+  onAlunoSecretariaCarregado,
 }: GeradorHistoricoProps) {
-  const [dados, setDados] = useState<Record<string, string>>(() => carregarRascunho() ?? { ...estadoInicial });
+  // Se veio um aluno da aba "Alunos da Secretaria", prepara o preenchimento
+  // já na montagem: aplica direto se não houver conflito, senão pede confirmação.
+  // Histórico salvo aberto para continuar editando também é aplicado na montagem.
+  const [estadoAbertura] = useState(() => {
+    const base = dadosParaCarregar
+      ? { ...estadoInicial, ...dadosParaCarregar }
+      : carregarRascunho() ?? { ...estadoInicial };
+    if (!alunoSecretariaParaCarregar) return { dados: base, pendente: null, aplicado: false };
+    const pendente = prepararPreenchimento(base, alunoSecretariaParaCarregar);
+    if (pendente.conflitos.length === 0) {
+      return { dados: aplicarPreenchimento(base, pendente, true), pendente: null, aplicado: true };
+    }
+    return { dados: base, pendente, aplicado: false };
+  });
+  const [dados, setDados] = useState<Record<string, string>>(estadoAbertura.dados);
+  const [alunosSecretaria, setAlunosSecretaria] = useState<AlunoSecretariaResumo[]>([]);
+  const [buscaSecretaria, setBuscaSecretaria] = useState('');
+  const [preenchimentoPendente, setPreenchimentoPendente] =
+    useState<PreenchimentoPendente | null>(estadoAbertura.pendente);
+  const [avisoPreenchimento, setAvisoPreenchimento] = useState(
+    estadoAbertura.aplicado ? AVISO_FILIACAO : ''
+  );
   const [buscaAluno, setBuscaAluno] = useState('');
   const [rascunhoSalvo, setRascunhoSalvo] = useState(false);
   const [errosValidacao, setErrosValidacao] = useState<string[]>([]);
 
-  // Carrega histórico salvo para continuar editando
+  // Histórico salvo para continuar editando: os dados já foram aplicados na
+  // montagem (estado inicial); aqui só avisa o App e rola para o topo.
   useEffect(() => {
     if (!dadosParaCarregar) return;
-    setDados({ ...estadoInicial, ...dadosParaCarregar });
-    setErrosValidacao([]);
-    setBuscaAluno('');
     onDadosCarregados?.();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [dadosParaCarregar, onDadosCarregados]);
+
+  // Avisa o App que o aluno da secretaria já foi recebido
+  useEffect(() => {
+    if (alunoSecretariaParaCarregar) onAlunoSecretariaCarregado?.();
+  }, [alunoSecretariaParaCarregar, onAlunoSecretariaCarregado]);
+
+  // Carrega a lista importada da Secretaria (se a tabela ainda não existir, apenas oculta a busca)
+  useEffect(() => {
+    let ativo = true;
+    carregarAlunosParaHistorico()
+      .then((lista) => {
+        if (ativo) setAlunosSecretaria(lista);
+      })
+      .catch((erro) => console.warn('Alunos da secretaria indisponíveis:', erro));
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -132,6 +220,9 @@ export default function GeradorHistorico({
     if (!window.confirm('Tem certeza que deseja limpar todo o formulario?')) return;
     setDados({ ...estadoInicial });
     setBuscaAluno('');
+    setBuscaSecretaria('');
+    setPreenchimentoPendente(null);
+    setAvisoPreenchimento('');
     setErrosValidacao([]);
     localStorage.removeItem(STORAGE_KEY);
   };
@@ -144,6 +235,32 @@ export default function GeradorHistorico({
     }));
     setBuscaAluno('');
   };
+
+  const selecionarAlunoSecretaria = (aluno: AlunoParaHistorico) => {
+    const pendente = prepararPreenchimento(dados, aluno);
+    setBuscaSecretaria('');
+    if (pendente.conflitos.length === 0) {
+      setDados((atual) => aplicarPreenchimento(atual, pendente, true));
+      setPreenchimentoPendente(null);
+      setAvisoPreenchimento(AVISO_FILIACAO);
+    } else {
+      setPreenchimentoPendente(pendente);
+      setAvisoPreenchimento('');
+    }
+  };
+
+  const confirmarPreenchimento = (substituirPreenchidos: boolean) => {
+    if (!preenchimentoPendente) return;
+    setDados((atual) => aplicarPreenchimento(atual, preenchimentoPendente, substituirPreenchidos));
+    setPreenchimentoPendente(null);
+    setAvisoPreenchimento(AVISO_FILIACAO);
+  };
+
+  const alunosSecretariaFiltrados = useMemo(() => {
+    const termo = chaveTexto(buscaSecretaria);
+    if (termo.length < 2) return [];
+    return alunosSecretaria.filter((a) => chaveTexto(a.nome).includes(termo)).slice(0, 10);
+  }, [alunosSecretaria, buscaSecretaria]);
 
   const alunosFiltrados = useMemo(() => {
     const termo = buscaAluno.trim().toLocaleLowerCase('pt-BR');
@@ -282,6 +399,59 @@ export default function GeradorHistorico({
       )}
 
       <form onSubmit={gerarDocumento} style={{ display: 'flex', flexDirection: 'column' }}>
+        {(alunosSecretaria.length > 0 || preenchimentoPendente) && (
+          <div style={{ ...cssCaixa, padding: '16px 20px', borderColor: '#a5b4fc' }}>
+            <label style={{ fontSize: '13px', fontWeight: 700, color: '#3730a3' }}>Buscar aluno da secretaria</label>
+            <input type="text" value={buscaSecretaria} onChange={(e) => setBuscaSecretaria(e.target.value)} placeholder="Digite ao menos 2 letras do nome..." style={{ ...cssInput, marginTop: '8px' }} />
+            {alunosSecretariaFiltrados.length > 0 && (
+              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: '8px', maxHeight: '260px', overflowY: 'auto', background: '#fff' }}>
+                {alunosSecretariaFiltrados.map((aluno) => (
+                  <li key={aluno.id}>
+                    <button type="button" onClick={() => selecionarAlunoSecretaria(aluno)} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', borderBottom: '1px solid #f1f5f9', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}>
+                      <strong>{aluno.nome}</strong>
+                      {aluno.data_nascimento && <span style={{ color: '#64748b', marginLeft: '8px' }}>- {isoParaDataBR(aluno.data_nascimento)}</span>}
+                      <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        {[aluno.periodo, aluno.turma && `Turma ${aluno.turma}`, aluno.situacao, aluno.data_matricula && `Matrícula em ${isoParaDataBR(aluno.data_matricula)}`].filter(Boolean).join(' • ')}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {buscaSecretaria.trim().length >= 2 && alunosSecretariaFiltrados.length === 0 && (
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b' }}>Nenhum aluno encontrado.</p>
+            )}
+
+            {preenchimentoPendente && (
+              <div style={{ marginTop: '12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '10px', padding: '12px 14px', color: '#78350f' }}>
+                <strong style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>
+                  O formulário já tem dados. Preencher com {preenchimentoPendente.nomeAluno}?
+                </strong>
+                <p style={{ margin: '0 0 6px', fontSize: '13px' }}>Estes campos já estão preenchidos com valores diferentes:</p>
+                <ul style={{ margin: '0 0 10px', paddingLeft: '20px', fontSize: '13px' }}>
+                  {preenchimentoPendente.conflitos.map((campo) => (
+                    <li key={campo}>
+                      <strong>{ROTULOS_CAMPOS_HISTORICO[campo] ?? campo}:</strong> {dados[campo]} → {preenchimentoPendente.campos[campo]}
+                    </li>
+                  ))}
+                </ul>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <button type="button" onClick={() => confirmarPreenchimento(true)} style={{ backgroundColor: '#b45309', color: '#fff', border: 'none', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Substituir campos preenchidos</button>
+                  <button type="button" onClick={() => confirmarPreenchimento(false)} style={{ backgroundColor: '#fff', color: '#92400e', border: '1px solid #fcd34d', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Preencher só os campos vazios</button>
+                  <button type="button" onClick={() => setPreenchimentoPendente(null)} style={{ backgroundColor: '#fff', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+                </div>
+              </div>
+            )}
+
+            {avisoPreenchimento && !preenchimentoPendente && (
+              <div style={{ marginTop: '12px', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: '10px', padding: '10px 14px', color: '#3730a3', fontSize: '13px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
+                <span>{avisoPreenchimento}</span>
+                <button type="button" onClick={() => setAvisoPreenchimento('')} aria-label="Fechar aviso" style={{ background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+              </div>
+            )}
+          </div>
+        )}
+
         {alunos.length > 0 && (
           <div style={{ ...cssCaixa, padding: '16px 20px' }}>
             <label style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a8a' }}>Preencher com aluno ja cadastrado</label>
@@ -319,8 +489,8 @@ export default function GeradorHistorico({
             </div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Aluno:</label><input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Nascimento:</label><input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae:</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai:</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai (Filiação 2):</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae (Filiação 1):</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Naturalidade:</label><input name="naturalidade" value={dados.naturalidade} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>UF:</label><input name="uf" value={dados.uf} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nacionalidade:</label><input name="nacionalidade" value={dados.nacionalidade} onChange={handleChange} style={cssInput} /></div>
