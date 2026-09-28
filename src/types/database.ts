@@ -75,6 +75,87 @@ export interface Database {
         };
         Relationships: [];
       };
+      alunos_secretaria: {
+        Row: {
+          id: number;
+          codigo_matricula: string;
+          codigo_estudante: string | null;
+          ra: string | null;
+          nome: string;
+          data_nascimento: string | null;
+          periodo: string | null;
+          turma: string | null;
+          descricao: string | null;
+          turno: string | null;
+          situacao: string | null;
+          data_matricula: string | null;
+          data_movimentacao: string | null;
+          nacionalidade: string | null;
+          naturalidade: string | null;
+          uf_naturalidade: string | null;
+          sexo: string | null;
+          identidade: string | null;
+          filiacao_1: string | null;
+          filiacao_2: string | null;
+          escola: string | null;
+          dados: Json;
+          importado_em: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          codigo_matricula: string;
+          codigo_estudante?: string | null;
+          ra?: string | null;
+          nome: string;
+          data_nascimento?: string | null;
+          periodo?: string | null;
+          turma?: string | null;
+          descricao?: string | null;
+          turno?: string | null;
+          situacao?: string | null;
+          data_matricula?: string | null;
+          data_movimentacao?: string | null;
+          nacionalidade?: string | null;
+          naturalidade?: string | null;
+          uf_naturalidade?: string | null;
+          sexo?: string | null;
+          identidade?: string | null;
+          filiacao_1?: string | null;
+          filiacao_2?: string | null;
+          escola?: string | null;
+          dados?: Json;
+          importado_em?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          codigo_matricula?: string;
+          codigo_estudante?: string | null;
+          ra?: string | null;
+          nome?: string;
+          data_nascimento?: string | null;
+          periodo?: string | null;
+          turma?: string | null;
+          descricao?: string | null;
+          turno?: string | null;
+          situacao?: string | null;
+          data_matricula?: string | null;
+          data_movimentacao?: string | null;
+          nacionalidade?: string | null;
+          naturalidade?: string | null;
+          uf_naturalidade?: string | null;
+          sexo?: string | null;
+          identidade?: string | null;
+          filiacao_1?: string | null;
+          filiacao_2?: string | null;
+          escola?: string | null;
+          dados?: Json;
+          importado_em?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -115,3 +196,11 @@ export interface AlunoArquivo {
   numero: number;
   status: string;
 }
+
+/** Linha da tabela alunos_secretaria (listagem importada do sistema municipal) */
+export type AlunoSecretariaRow =
+  Database['public']['Tables']['alunos_secretaria']['Row'];
+
+/** Tipo usado para inserir/atualizar (upsert) alunos da secretaria */
+export type AlunoSecretariaInsert =
+  Database['public']['Tables']['alunos_secretaria']['Insert'];

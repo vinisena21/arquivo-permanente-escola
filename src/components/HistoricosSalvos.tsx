@@ -32,23 +32,29 @@ export default function HistoricosSalvos({
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState('');
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    setMensagem('');
-    try {
-      const dados = await listarHistoricosSalvos();
-      setLista(dados);
-    } catch (e) {
-      console.error(e);
-      setMensagem('Não foi possível carregar os históricos salvos.');
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
+  const buscarHistoricos = useCallback(
+    () =>
+      listarHistoricosSalvos()
+        .then((dados) => {
+          setLista(dados);
+          setMensagem('');
+        })
+        .catch((e) => {
+          console.error(e);
+          setMensagem('Não foi possível carregar os históricos salvos.');
+        })
+        .finally(() => setCarregando(false)),
+    []
+  );
 
   useEffect(() => {
-    carregar();
-  }, [carregar]);
+    buscarHistoricos();
+  }, [buscarHistoricos]);
+
+  const carregar = useCallback(() => {
+    setCarregando(true);
+    return buscarHistoricos();
+  }, [buscarHistoricos]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase('pt-BR');

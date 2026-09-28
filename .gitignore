@@ -26,3 +26,8 @@ dist-ssr
 .vercel
 
 .env.local
+
+# Planilhas exportadas com dados pessoais de alunos (LGPD) — nunca versionar
+*.xls
+*.xlsx
+*.csv

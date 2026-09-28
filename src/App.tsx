@@ -17,6 +17,7 @@ import {
   Trash2,
   User,
   FileText,
+  FileSpreadsheet,
   History
 } from 'lucide-react';
 import './App.css';
@@ -33,10 +34,22 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
 import GeradorHistorico from './components/GeradorHistorico';
 import HistoricosSalvos from './components/HistoricosSalvos';
+import ImportarAlunos from './components/ImportarAlunos';
 import { supabase } from './lib/supabase';
-import type { AlunoArquivo, AlunoRow } from './types/database';
+import type {
+  AlunoArquivo,
+  AlunoRow,
+  AlunoSecretariaRow
+} from './types/database';
 
-type AbaAtiva = 'consulta' | 'dashboard' | 'arvore' | 'gerenciamento' | 'historico' | 'historicos-salvos';
+type AbaAtiva =
+  | 'consulta'
+  | 'dashboard'
+  | 'arvore'
+  | 'gerenciamento'
+  | 'historico'
+  | 'historicos-salvos'
+  | 'alunos-secretaria';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -67,6 +80,10 @@ export default function App() {
   const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<
     Record<string, string> | null
   >(null);
+
+  /** Aluno da secretaria escolhido para preencher o gerador de histórico */
+  const [alunoSecretariaParaHistorico, setAlunoSecretariaParaHistorico] =
+    useState<AlunoSecretariaRow | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -144,9 +161,11 @@ export default function App() {
     carregarAlunos();
   }, [sessao]);
 
-  useEffect(() => {
+  /** Altera o texto da busca e volta para a primeira página */
+  function alterarBusca(valor: string) {
+    setBusca(valor);
     setPaginaAtual(1);
-  }, [busca]);
+  }
 
   async function sairDoSistema() {
     await supabase.auth.signOut();
@@ -349,6 +368,19 @@ export default function App() {
             <button
               type="button"
               className={
+                abaAtiva === 'alunos-secretaria'
+                  ? 'navigation-button active'
+                  : 'navigation-button'
+              }
+              onClick={() => setAbaAtiva('alunos-secretaria')}
+            >
+              <FileSpreadsheet size={19} />
+              Alunos da Secretaria
+            </button>
+
+            <button
+              type="button"
+              className={
                 abaAtiva === 'gerenciamento'
                   ? 'navigation-button active'
                   : 'navigation-button'
@@ -401,13 +433,13 @@ export default function App() {
                   type="text"
                   placeholder="Buscar por nome do aluno, pasta ou número..."
                   value={busca}
-                  onChange={(evento) => setBusca(evento.target.value)}
+                  onChange={(evento) => alterarBusca(evento.target.value)}
                 />
 
                 {busca && (
                   <button
                     className="clear-btn"
-                    onClick={() => setBusca('')}
+                    onClick={() => alterarBusca('')}
                     aria-label="Limpar pesquisa"
                   >
                     ✕
@@ -582,7 +614,7 @@ export default function App() {
               data={arvoreAcervo}
               onSelectNode={(node) => {
                 if (node.type === 'documento') {
-                  setBusca(node.name.split(' - ')[1] || node.name);
+                  alterarBusca(node.name.split(' - ')[1] || node.name);
                   setAbaAtiva('consulta');
                 }
               }}
@@ -595,6 +627,10 @@ export default function App() {
             alunos={alunos}
             dadosParaCarregar={dadosHistoricoEdicao}
             onDadosCarregados={() => setDadosHistoricoEdicao(null)}
+            alunoSecretariaParaCarregar={alunoSecretariaParaHistorico}
+            onAlunoSecretariaCarregado={() =>
+              setAlunoSecretariaParaHistorico(null)
+            }
           />
         )}
 
@@ -608,6 +644,16 @@ export default function App() {
                   'Histórico carregado no gerador. Continue editando e gere novamente quando quiser.',
                 type: 'success',
               });
+            }}
+          />
+        )}
+
+        {abaAtiva === 'alunos-secretaria' && (
+          <ImportarAlunos
+            onToast={setToast}
+            onUsarNoHistorico={(aluno) => {
+              setAlunoSecretariaParaHistorico(aluno);
+              setAbaAtiva('historico');
             }}
           />
         )}

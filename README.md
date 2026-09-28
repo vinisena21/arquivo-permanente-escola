@@ -19,6 +19,7 @@ Aplicação web para consulta, cadastro, edição e organização dos prontuári
 - **Gerenciar alunos** — Cadastro com recomendação inteligente de pasta e número
 - **Edição e exclusão** — Modal de edição + confirmação de exclusão
 - **Gerador de Históricos** — Preenchimento completo e geração de documento oficial em `.docx`
+- **Alunos da Secretaria** — Importação da Listagem de Matrícula exportada do sistema municipal (`.xls`, `.xlsx` ou `.csv`), com prévia das alterações, consulta, ficha completa e exportação
 
 ---
 
@@ -32,6 +33,7 @@ Aplicação web para consulta, cadastro, edição e organização dos prontuári
 | Supabase                | Autenticação + Banco de dados    |
 | Lucide React            | Ícones                           |
 | Docxtemplater + PizZip  | Geração de documentos Word       |
+| SheetJS (`xlsx`)        | Leitura/exportação de planilhas  |
 | FileSaver               | Download dos arquivos gerados    |
 | vite-plugin-pwa         | Suporte a Progressive Web App    |
 
@@ -148,6 +150,40 @@ public/modelo_historico.docx
 ```
 
 Preencha os dados no formulário e o sistema gera automaticamente o documento oficial com as informações do aluno.
+
+---
+
+## Alunos da Secretaria (importação da Listagem de Matrícula)
+
+A aba **Alunos da Secretaria** importa a planilha "Listagem de Matrícula" exportada do sistema municipal (EL Sistemas) e guarda **todas as colunas** no Supabase, para que o Gerador de Históricos preencha os dados do aluno automaticamente.
+
+### 1. Crie a tabela no Supabase (uma única vez)
+
+1. Abra o painel do projeto no [Supabase](https://supabase.com/dashboard) → **SQL Editor** → **New query**.
+2. Cole todo o conteúdo do arquivo [`supabase/alunos_secretaria.sql`](supabase/alunos_secretaria.sql) e clique em **Run**.
+3. Isso cria a tabela `alunos_secretaria` (com RLS: apenas usuários autenticados leem/gravam). O script pode ser executado novamente sem problemas.
+
+### 2. Importe a planilha
+
+1. No sistema da Secretaria, exporte a **Listagem de Matrícula** (arquivo `.xls`).
+2. No Guia Escolar, abra a aba **Alunos da Secretaria** → **Selecionar arquivo**.
+3. O arquivo é lido **no próprio navegador**. A linha de cabeçalho é detectada automaticamente (a que contém "Código do estudante" e "Nome"); o bloco de cabeçalho da prefeitura e o rodapé são ignorados.
+4. Confira a prévia: **novos**, **situação alterada** (mostra a situação anterior → nova), **outros dados alterados** e **sem alteração**.
+5. Clique em **Confirmar importação**. Os registros são gravados em lotes usando o **Código** da matrícula como chave. Matrículas que já estão no banco e não aparecem no arquivo **não são excluídas**.
+
+Cada linha da planilha é uma **matrícula** (coluna "Código"). O mesmo estudante ("Código do estudante") pode ter mais de uma matrícula (ex.: transferido e rematriculado).
+
+### 3. Consulta, ficha completa e exportação
+
+- Busque por nome ou código e filtre por período, turma e situação.
+- **Detalhes** mostra todas as colunas da planilha (a coluna "Falecido", que aparece duas vezes na exportação, vira "Falecido (Filiação 1)" e "Falecido (Filiação 2)").
+- **Exportar XLSX / CSV** baixa a lista filtrada com todas as colunas.
+
+### 4. Uso no Gerador de Históricos
+
+No Gerador, use **Buscar aluno da secretaria** (ou o botão **Usar no Gerador de Históricos** na ficha do aluno). São preenchidos: nome, data de nascimento, nacionalidade, sexo, naturalidade (cidade) e UF, nome da mãe (**Filiação 1**), nome do pai (**Filiação 2**), RG (Identidade), status (NORMAL/CLASSIFICADO → CURSANDO, TRANSFERIDO → TRANSFERIDO) e série atual (Período). Se o formulário já tiver dados diferentes, o sistema pergunta antes de substituir. As notas continuam sendo preenchidas manualmente.
+
+> **Privacidade (LGPD):** a planilha contém dados pessoais de alunos e responsáveis. Não coloque o arquivo exportado dentro do repositório.
 
 ---
 
