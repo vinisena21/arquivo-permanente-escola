@@ -127,7 +127,7 @@ function aplicarPreenchimento(
 }
 
 const AVISO_FILIACAO =
-  'Confira os dados preenchidos: "Filiação 1" da Secretaria foi usada como Nome da Mãe e "Filiação 2" como Nome do Pai. As notas continuam manuais.';
+  'Confira os dados preenchidos: "Filiação 2" da Secretaria foi usada como Nome do Pai (1º no histórico) e "Filiação 1" como Nome da Mãe (2º no histórico). As notas continuam manuais.';
 
 function carregarRascunho(): Record<string, string> | null {
   try {
@@ -489,8 +489,8 @@ export default function GeradorHistorico({
             </div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Aluno:</label><input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Nascimento:</label><input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae:</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai:</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai (Filiação 2):</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae (Filiação 1):</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Naturalidade:</label><input name="naturalidade" value={dados.naturalidade} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>UF:</label><input name="uf" value={dados.uf} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nacionalidade:</label><input name="nacionalidade" value={dados.nacionalidade} onChange={handleChange} style={cssInput} /></div>

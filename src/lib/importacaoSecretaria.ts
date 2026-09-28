@@ -517,8 +517,8 @@ export interface AlunoParaHistorico {
 export const ROTULOS_CAMPOS_HISTORICO: Record<string, string> = {
   nome_aluno: 'Nome do Aluno',
   data_nascimento: 'Data de Nascimento',
-  nome_mae: 'Nome da Mãe',
   nome_pai: 'Nome do Pai',
+  nome_mae: 'Nome da Mãe',
   naturalidade: 'Naturalidade',
   uf: 'UF',
   nacionalidade: 'Nacionalidade',
@@ -544,8 +544,10 @@ export function mapearParaHistorico(aluno: AlunoParaHistorico): Record<string, s
 
   definir('nome_aluno', aluno.nome.toUpperCase());
   definir('data_nascimento', isoParaDataBR(aluno.data_nascimento));
-  definir('nome_mae', aluno.filiacao_1?.toUpperCase());
+  // No histórico o pai vem primeiro ("Filho(a) de: {nome_pai} e de: {nome_mae}").
+  // Filiação 2 -> pai (1º); Filiação 1 -> mãe (2º).
   definir('nome_pai', aluno.filiacao_2?.toUpperCase());
+  definir('nome_mae', aluno.filiacao_1?.toUpperCase());
   definir('naturalidade', aluno.naturalidade?.toUpperCase());
   definir('uf', aluno.uf_naturalidade);
   definir('nacionalidade', aluno.nacionalidade?.toUpperCase());
