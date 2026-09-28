@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  Database,
   Download,
   Eye,
   FileSpreadsheet,
@@ -27,10 +28,12 @@ import {
 import { EXTENSOES_ACEITAS, baixarPlanilha, lerArquivoComoMatriz } from '../lib/planilha';
 import {
   carregarAlunosSecretaria,
+  ehErroTabelaAusente,
   salvarAlunosSecretaria,
 } from '../lib/alunosSecretaria';
 import type { AlunoSecretariaRow } from '../types/database';
 import type { ToastData } from './Toast';
+import './ImportarAlunos.css';
 
 interface ImportarAlunosProps {
   onToast?: (toast: ToastData) => void;
@@ -80,26 +83,50 @@ function dadosDoRegistro(aluno: AlunoSecretariaRow): Record<string, string | nul
   return resultado;
 }
 
-function corSituacao(situacao: string | null): string {
+function classeSituacao(situacao: string | null): string {
   switch ((situacao ?? '').toUpperCase()) {
     case 'NORMAL':
-      return 'bg-green-50 text-green-700 border-green-200';
+      return 'ia-badge ia-badge--normal';
     case 'TRANSFERIDO':
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'ia-badge ia-badge--transferido';
     case 'DESISTENTE':
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'ia-badge ia-badge--desistente';
+    case '':
+      return 'ia-badge ia-badge--vazio';
     default:
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'ia-badge ia-badge--outro';
   }
 }
 
 function BadgeSituacao({ situacao }: { situacao: string | null }) {
+  return <span className={classeSituacao(situacao)}>{situacao || '—'}</span>;
+}
+
+const MENSAGEM_SQL_PENDENTE =
+  'A tabela "alunos_secretaria" ainda não existe no Supabase. Execute o SQL "supabase/alunos_secretaria.sql" no SQL Editor do Supabase antes de importar.';
+
+function AvisoSqlPendente() {
   return (
-    <span
-      className={`inline-block px-2 py-0.5 text-xs font-bold border rounded-md ${corSituacao(situacao)}`}
-    >
-      {situacao || '—'}
-    </span>
+    <div className="ia-alerta ia-alerta--aviso ia-alerta--card" role="alert">
+      <Database size={22} className="ia-alerta__icone" />
+      <div>
+        <strong className="ia-alerta__titulo">Falta um passo no Supabase antes de usar esta aba</strong>
+        <p>
+          A tabela <code>alunos_secretaria</code> ainda não foi criada. Faça isso uma única vez:
+        </p>
+        <ol>
+          <li>Abra o painel do Supabase e entre no projeto do Guia Escolar.</li>
+          <li>
+            Vá em <strong>SQL Editor</strong> → <strong>New query</strong>.
+          </li>
+          <li>
+            Cole todo o conteúdo do arquivo <code>supabase/alunos_secretaria.sql</code> (está no
+            repositório) e clique em <strong>Run</strong>.
+          </li>
+          <li>Volte aqui e clique em <strong>Atualizar</strong>.</li>
+        </ol>
+      </div>
+    </div>
   );
 }
 
@@ -107,6 +134,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
   const [alunos, setAlunos] = useState<AlunoSecretariaRow[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erroCarregamento, setErroCarregamento] = useState('');
+  const [tabelaAusente, setTabelaAusente] = useState(false);
 
   // Importação
   const inputArquivo = useRef<HTMLInputElement>(null);
@@ -136,11 +164,16 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
         .then((lista) => {
           setAlunos(lista);
           setErroCarregamento('');
+          setTabelaAusente(false);
         })
         .catch((erro) => {
           console.error(erro);
+          const ausente = ehErroTabelaAusente(erro);
+          setTabelaAusente(ausente);
           setErroCarregamento(
-            'Não foi possível carregar os alunos da secretaria. Verifique se o SQL "supabase/alunos_secretaria.sql" já foi executado no Supabase.'
+            ausente
+              ? MENSAGEM_SQL_PENDENTE
+              : 'Não foi possível carregar os alunos da secretaria. Verifique sua conexão e tente novamente.'
           );
         })
         .finally(() => setCarregando(false)),
@@ -220,9 +253,14 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
       await carregar();
     } catch (erro) {
       console.error(erro);
-      setErroImportacao(
-        'Erro ao gravar no banco de dados. Parte dos registros pode ter sido gravada; importe o arquivo novamente para concluir.'
-      );
+      if (ehErroTabelaAusente(erro)) {
+        setTabelaAusente(true);
+        setErroImportacao(`Nada foi gravado. ${MENSAGEM_SQL_PENDENTE}`);
+      } else {
+        setErroImportacao(
+          'Erro ao gravar no banco de dados. Parte dos registros pode ter sido gravada; importe o arquivo novamente para concluir.'
+        );
+      }
       onToast?.({ message: 'Falha ao importar os alunos.', type: 'error' });
     } finally {
       setSalvando(false);
@@ -314,51 +352,69 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
 
   /* ------------------------------ Render ------------------------------ */
 
+  const cartoesResumo: [TipoAlteracao, number][] = comparacao
+    ? [
+        ['novo', comparacao.novos],
+        ['situacao', comparacao.situacaoAlterada],
+        ['outros', comparacao.outrosAlterados],
+        ['igual', comparacao.semAlteracao],
+      ]
+    : [];
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="ia-container">
+      {tabelaAusente && <AvisoSqlPendente />}
+
       {/* Importação */}
-      <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <FileSpreadsheet size={20} className="text-blue-600" />
+      <section className="table-section ia-secao">
+        <div className="ia-cabecalho">
+          <div className="ia-titulo">
+            <h2>
+              <FileSpreadsheet size={20} />
               Importar listagem de matrícula da Secretaria
             </h2>
-            <p className="text-sm text-gray-500 mt-1 max-w-2xl">
-              Selecione o arquivo exportado do sistema municipal (Listagem de Matrícula em
-              .xls, .xlsx ou .csv). O arquivo é lido no seu navegador; antes de gravar, você
-              verá o que mudou em relação aos dados já importados.
+            <p>
+              Selecione o arquivo exportado do sistema municipal (Listagem de Matrícula em .xls,
+              .xlsx ou .csv). O arquivo é lido no seu navegador e, antes de gravar, você verá o que
+              mudou em relação aos dados já importados.
             </p>
           </div>
-
-          <label
-            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white rounded-lg cursor-pointer ${
-              lendoArquivo || salvando ? 'bg-blue-300 pointer-events-none' : 'bg-blue-700 hover:bg-blue-800'
-            }`}
-          >
-            {lendoArquivo ? <LoaderCircle size={18} className="animate-spin" /> : <Upload size={18} />}
-            {lendoArquivo ? 'Lendo arquivo...' : 'Selecionar arquivo'}
-            <input
-              ref={inputArquivo}
-              type="file"
-              accept={EXTENSOES_ACEITAS}
-              onChange={aoSelecionarArquivo}
-              disabled={lendoArquivo || salvando}
-              className="hidden"
-            />
-          </label>
         </div>
 
+        <label
+          className={`ia-upload${lendoArquivo || salvando ? ' ia-upload--desativado' : ''}`}
+        >
+          <input
+            ref={inputArquivo}
+            type="file"
+            accept={EXTENSOES_ACEITAS}
+            onChange={aoSelecionarArquivo}
+            disabled={lendoArquivo || salvando}
+            className="ia-upload__input"
+          />
+          <span className="ia-upload__icone">
+            {lendoArquivo ? <LoaderCircle size={26} className="ia-girar" /> : <Upload size={26} />}
+          </span>
+          <span className="ia-upload__texto">
+            <strong>{lendoArquivo ? 'Lendo arquivo...' : 'Selecionar arquivo da Secretaria'}</strong>
+            <small>{nomeArquivo || 'Clique aqui para escolher (.xls, .xlsx ou .csv)'}</small>
+          </span>
+          <span className="ia-botao ia-botao--primario ia-upload__botao">
+            <Upload size={16} />
+            Escolher arquivo
+          </span>
+        </label>
+
         {erroImportacao && (
-          <div className="mb-4 flex items-start gap-2 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+          <div className="ia-alerta ia-alerta--erro" role="alert">
+            <AlertTriangle size={18} className="ia-alerta__icone" />
             <span>{erroImportacao}</span>
           </div>
         )}
 
         {leitura && comparacao && (
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="ia-previa">
+            <p className="ia-previa__info">
               <strong>{nomeArquivo}</strong> — {leitura.registros.length} matrícula(s) de{' '}
               {new Set(leitura.registros.map((r) => r.codigo_estudante)).size} estudante(s),{' '}
               {leitura.cabecalhos.length} colunas
@@ -369,15 +425,8 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                 ` — ${leitura.matriculasDuplicadas.length} matrícula(s) repetida(s) no arquivo (mantida a última)`}
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              {(
-                [
-                  ['novo', comparacao.novos, 'text-blue-700 bg-blue-50 border-blue-200'],
-                  ['situacao', comparacao.situacaoAlterada, 'text-amber-700 bg-amber-50 border-amber-200'],
-                  ['outros', comparacao.outrosAlterados, 'text-indigo-700 bg-indigo-50 border-indigo-200'],
-                  ['igual', comparacao.semAlteracao, 'text-gray-600 bg-gray-50 border-gray-200'],
-                ] as [TipoAlteracao, number, string][]
-              ).map(([tipo, total, cor]) => (
+            <div className="ia-resumo">
+              {cartoesResumo.map(([tipo, total]) => (
                 <button
                   key={tipo}
                   type="button"
@@ -385,37 +434,37 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                     setFiltroPrevia(tipo);
                     setLimitePrevia(ITENS_PREVIA);
                   }}
-                  className={`text-left p-3 rounded-lg border ${cor} ${
-                    filtroPrevia === tipo ? 'ring-2 ring-offset-1 ring-blue-400' : ''
+                  className={`ia-resumo__cartao ia-resumo__cartao--${tipo}${
+                    filtroPrevia === tipo ? ' ia-resumo__cartao--ativo' : ''
                   }`}
+                  aria-pressed={filtroPrevia === tipo}
                 >
-                  <span className="block text-xs font-bold uppercase tracking-wide">
-                    {ROTULOS_TIPO[tipo]}
-                  </span>
-                  <span className="block text-2xl font-black">{total}</span>
+                  <span className="ia-resumo__rotulo">{ROTULOS_TIPO[tipo]}</span>
+                  <span className="ia-resumo__numero">{total}</span>
                 </button>
               ))}
             </div>
 
             {comparacao.ausentesNoArquivo > 0 && (
-              <p className="mb-4 text-xs text-gray-500">
-                {comparacao.ausentesNoArquivo} matrícula(s) já gravada(s) não aparece(m) neste
-                arquivo. Elas serão mantidas no banco (nada é excluído na importação).
-              </p>
+              <div className="ia-alerta ia-alerta--info">
+                <AlertTriangle size={18} className="ia-alerta__icone" />
+                <span>
+                  {comparacao.ausentesNoArquivo} matrícula(s) já gravada(s) não aparece(m) neste
+                  arquivo. Elas serão mantidas no banco (nada é excluído na importação).
+                </span>
+              </div>
             )}
 
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
-              <span className="text-sm font-semibold text-gray-700">
-                {filtroPrevia === 'alterados'
-                  ? 'Novos e alterados'
-                  : ROTULOS_TIPO[filtroPrevia]}{' '}
-                ({itensPrevia.length})
+            <div className="ia-barra">
+              <span className="ia-barra__titulo">
+                {filtroPrevia === 'alterados' ? 'Novos e alterados' : ROTULOS_TIPO[filtroPrevia]} (
+                {itensPrevia.length})
               </span>
               {filtroPrevia !== 'alterados' && (
                 <button
                   type="button"
                   onClick={() => setFiltroPrevia('alterados')}
-                  className="text-xs font-semibold text-blue-700 hover:underline"
+                  className="ia-link"
                 >
                   Mostrar todos os novos e alterados
                 </button>
@@ -423,52 +472,52 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
             </div>
 
             {itensPrevia.length > 0 ? (
-              <div className="overflow-x-auto max-h-[420px] overflow-y-auto border border-gray-100 rounded-lg">
-                <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 bg-white">
-                    <tr className="border-b border-gray-200 text-gray-500 uppercase text-xs tracking-wide">
-                      <th className="py-2 px-3">Aluno</th>
-                      <th className="py-2 px-3">Matrícula</th>
-                      <th className="py-2 px-3">Período / Turma</th>
-                      <th className="py-2 px-3">Situação</th>
-                      <th className="py-2 px-3">Alterações</th>
+              <div className="table-responsive ia-tabela-rolagem">
+                <table className="custom-table ia-tabela">
+                  <thead>
+                    <tr>
+                      <th>Aluno</th>
+                      <th>Matrícula</th>
+                      <th>Período / Turma</th>
+                      <th>Situação</th>
+                      <th>Alterações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {itensPrevia.slice(0, limitePrevia).map((item: ItemComparacao) => (
-                      <tr key={item.novo.codigo_matricula} className="border-b border-gray-100">
-                        <td className="py-2 px-3 font-semibold text-gray-900">{item.novo.nome}</td>
-                        <td className="py-2 px-3 text-gray-600">{item.novo.codigo_matricula}</td>
-                        <td className="py-2 px-3 text-gray-600 whitespace-nowrap">
+                      <tr key={item.novo.codigo_matricula}>
+                        <td className="font-bold">{item.novo.nome}</td>
+                        <td className="ia-nowrap">{item.novo.codigo_matricula}</td>
+                        <td className="ia-nowrap">
                           {item.novo.periodo || '—'} / {item.novo.turma || '—'}
                         </td>
-                        <td className="py-2 px-3 whitespace-nowrap">
+                        <td className="ia-nowrap">
                           {item.tipo === 'situacao' ? (
-                            <span className="inline-flex items-center gap-1">
+                            <span className="ia-mudanca">
                               <BadgeSituacao situacao={item.situacaoAnterior} />
-                              <ArrowRight size={14} className="text-gray-400" />
+                              <ArrowRight size={14} />
                               <BadgeSituacao situacao={item.novo.situacao} />
                             </span>
                           ) : (
                             <BadgeSituacao situacao={item.novo.situacao} />
                           )}
                         </td>
-                        <td className="py-2 px-3 text-xs text-gray-500 max-w-[320px]">
-                          {item.tipo === 'novo' && 'Nova matrícula'}
+                        <td className="ia-alteracoes">
+                          {item.tipo === 'novo' && <span className="ia-tag ia-tag--novo">Nova matrícula</span>}
                           {item.tipo === 'igual' && '—'}
                           {(item.tipo === 'situacao' || item.tipo === 'outros') &&
-                            item.camposAlterados.map((c) => ROTULOS_CAMPOS[c] ?? c).join(', ')}
+                            Array.from(new Set(item.camposAlterados.map((c) => ROTULOS_CAMPOS[c] ?? c))).join(', ')}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 {itensPrevia.length > limitePrevia && (
-                  <div className="p-3 text-center">
+                  <div className="ia-mais">
                     <button
                       type="button"
                       onClick={() => setLimitePrevia((l) => l + ITENS_PREVIA)}
-                      className="text-sm font-semibold text-blue-700 hover:underline"
+                      className="ia-link"
                     >
                       Mostrar mais ({itensPrevia.length - limitePrevia} restantes)
                     </button>
@@ -476,14 +525,13 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                 )}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 py-4 text-center border border-gray-100 rounded-lg">
-                Nenhum registro nesta categoria.
-              </p>
+              <div className="empty-state ia-vazio-previa">Nenhum registro nesta categoria.</div>
             )}
 
-            <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
+            <div className="ia-acoes-finais">
               {salvando && (
-                <span className="text-sm text-gray-600">
+                <span className="ia-progresso">
+                  <LoaderCircle size={16} className="ia-girar" />
                   Gravando {progresso.gravados} de {progresso.total}...
                 </span>
               )}
@@ -491,21 +539,18 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                 type="button"
                 onClick={cancelarImportacao}
                 disabled={salvando}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="ia-botao ia-botao--secundario"
               >
+                <X size={16} />
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmarImportacao}
                 disabled={salvando || itensParaGravar.length === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ia-botao ia-botao--sucesso"
               >
-                {salvando ? (
-                  <LoaderCircle size={16} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={16} />
-                )}
+                {salvando ? <LoaderCircle size={16} className="ia-girar" /> : <CheckCircle2 size={16} />}
                 {itensParaGravar.length === 0
                   ? 'Nada para atualizar'
                   : `Confirmar importação (${itensParaGravar.length})`}
@@ -516,24 +561,24 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
       </section>
 
       {/* Lista de alunos importados */}
-      <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <Users size={20} className="text-blue-600" />
+      <section className="table-section ia-secao">
+        <div className="ia-cabecalho">
+          <div className="ia-titulo">
+            <h2>
+              <Users size={20} />
               Alunos da Secretaria
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p>
               {alunos.length} matrícula(s) importada(s)
               {ultimaImportacao ? ` — última atualização em ${ultimaImportacao}` : ''}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="ia-grupo-botoes">
             <button
               type="button"
               onClick={() => exportar('xlsx')}
               disabled={exportando || filtrados.length === 0}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 border border-green-200 rounded-lg hover:bg-green-50 disabled:opacity-50"
+              className="ia-botao ia-botao--verde"
               title="Exporta a lista filtrada com todas as colunas"
             >
               <Download size={16} />
@@ -543,26 +588,22 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               type="button"
               onClick={() => exportar('csv')}
               disabled={exportando || filtrados.length === 0}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 border border-green-200 rounded-lg hover:bg-green-50 disabled:opacity-50"
+              className="ia-botao ia-botao--verde"
               title="Exporta a lista filtrada com todas as colunas"
             >
               <FileText size={16} />
               Exportar CSV
             </button>
-            <button
-              type="button"
-              onClick={carregar}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50"
-            >
+            <button type="button" onClick={carregar} className="ia-botao ia-botao--contorno">
               <RefreshCw size={16} />
               Atualizar
             </button>
           </div>
         </div>
 
-        <div className="grid gap-3 mb-4 md:grid-cols-[2fr_1fr_1fr_1fr]">
-          <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
-            <Search size={18} className="text-gray-400" />
+        <div className="ia-filtros">
+          <div className="search-bar ia-busca">
+            <Search className="search-icon" size={18} />
             <input
               type="text"
               value={busca}
@@ -571,7 +612,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                 setPagina(1);
               }}
               placeholder="Buscar por nome ou código..."
-              className="w-full bg-transparent outline-none text-sm text-gray-800"
+              aria-label="Buscar aluno"
             />
           </div>
           <select
@@ -581,7 +622,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               setFiltroTurma('');
               setPagina(1);
             }}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50"
+            className="ia-select"
             aria-label="Filtrar por período"
           >
             <option value="">Todos os períodos</option>
@@ -597,7 +638,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               setFiltroTurma(e.target.value);
               setPagina(1);
             }}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50"
+            className="ia-select"
             aria-label="Filtrar por turma"
           >
             <option value="">Todas as turmas</option>
@@ -613,7 +654,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               setFiltroSituacao(e.target.value);
               setPagina(1);
             }}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50"
+            className="ia-select"
             aria-label="Filtrar por situação"
           >
             <option value="">Todas as situações</option>
@@ -625,74 +666,72 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
           </select>
         </div>
 
-        {erroCarregamento && (
-          <p className="mb-4 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-            {erroCarregamento}
-          </p>
+        {erroCarregamento && !tabelaAusente && (
+          <div className="ia-alerta ia-alerta--erro" role="alert">
+            <AlertTriangle size={18} className="ia-alerta__icone" />
+            <span>{erroCarregamento}</span>
+          </div>
         )}
 
         {carregando && (
-          <div className="flex items-center justify-center gap-2 py-12 text-gray-500">
-            <LoaderCircle className="animate-spin" size={22} />
+          <div className="empty-state ia-carregando">
+            <LoaderCircle className="ia-girar" size={22} />
             Carregando alunos...
           </div>
         )}
 
         {!carregando && !erroCarregamento && filtrados.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <Users size={40} className="mx-auto mb-3 text-gray-300" />
-            <p className="font-medium">
-              {alunos.length === 0 ? 'Nenhum aluno importado ainda' : 'Nenhum aluno encontrado'}
+          <div className="empty-state">
+            <Users size={40} className="ia-vazio-icone" />
+            <p>
+              <strong>
+                {alunos.length === 0 ? 'Nenhum aluno importado ainda' : 'Nenhum aluno encontrado'}
+              </strong>
             </p>
             {alunos.length === 0 && (
-              <p className="text-sm mt-1">
-                Use o botão "Selecionar arquivo" acima para importar a listagem da Secretaria.
-              </p>
+              <p>Use "Selecionar arquivo da Secretaria" acima para importar a listagem.</p>
             )}
           </div>
         )}
 
         {!carregando && filtrados.length > 0 && (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+            <div className="table-responsive">
+              <table className="custom-table ia-tabela">
                 <thead>
-                  <tr className="border-b border-gray-200 text-gray-500 uppercase text-xs tracking-wide">
-                    <th className="py-3 pr-3">Aluno</th>
-                    <th className="py-3 pr-3">Nascimento</th>
-                    <th className="py-3 pr-3">Período</th>
-                    <th className="py-3 pr-3">Turma</th>
-                    <th className="py-3 pr-3">Turno</th>
-                    <th className="py-3 pr-3">Situação</th>
-                    <th className="py-3 pr-3">Matrícula</th>
-                    <th className="py-3 text-right">Ações</th>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Nascimento</th>
+                    <th>Período</th>
+                    <th>Turma</th>
+                    <th>Turno</th>
+                    <th>Situação</th>
+                    <th>Matrícula</th>
+                    <th className="ia-col-acoes">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginados.map((aluno) => (
-                    <tr key={aluno.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 pr-3 font-semibold text-gray-900">{aluno.nome}</td>
-                      <td className="py-3 pr-3 text-gray-600 whitespace-nowrap">
-                        {isoParaDataBR(aluno.data_nascimento) || '—'}
-                      </td>
-                      <td className="py-3 pr-3 text-gray-600 whitespace-nowrap">{aluno.periodo || '—'}</td>
-                      <td className="py-3 pr-3 text-gray-600">{aluno.turma || '—'}</td>
-                      <td className="py-3 pr-3 text-gray-600">{aluno.turno || '—'}</td>
-                      <td className="py-3 pr-3">
+                    <tr key={aluno.id}>
+                      <td className="font-bold">{aluno.nome}</td>
+                      <td className="ia-nowrap">{isoParaDataBR(aluno.data_nascimento) || '—'}</td>
+                      <td className="ia-nowrap">{aluno.periodo || '—'}</td>
+                      <td>{aluno.turma || '—'}</td>
+                      <td>{aluno.turno || '—'}</td>
+                      <td>
                         <BadgeSituacao situacao={aluno.situacao} />
                       </td>
-                      <td className="py-3 pr-3 text-gray-600">{aluno.codigo_matricula}</td>
-                      <td className="py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDetalhe(aluno)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50"
-                          >
-                            <Eye size={14} />
-                            Detalhes
-                          </button>
-                        </div>
+                      <td>{aluno.codigo_matricula}</td>
+                      <td className="ia-col-acoes">
+                        <button
+                          type="button"
+                          onClick={() => setDetalhe(aluno)}
+                          className="acao-editar"
+                          title="Ver todos os dados"
+                        >
+                          <Eye size={17} />
+                          <span>Detalhes</span>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -700,28 +739,28 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               </table>
             </div>
 
-            <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-              <span className="text-xs text-gray-500">
+            <div className="ia-paginacao">
+              <span>
                 Mostrando {inicio + 1} até {Math.min(inicio + ITENS_POR_PAGINA, filtrados.length)} de{' '}
                 {filtrados.length} registro(s)
               </span>
-              <div className="flex items-center gap-2">
+              <div className="ia-grupo-botoes">
                 <button
                   type="button"
                   onClick={() => setPagina(Math.max(paginaSegura - 1, 1))}
                   disabled={paginaSegura === 1}
-                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+                  className="ia-botao ia-botao--secundario ia-botao--pequeno"
                 >
                   Anterior
                 </button>
-                <span className="text-sm text-gray-700">
+                <span className="ia-paginacao__pagina">
                   Página {paginaSegura} de {totalPaginas}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPagina(Math.min(paginaSegura + 1, totalPaginas))}
                   disabled={paginaSegura === totalPaginas}
-                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+                  className="ia-botao ia-botao--secundario ia-botao--pequeno"
                 >
                   Próxima
                 </button>
@@ -733,22 +772,19 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
 
       {/* Detalhes do aluno */}
       {detalhe && (
-        <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setDetalhe(null)}
-        >
+        <div className="ia-modal-fundo" onClick={() => setDetalhe(null)}>
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+            className="ia-modal"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label={`Dados completos de ${detalhe.nome}`}
           >
-            <div className="flex items-start justify-between gap-4 p-5 border-b border-gray-100">
+            <div className="ia-modal__cabecalho">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{detalhe.nome}</h3>
-                <p className="text-sm text-gray-500 mt-1 flex flex-wrap items-center gap-2">
-                  Matrícula {detalhe.codigo_matricula}
+                <h3>{detalhe.nome}</h3>
+                <p className="ia-modal__sub">
+                  <span>Matrícula {detalhe.codigo_matricula}</span>
                   {detalhe.periodo && <span>• {detalhe.periodo}</span>}
                   {detalhe.turma && <span>• Turma {detalhe.turma}</span>}
                   <BadgeSituacao situacao={detalhe.situacao} />
@@ -757,15 +793,15 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
               <button
                 type="button"
                 onClick={() => setDetalhe(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="ia-modal__fechar"
                 aria-label="Fechar"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="px-5 pt-3 flex items-center justify-between gap-3 flex-wrap">
-              <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+            <div className="ia-modal__barra">
+              <label className="ia-checkbox">
                 <input
                   type="checkbox"
                   checked={ocultarVazios}
@@ -780,19 +816,19 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: ImportarA
                     onUsarNoHistorico(detalhe);
                     setDetalhe(null);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                  className="ia-botao ia-botao--contorno ia-botao--pequeno"
                 >
-                  <FileText size={14} />
+                  <FileText size={15} />
                   Usar no Gerador de Históricos
                 </button>
               )}
             </div>
 
-            <dl className="p-5 overflow-y-auto grid gap-x-6 gap-y-3 sm:grid-cols-2">
+            <dl className="ia-modal__campos">
               {colunasDetalhe.map((coluna) => (
-                <div key={coluna} className="border-b border-gray-50 pb-2">
-                  <dt className="text-xs font-bold uppercase tracking-wide text-gray-500">{coluna}</dt>
-                  <dd className="text-sm text-gray-900 break-words">{dadosDetalhe[coluna] || '—'}</dd>
+                <div key={coluna} className="ia-campo">
+                  <dt>{coluna}</dt>
+                  <dd>{dadosDetalhe[coluna] || '—'}</dd>
                 </div>
               ))}
             </dl>

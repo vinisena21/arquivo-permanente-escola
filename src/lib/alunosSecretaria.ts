@@ -87,3 +87,15 @@ export async function salvarAlunosSecretaria(
     aoProgredir?.(Math.min(i + lote.length, registros.length), registros.length);
   }
 }
+
+/**
+ * Indica se o erro do Supabase/PostgREST é de tabela inexistente
+ * (o SQL supabase/alunos_secretaria.sql ainda não foi executado).
+ */
+export function ehErroTabelaAusente(erro: unknown): boolean {
+  if (!erro || typeof erro !== 'object') return false;
+  const { code, message } = erro as { code?: unknown; message?: unknown };
+  if (code === '42P01' || code === 'PGRST205') return true;
+  const texto = typeof message === 'string' ? message : '';
+  return /relation .* does not exist|could not find the table/i.test(texto);
+}
