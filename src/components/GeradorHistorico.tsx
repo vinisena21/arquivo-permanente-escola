@@ -373,62 +373,241 @@ export default function GeradorHistorico({
     }
   };
 
-  // TEMP: incomplete UI - will restore full form in next commit if truncated
   return (
     <div style={{ padding: '10px 0 100px 0' }}>
-      <div style={{ backgroundColor: '#1e3a8a', color: '#fff', padding: '20px 24px', borderRadius: '16px', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0 }}>Gerador Oficial de Historico Escolar</h2>
-        <p style={{ margin: '8px 0 0', opacity: 0.9 }}>Carregando formulário completo...</p>
+      <div style={{ backgroundColor: '#1e3a8a', color: '#fff', padding: '20px 24px', borderRadius: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Gerador Oficial de Historico Escolar</h2>
+          <p style={{ margin: '6px 0 0', opacity: 0.9, fontSize: '13px' }}>E.M. MARIA GERALDA MIRANDA BRITO SALOMAO · Ponto dos Volantes - MG</p>
+        </div>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: rascunhoSalvo ? '#86efac' : 'rgba(255,255,255,0.7)' }}>
+          {rascunhoSalvo ? 'Rascunho salvo' : 'Salvando rascunho...'}
+        </div>
       </div>
+
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: '#475569' }}>
+        Identificação: {progresso.identificacao}/{progresso.identificacaoTotal} · Anos: {progresso.anos}/{progresso.anosTotal}
+      </div>
+
+      {avisoPreenchimento && (
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: 14, marginBottom: 16, color: '#1e40af', fontSize: 13 }}>
+          {avisoPreenchimento}
+        </div>
+      )}
+
+      {preenchimentoPendente && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+          <p style={{ margin: '0 0 10px', fontWeight: 600, color: '#92400e' }}>
+            Conflito ao preencher dados de {preenchimentoPendente.nomeAluno}. Substituir campos já preenchidos?
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => confirmarPreenchimento(true)} style={{ padding: '8px 14px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600 }}>
+              Substituir tudo
+            </button>
+            <button type="button" onClick={() => confirmarPreenchimento(false)} style={{ padding: '8px 14px', background: '#fff', color: '#92400e', border: '1px solid #fde68a', borderRadius: 8, fontWeight: 600 }}>
+              Só vazios
+            </button>
+          </div>
+        </div>
+      )}
+
       {errosValidacao.length > 0 && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 14, marginBottom: 18, color: '#991b1b' }}>
-          <ul>{errosValidacao.map((m) => <li key={m}>{m}</li>)}</ul>
+          <strong style={{ display: 'block', marginBottom: 8 }}>Corrija os seguintes pontos:</strong>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {errosValidacao.map((m) => (
+              <li key={m} style={{ marginBottom: 4, fontSize: 13 }}>{m}</li>
+            ))}
+          </ul>
         </div>
       )}
       {msgSalvo && (
-        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, padding: 14, marginBottom: 18, color: '#065f46' }}>{msgSalvo}</div>
+        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, padding: 14, marginBottom: 18, color: '#065f46', fontWeight: 600 }}>{msgSalvo}</div>
       )}
+
       <form onSubmit={gerarDocumento}>
         <div style={{ marginBottom: 16 }}>
-          <label>Nome do Aluno</label>
-          <input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={{ width: '100%', padding: 10 }} />
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Buscar aluno (secretaria)</label>
+          <input
+            value={buscaSecretaria}
+            onChange={(e) => setBuscaSecretaria(e.target.value)}
+            placeholder="Digite pelo menos 2 letras..."
+            style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+          />
+          {alunosSecretariaFiltrados.length > 0 && (
+            <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 180, overflow: 'auto' }}>
+              {alunosSecretariaFiltrados.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => selecionarAlunoSecretaria(a as unknown as AlunoParaHistorico)}
+                    style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: '#fff', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                  >
+                    {a.nome}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {alunos.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Buscar aluno (arquivo permanente)</label>
+            <input
+              value={buscaAluno}
+              onChange={(e) => setBuscaAluno(e.target.value)}
+              placeholder="Nome do aluno..."
+              style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+            />
+            {alunosFiltrados.length > 0 && (
+              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                {alunosFiltrados.map((a) => (
+                  <li key={a.id}>
+                    <button type="button" onClick={() => preencherComAluno(a)} style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: '#fff', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}>
+                      {a.nome}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Nome do Aluno</label>
+          <input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label>Data de Nascimento</label>
-          <input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={{ width: '100%', padding: 10 }} />
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Data de Nascimento</label>
+          <input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label>Nome da Mãe</label>
-          <input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={{ width: '100%', padding: 10 }} />
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Nome do Pai</label>
+          <input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label>Título do documento</label>
-          <select name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={{ width: '100%', padding: 10 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Nome da Mãe</label>
+          <input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Naturalidade / UF / Nacionalidade</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+            <input name="naturalidade" value={dados.naturalidade} onChange={handleChange} placeholder="Cidade" style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1' }} />
+            <input name="uf" value={dados.uf} onChange={handleChange} placeholder="UF" style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1' }} />
+            <input name="nacionalidade" value={dados.nacionalidade} onChange={handleChange} placeholder="Nacionalidade" style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1' }} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Sexo</label>
+          <select name="sexo" value={dados.sexo} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}>
             <option value="">Selecione...</option>
-            <option value="Histórico Escolar">Histórico Escolar</option>
-            <option value="Histórico Escolar Parcial">Histórico Escolar Parcial</option>
-            <option value="Certificado de Conclusão">Certificado de Conclusão</option>
-            <option value="Declaração de Escolaridade">Declaração de Escolaridade</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
           </select>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label>Data de expedição</label>
-          <input name="data_extenso" value={dados.data_extenso} onChange={handleChange} style={{ width: '100%', padding: 10 }} />
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Título do documento</label>
+          <select name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}>
+            <option value="">Selecione...</option>
+            <option value="HISTÓRICO ESCOLAR">HISTÓRICO ESCOLAR</option>
+            <option value="HISTÓRICO ESCOLAR - TRANSFERÊNCIA">HISTÓRICO ESCOLAR - TRANSFERÊNCIA</option>
+            <option value="HISTÓRICO ESCOLAR PARCIAL">HISTÓRICO ESCOLAR PARCIAL</option>
+            <option value="CERTIFICADO DE CONCLUSÃO">CERTIFICADO DE CONCLUSÃO</option>
+            <option value="DECLARAÇÃO DE ESCOLARIDADE">DECLARAÇÃO DE ESCOLARIDADE</option>
+          </select>
         </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <button type="button" onClick={salvarNoBanco} disabled={salvandoHistorico} style={{ padding: '12px 20px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700 }}>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Data de expedição</label>
+          <input name="data_extenso" value={dados.data_extenso} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Fundamentação legal</label>
+          <textarea name="fundamentacao_legal" value={dados.fundamentacao_legal} onChange={handleChange} rows={3} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+        </div>
+
+        {ANOS_CONFIG.map((ano) => (
+          <details key={ano.num} style={{ border: '1px solid #cbd5e1', borderRadius: 12, padding: 16, marginBottom: 14, background: '#fff' }}>
+            <summary style={{ fontWeight: 700, color: '#1e3a8a', cursor: 'pointer' }}>{ano.titulo}</summary>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Ano letivo</label>
+                <input name={`ano_letivo_${ano.num}ano`} value={dados[`ano_letivo_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Escola</label>
+                <input name={`escola_${ano.num}ano`} value={dados[`escola_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Município/Estado</label>
+                <input name={`municipio_estado_${ano.num}ano`} value={dados[`municipio_estado_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Situação</label>
+                <input name={`situacao_${ano.num}ano`} value={dados[`situacao_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>LP</label>
+                <input name={`nota_lp_${ano.num}ano`} value={dados[`nota_lp_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              {ano.temIngles && (
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600 }}>Inglês</label>
+                  <input name={`nota_ing_${ano.num}ano`} value={dados[`nota_ing_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+                </div>
+              )}
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Arte</label>
+                <input name={`nota_Arte_${ano.num}ano`} value={dados[`nota_Arte_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Ed. Física</label>
+                <input name={`nota_edf_${ano.num}ano`} value={dados[`nota_edf_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Matemática</label>
+                <input name={`nota_mat_${ano.num}ano`} value={dados[`nota_mat_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Ciências</label>
+                <input name={`nota_cie_${ano.num}ano`} value={dados[`nota_cie_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>História</label>
+                <input name={`nota_hist_${ano.num}ano`} value={dados[`nota_hist_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Geografia</label>
+                <input name={`nota_geo_${ano.num}ano`} value={dados[`nota_geo_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Ens. Religioso</label>
+                <input name={`nota_ensr_${ano.num}ano`} value={dados[`nota_ensr_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>Faltas totais</label>
+                <input name={`faltas_totais_${ano.num}ano`} value={dados[`faltas_totais_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600 }}>CH total</label>
+                <input name={`ch_total_${ano.num}ano`} value={dados[`ch_total_${ano.num}ano`] || ''} onChange={handleChange} style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+          </details>
+        ))}
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+          <button type="button" onClick={salvarNoBanco} disabled={salvandoHistorico} style={{ padding: '12px 20px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
             {salvandoHistorico ? 'Salvando...' : 'Salvar em Históricos salvos'}
           </button>
-          <button type="submit" style={{ padding: '12px 20px', background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700 }}>
+          <button type="submit" style={{ padding: '12px 20px', background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
             Gerar Documento
           </button>
-          <button type="button" onClick={limparFormulario} style={{ padding: '12px 20px', background: '#fff', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 8 }}>
+          <button type="button" onClick={limparFormulario} style={{ padding: '12px 20px', background: '#fff', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer' }}>
             Limpar
           </button>
         </div>
       </form>
-      {/* refs used to avoid unused vars */}
-      <span style={{ display: 'none' }}>{progresso.identificacao}{alunosFiltrados.length}{alunosSecretariaFiltrados.length}{avisoPreenchimento}{buscaAluno}{preenchimentoPendente ? '1' : '0'}{String(preencherComAluno)}{String(selecionarAlunoSecretaria)}{String(confirmarPreenchimento)}</span>
     </div>
   );
 }
