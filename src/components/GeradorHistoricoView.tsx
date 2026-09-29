@@ -1,12 +1,13 @@
 import React from 'react';
+import type { AlunoSecretariaResumo } from '../lib/alunosSecretaria';
+import type { AlunoParaHistorico } from '../lib/importacaoSecretaria';
+import { isoParaDataBR } from '../lib/importacaoSecretaria';
+
 export interface AlunoOpcao {
   id: number;
   nome: string;
   dataNascimento: string;
 }
-import type { AlunoSecretariaResumo } from '../lib/alunosSecretaria';
-import type { AlunoParaHistorico } from '../lib/importacaoSecretaria';
-import { isoParaDataBR, ROTULOS_CAMPOS_HISTORICO } from '../lib/importacaoSecretaria';
 
 export interface PreenchimentoPendente {
   nomeAluno: string;
@@ -157,6 +158,22 @@ export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
                   <button type="button" onClick={() => confirmarPreenchimento(false)} style={{ padding: '8px 12px', background: '#fff', border: '1px solid #fcd34d', borderRadius: 8 }}>Só vazios</button>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {alunos.length > 0 && (
+          <div style={{ ...cssCaixa, padding: '16px 20px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Buscar aluno (arquivo permanente)</label>
+            <input type="text" value={buscaAluno} onChange={(e) => setBuscaAluno(e.target.value)} placeholder="Nome do aluno..." style={{ ...cssInput, marginTop: '8px' }} />
+            {alunosFiltrados.length > 0 && (
+              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                {alunosFiltrados.map((a) => (
+                  <li key={a.id}>
+                    <button type="button" onClick={() => preencherComAluno(a)} style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: '#fff', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}>{a.nome}</button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}
