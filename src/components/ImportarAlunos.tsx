@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   compararComExistentes, isoParaDataBR, lerListagemMatricula, ordenarColunas,
-  type ResultadoLeitura, type ResumoComparacao, type TipoAlteracao,
+  type ResultadoLeitura, type ResumoComparacao,
 } from '../lib/importacaoSecretaria';
 import { EXTENSOES_ACEITAS, baixarPlanilha, lerArquivoComoMatriz } from '../lib/planilha';
 import {
@@ -92,17 +92,36 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: Props) {
   async function aoSelecionarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
-    setLendoArquivo(true); setErroImportacao(''); setLeitura(null); setComparacao(null); setNomeArquivo(arquivo.name);
+    setLendoArquivo(true);
+    setErroImportacao('');
+    setLeitura(null);
+    setComparacao(null);
+    setNomeArquivo(arquivo.name);
     try {
       const matriz = await lerArquivoComoMatriz(arquivo);
+      if (!matriz || matriz.length === 0) {
+        throw new Error('O arquivo está vazio ou não pôde ser lido.');
+      }
       const resultado = lerListagemMatricula(matriz);
-      if (resultado.registros.length === 0) throw new Error('Nenhum aluno encontrado no arquivo.');
+      if (resultado.registros.length === 0) {
+        throw new Error('Nenhum aluno encontrado no arquivo. Verifique se é a Listagem de Matrícula exportada do sistema.');
+      }
       setLeitura(resultado);
       setComparacao(compararComExistentes(resultado.registros, alunos));
     } catch (erro) {
       console.error(erro);
-      setErroImportacao(erro instanceof Error ? erro.message : 'Não foi possível ler o arquivo.');
-    } finally { setLendoArquivo(false); }
+      const msg =
+        erro instanceof Error && erro.message
+          ? erro.message
+          : 'Não foi possível ler o arquivo. Use .xls, .xlsx ou .csv da Listagem de Matrícula.';
+      setErroImportacao(msg);
+      setLeitura(null);
+      setComparacao(null);
+    } finally {
+      setLendoArquivo(false);
+      // Permite selecionar o mesmo arquivo novamente
+      if (inputArquivo.current) inputArquivo.current.value = '';
+    }
   }
 
   const itensParaGravar = useMemo(
@@ -206,8 +225,8 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico }: Props) {
             <p>Selecione o arquivo exportado do sistema municipal (.xls, .xlsx ou .csv).</p>
           </div>
         </div>
-        <label className={`ia-upload${lendoArquivo || salvando ? ' ia-upload--desativado' : ''}`}>
-          <input ref={inputArquivo} type="file" accept={EXTENSOES_ACEITAS} onChange={aoSelecionarArquivo} disabled={lendoArquivo || salvando} className="ia-upload__input" />
+        <label htmlFor="ia-arquivo-secretaria" className={`ia-upload${lendoArquivo || salvando ? ' ia-upload--desativado' : ''}`}>
+          <input id="ia-arquivo-secretaria" ref={inputArquivo} type="file" accept={EXTENSOES_ACEITAS} onChange={aoSelecionarArquivo} disabled={lendoArquivo || salvando} className="ia-upload__input" />
           <span className="ia-upload__icone">{lendoArquivo ? <LoaderCircle size={26} className="ia-girar" /> : <Upload size={26} />}</span>
           <span className="ia-upload__texto">
             <strong>{lendoArquivo ? 'Lendo arquivo...' : 'Selecionar arquivo da Secretaria'}</strong>
