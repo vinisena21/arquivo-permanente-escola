@@ -424,13 +424,35 @@
   font-size: 0.82rem !important;
 }
 
+/* Coluna de ações: espaço para Detalhes + Editar + Excluir */
 .ia-col-acoes {
+  width: 1%;
+  min-width: 280px;
   text-align: right;
+  white-space: nowrap;
 }
 
-.custom-table.ia-tabela th:last-child,
-.custom-table.ia-tabela td:last-child {
-  min-width: 0;
+.custom-table.ia-tabela th.ia-col-acoes,
+.custom-table.ia-tabela td.ia-col-acoes {
+  min-width: 280px;
+  width: 1%;
+  padding-left: 0.5rem;
+  padding-right: 0.75rem;
+}
+
+.ia-tabela .acoes-aluno {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.ia-tabela .acao-editar,
+.ia-tabela .acao-excluir {
+  flex-shrink: 0;
+  padding: 6px 9px;
+  font-size: 0.78rem;
 }
 
 .ia-mudanca {
@@ -707,6 +729,26 @@
 }
 
 /* Responsivo */
+@media (max-width: 1100px) {
+  /* Em telas médias: só ícones, com title nativo */
+  .ia-tabela .acao-editar span,
+  .ia-tabela .acao-excluir span {
+    display: none;
+  }
+
+  .ia-tabela .acao-editar,
+  .ia-tabela .acao-excluir {
+    width: 36px;
+    min-width: 36px;
+    padding: 7px;
+  }
+
+  .custom-table.ia-tabela th.ia-col-acoes,
+  .custom-table.ia-tabela td.ia-col-acoes {
+    min-width: 130px;
+  }
+}
+
 @media (max-width: 900px) {
   .ia-filtros {
     grid-template-columns: repeat(3, minmax(0, 1fr));
