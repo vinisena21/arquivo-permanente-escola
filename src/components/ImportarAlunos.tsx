@@ -39,5 +39,3 @@ import type { ToastData } from './Toast';
 import { ConfirmModal } from './ConfirmModal';
 import EditarAlunoSecretariaModal from './EditarAlunoSecretariaModal';
 import './ImportarAlunos.css';
-
-// FILE CONTINUES - USE FULL CONTENT FROM ARTIFACT
