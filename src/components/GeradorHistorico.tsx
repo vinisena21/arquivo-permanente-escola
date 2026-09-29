@@ -34,11 +34,29 @@ const ANOS_CONFIG = [
   { num: '9', titulo: '9o Ano', temIngles: true, temCHSeparada: true, keyCHAnual: 'ch_a_9ano', keyFaltasMeio: 'faltas_9ano', exibirFaltasMeio: true },
 ];
 
+const MESES_PT = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+] as const;
+
+/** Data de expedição no formato "29 de setembro de 2026". */
+function dataExtensoHoje(data: Date = new Date()): string {
+  return `${data.getDate()} de ${MESES_PT[data.getMonth()]} de ${data.getFullYear()}`;
+}
+
+/** Máscara DD/MM/AAAA enquanto o usuário digita (barra automática). */
+function mascararDataBR(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 8);
+  if (digitos.length <= 2) return digitos;
+  if (digitos.length <= 4) return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
+  return `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`;
+}
+
 const estadoInicial: Record<string, string> = {
   nome_aluno: '', naturalidade: '', uf: '', nacionalidade: '',
   sexo: '', data_nascimento: '', nome_pai: '', nome_mae: '',
   rg: '', orgao_rg: '', status_curso: '', ano_curso: '',
-  data_extenso: '16 de setembro de 2026',
+  data_extenso: dataExtensoHoje(),
   historico_escolar: '',
   fundamentacao_legal: 'Lei Federal n 9.394/1996 (LDBEN); Resolucao CNE/CP n 02/2017 (BNCC); Resolucao CEE/MG n 481/2021; Curriculo Referencia de Minas Gerais (CRMG). Instituicao registrada sob o Codigo INEP n 31353426.',
 };
@@ -134,7 +152,9 @@ function carregarRascunho(): Record<string, string> | null {
     const salvo = localStorage.getItem(STORAGE_KEY);
     if (!salvo) return null;
     const parsed = JSON.parse(salvo) as Record<string, string>;
-    return { ...estadoInicial, ...parsed };
+    // Mantém o rascunho, mas a data de expedição começa sempre no dia de hoje
+    // (o usuário ainda pode editar no formulário).
+    return { ...estadoInicial, ...parsed, data_extenso: dataExtensoHoje() };
   } catch {
     return null;
   }
@@ -213,12 +233,17 @@ export default function GeradorHistorico({
   }, [dados]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setDados({ ...dados, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'data_nascimento') {
+      setDados({ ...dados, data_nascimento: mascararDataBR(value) });
+      return;
+    }
+    setDados({ ...dados, [name]: value });
   };
 
   const limparFormulario = () => {
     if (!window.confirm('Tem certeza que deseja limpar todo o formulario?')) return;
-    setDados({ ...estadoInicial });
+    setDados({ ...estadoInicial, data_extenso: dataExtensoHoje() });
     setBuscaAluno('');
     setBuscaSecretaria('');
     setPreenchimentoPendente(null);
@@ -427,37 +452,29 @@ export default function GeradorHistorico({
                 <strong style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>
                   O formulário já tem dados. Preencher com {preenchimentoPendente.nomeAluno}?
                 </strong>
-                <p style={{ margin: '0 0 6px', fontSize: '13px' }}>Estes campos já estão preenchidos com valores diferentes:</p>
-                <ul style={{ margin: '0 0 10px', paddingLeft: '20px', fontSize: '13px' }}>
-                  {preenchimentoPendente.conflitos.map((campo) => (
-                    <li key={campo}>
-                      <strong>{ROTULOS_CAMPOS_HISTORICO[campo] ?? campo}:</strong> {dados[campo]} → {preenchimentoPendente.campos[campo]}
-                    </li>
-                  ))}
-                </ul>
+                <p style={{ margin: '0 0 10px', fontSize: '13px' }}>
+                  Campos diferentes: {preenchimentoPendente.conflitos.map((c) => ROTULOS_CAMPOS_HISTORICO[c] || c).join(', ')}.
+                </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  <button type="button" onClick={() => confirmarPreenchimento(true)} style={{ backgroundColor: '#b45309', color: '#fff', border: 'none', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Substituir campos preenchidos</button>
-                  <button type="button" onClick={() => confirmarPreenchimento(false)} style={{ backgroundColor: '#fff', color: '#92400e', border: '1px solid #fcd34d', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Preencher só os campos vazios</button>
-                  <button type="button" onClick={() => setPreenchimentoPendente(null)} style={{ backgroundColor: '#fff', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 14px', fontSize: '13px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+                  <button type="button" onClick={() => confirmarPreenchimento(true)} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#1e3a8a', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Substituir dados</button>
+                  <button type="button" onClick={() => confirmarPreenchimento(false)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontWeight: 700, cursor: 'pointer' }}>Só preencher vazios</button>
+                  <button type="button" onClick={() => setPreenchimentoPendente(null)} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer' }}>Cancelar</button>
                 </div>
               </div>
             )}
 
             {avisoPreenchimento && !preenchimentoPendente && (
-              <div style={{ marginTop: '12px', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: '10px', padding: '10px 14px', color: '#3730a3', fontSize: '13px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
-                <span>{avisoPreenchimento}</span>
-                <button type="button" onClick={() => setAvisoPreenchimento('')} aria-label="Fechar aviso" style={{ background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', fontWeight: 700 }}>✕</button>
-              </div>
+              <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#3730a3' }}>{avisoPreenchimento}</p>
             )}
           </div>
         )}
 
         {alunos.length > 0 && (
           <div style={{ ...cssCaixa, padding: '16px 20px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a8a' }}>Preencher com aluno ja cadastrado</label>
-            <input type="text" value={buscaAluno} onChange={(e) => setBuscaAluno(e.target.value)} placeholder="Digite o nome do aluno..." style={{ ...cssInput, marginTop: '8px' }} />
+            <label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Buscar aluno do acervo</label>
+            <input type="text" value={buscaAluno} onChange={(e) => setBuscaAluno(e.target.value)} placeholder="Digite o nome..." style={{ ...cssInput, marginTop: '8px' }} />
             {alunosFiltrados.length > 0 && (
-              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto', background: '#fff' }}>
+              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, border: '1px solid #e2e8f0', borderRadius: '8px', maxHeight: '220px', overflowY: 'auto', background: '#fff' }}>
                 {alunosFiltrados.map((aluno) => (
                   <li key={aluno.id}>
                     <button type="button" onClick={() => preencherComAluno(aluno)} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', borderBottom: '1px solid #f1f5f9', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}>
@@ -472,49 +489,32 @@ export default function GeradorHistorico({
         )}
 
         <details open style={cssCaixa}>
-          <summary style={cssTitulo}>Identificacao do Aluno e Configuracoes</summary>
+          <summary style={cssTitulo}>1. Identificacao do Aluno</summary>
           <div style={cssGrid2}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ fontSize: '13px', fontWeight: 800, color: '#be123c' }}>Titulo do Documento:</label>
-              <select name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={{ ...cssInput, border: '1px solid #fda4af', backgroundColor: '#fff1f2' }}>
-                <option value="">Selecione...</option>
-                <option value="HISTORICO ESCOLAR - TRANSFERENCIA">HISTORICO ESCOLAR - TRANSFERENCIA</option>
-                <option value="CERTIFICADO DE CONCLUSAO DA EDUCACAO BASICA">CERTIFICADO DE CONCLUSAO DA EDUCACAO BASICA</option>
-                <option value="HISTORICO ESCOLAR - ENSINO FUNDAMENTAL">HISTORICO ESCOLAR - ENSINO FUNDAMENTAL</option>
-              </select>
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ fontSize: '13px', fontWeight: 800, color: '#1e3a8a' }}>Fundamentacao Legal:</label>
-              <textarea name="fundamentacao_legal" value={dados.fundamentacao_legal} onChange={handleChange} rows={2} style={{ ...cssInput, border: '1px solid #bfdbfe', backgroundColor: '#eff6ff' }} />
-            </div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Aluno:</label><input name="nome_aluno" value={dados.nome_aluno} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Nascimento:</label><input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai (Filiação 2):</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae (Filiação 1):</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Nascimento:</label><input name="data_nascimento" value={dados.data_nascimento} onChange={handleChange} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} autoComplete="bday" style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Naturalidade:</label><input name="naturalidade" value={dados.naturalidade} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>UF:</label><input name="uf" value={dados.uf} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>UF:</label><input name="uf" value={dados.uf} onChange={handleChange} maxLength={2} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nacionalidade:</label><input name="nacionalidade" value={dados.nacionalidade} onChange={handleChange} style={cssInput} /></div>
-            <div>
-              <label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Sexo:</label>
-              <select name="sexo" value={dados.sexo} onChange={handleChange} style={cssInput}>
-                <option value="">Selecione...</option>
-                <option value="MASCULINO">MASCULINO</option>
-                <option value="FEMININO">FEMININO</option>
-              </select>
-            </div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Sexo:</label><input name="sexo" value={dados.sexo} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome do Pai:</label><input name="nome_pai" value={dados.nome_pai} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nome da Mae:</label><input name="nome_mae" value={dados.nome_mae} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>RG:</label><input name="rg" value={dados.rg} onChange={handleChange} style={cssInput} /></div>
             <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Orgao Expedidor:</label><input name="orgao_rg" value={dados.orgao_rg} onChange={handleChange} style={cssInput} /></div>
-            <div>
-              <label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Status Atual:</label>
-              <select name="status_curso" value={dados.status_curso} onChange={handleChange} style={cssInput}>
-                <option value="">Selecione...</option>
-                <option value="CURSANDO">CURSANDO</option>
-                <option value="CONCLUIU">CONCLUIU</option>
-                <option value="TRANSFERIDO">TRANSFERIDO</option>
-              </select>
-            </div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Serie Atual:</label><input name="ano_curso" value={dados.ano_curso} onChange={handleChange} style={cssInput} /></div>
-            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Expedicao (Extenso):</label><input name="data_extenso" value={dados.data_extenso} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Status do Curso:</label><input name="status_curso" value={dados.status_curso} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Ano/Serie Atual:</label><input name="ano_curso" value={dados.ano_curso} onChange={handleChange} style={cssInput} /></div>
+          </div>
+        </details>
+
+        <details open style={cssCaixa}>
+          <summary style={cssTitulo}>2. Dados do Documento</summary>
+          <div style={cssGrid2}>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Titulo do Documento:</label><input name="historico_escolar" value={dados.historico_escolar} onChange={handleChange} style={cssInput} /></div>
+            <div><label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Data de Expedicao (Extenso):</label><input name="data_extenso" value={dados.data_extenso} onChange={handleChange} placeholder="Ex.: 29 de setembro de 2026" style={cssInput} /></div>
+          </div>
+          <div style={{ marginTop: '14px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Fundamentacao Legal:</label>
+            <textarea name="fundamentacao_legal" value={dados.fundamentacao_legal} onChange={handleChange} rows={3} style={{ ...cssInput, resize: 'vertical' as const }} />
           </div>
         </details>
 
@@ -524,71 +524,56 @@ export default function GeradorHistorico({
             <details key={n} style={cssCaixa}>
               <summary style={cssTitulo}>{ano.titulo}</summary>
               <div style={cssGrid4}>
-                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Ano Letivo:</label><input name={`ano_letivo_${n}ano`} value={dados[`ano_letivo_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Escola:</label><input name={`escola_${n}ano`} value={dados[`escola_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Municipio/Estado:</label><input name={`municipio_estado_${n}ano`} value={dados[`municipio_estado_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Situacao:</label>
-                  <select name={`situacao_${n}ano`} value={dados[`situacao_${n}ano`]} onChange={handleChange} style={cssInput}>
-                    <option value="">Selecione...</option>
-                    <option value="APROVADO">APROVADO</option>
-                    <option value="EM CURSO">EM CURSO</option>
-                    <option value="REPROVADO">REPROVADO</option>
-                    <option value="TRANSFERIDO">TRANSFERIDO</option>
-                  </select>
-                </div>
-                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Dias Letivos:</label><input name={`dias_letivos_${n}ano`} value={dados[`dias_letivos_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Min. Promocao:</label><input name={`minimo_promocao_${n}ano`} value={dados[`minimo_promocao_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Ano Letivo</label><input name={`ano_letivo_${n}ano`} value={dados[`ano_letivo_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Escola</label><input name={`escola_${n}ano`} value={dados[`escola_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Municipio/UF</label><input name={`municipio_estado_${n}ano`} value={dados[`municipio_estado_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Dias Letivos</label><input name={`dias_letivos_${n}ano`} value={dados[`dias_letivos_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Minimo Promocao</label><input name={`minimo_promocao_${n}ano`} value={dados[`minimo_promocao_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Situacao</label><input name={`situacao_${n}ano`} value={dados[`situacao_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Carga Horaria Anual</label><input name={ano.keyCHAnual} value={dados[ano.keyCHAnual] || ''} onChange={handleChange} style={cssInput} /></div>
                 {ano.exibirFaltasMeio && (
-                  <div style={{ backgroundColor: '#fff1f2', padding: '8px', borderRadius: '8px', border: '1px solid #fecdd3' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#be123c' }}>Faltas/Horas (Meio):</label>
-                    <input name={ano.keyFaltasMeio} value={dados[ano.keyFaltasMeio]} onChange={handleChange} style={{ ...cssInput, backgroundColor: '#fff' }} />
-                  </div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Faltas (meio)</label><input name={ano.keyFaltasMeio} value={dados[ano.keyFaltasMeio] || ''} onChange={handleChange} style={cssInput} /></div>
                 )}
-                <div style={{ backgroundColor: '#fff1f2', padding: '8px', borderRadius: '8px', border: '1px solid #fecdd3' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#be123c' }}>CH Anual:</label>
-                  <input name={ano.keyCHAnual} value={dados[ano.keyCHAnual]} onChange={handleChange} style={{ ...cssInput, backgroundColor: '#fff' }} />
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Total</label><input name={`ch_total_${n}ano`} value={dados[`ch_total_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Faltas Totais</label><input name={`faltas_totais_${n}ano`} value={dados[`faltas_totais_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+              </div>
+              <div style={{ ...cssGrid4, marginTop: '12px' }}>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota LP</label><input name={`nota_lp_${n}ano`} value={dados[`nota_lp_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                {ano.temIngles && (
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Ingles</label><input name={`nota_ing_${n}ano`} value={dados[`nota_ing_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                )}
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Arte</label><input name={`nota_Arte_${n}ano`} value={dados[`nota_Arte_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Ed. Fisica</label><input name={`nota_edf_${n}ano`} value={dados[`nota_edf_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Matematica</label><input name={`nota_mat_${n}ano`} value={dados[`nota_mat_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Ciencias</label><input name={`nota_cie_${n}ano`} value={dados[`nota_cie_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Historia</label><input name={`nota_hist_${n}ano`} value={dados[`nota_hist_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Geografia</label><input name={`nota_geo_${n}ano`} value={dados[`nota_geo_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Nota Ens. Religioso</label><input name={`nota_ensr_${n}ano`} value={dados[`nota_ensr_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+              </div>
+              {ano.temCHSeparada && (
+                <div style={{ ...cssGrid4, marginTop: '12px' }}>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH LP</label><input name={`ch_lp_${n}ano`} value={dados[`ch_lp_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Ingles</label><input name={`ch_ing_${n}ano`} value={dados[`ch_ing_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Arte</label><input name={`ch_arte_${n}ano`} value={dados[`ch_arte_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Ed. Fisica</label><input name={`ch_edf_${n}ano`} value={dados[`ch_edf_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Matematica</label><input name={`ch_mat_${n}ano`} value={dados[`ch_mat_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Ciencias</label><input name={`ch_cie_${n}ano`} value={dados[`ch_cie_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Historia</label><input name={`ch_hist_${n}ano`} value={dados[`ch_hist_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Geografia</label><input name={`ch_geo_${n}ano`} value={dados[`ch_geo_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                  <div><label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>CH Ens. Religioso</label><input name={`ch_ensr_${n}ano`} value={dados[`ch_ensr_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
                 </div>
-                <div style={{ backgroundColor: '#eff6ff', padding: '8px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#1d4ed8' }}>CH Total:</label>
-                  <input name={`ch_total_${n}ano`} value={dados[`ch_total_${n}ano`]} onChange={handleChange} style={{ ...cssInput, backgroundColor: '#fff' }} />
-                </div>
-                <div style={{ backgroundColor: '#eff6ff', padding: '8px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#1d4ed8' }}>Faltas Totais:</label>
-                  <input name={`faltas_totais_${n}ano`} value={dados[`faltas_totais_${n}ano`]} onChange={handleChange} style={{ ...cssInput, backgroundColor: '#fff' }} />
-                </div>
-                <div style={{ gridColumn: 'span 4', borderTop: '1px dashed #cbd5e1', paddingTop: '12px', marginTop: '8px' }}>
-                  <strong style={{ color: '#1e3a8a', fontSize: '14px' }}>Disciplinas e Aproveitamento</strong>
-                </div>
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota L. Portuguesa:</label><input name={`nota_lp_${n}ano`} value={dados[`nota_lp_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH L. Portuguesa:</label><input name={`ch_lp_${n}ano`} value={dados[`ch_lp_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                {ano.temIngles && <><div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Ingles:</label><input name={`nota_ing_${n}ano`} value={dados[`nota_ing_${n}ano`]} onChange={handleChange} style={cssInput} /></div>{ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Ingles:</label><input name={`ch_ing_${n}ano`} value={dados[`ch_ing_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}</>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Arte:</label><input name={`nota_Arte_${n}ano`} value={dados[`nota_Arte_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Arte:</label><input name={`ch_arte_${n}ano`} value={dados[`ch_arte_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Ed. Fisica:</label><input name={`nota_edf_${n}ano`} value={dados[`nota_edf_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Ed. Fisica:</label><input name={`ch_edf_${n}ano`} value={dados[`ch_edf_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Matematica:</label><input name={`nota_mat_${n}ano`} value={dados[`nota_mat_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Matematica:</label><input name={`ch_mat_${n}ano`} value={dados[`ch_mat_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Ciencias:</label><input name={`nota_cie_${n}ano`} value={dados[`nota_cie_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Ciencias:</label><input name={`ch_cie_${n}ano`} value={dados[`ch_cie_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Historia:</label><input name={`nota_hist_${n}ano`} value={dados[`nota_hist_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Historia:</label><input name={`ch_hist_${n}ano`} value={dados[`ch_hist_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Geografia:</label><input name={`nota_geo_${n}ano`} value={dados[`nota_geo_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Geografia:</label><input name={`ch_geo_${n}ano`} value={dados[`ch_geo_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Ens. Religioso:</label><input name={`nota_ensr_${n}ano`} value={dados[`nota_ensr_${n}ano`]} onChange={handleChange} style={cssInput} /></div>
-                {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Ens. Religioso:</label><input name={`ch_ensr_${n}ano`} value={dados[`ch_ensr_${n}ano`]} onChange={handleChange} style={cssInput} /></div>}
-                <div style={{ gridColumn: 'span 4', marginTop: '8px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Observacoes do Ano:</label>
-                  <input name={`obs_${n}ano`} value={dados[`obs_${n}ano`]} onChange={handleChange} style={cssInput} />
-                </div>
+              )}
+              <div style={{ marginTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Observacoes</label>
+                <input name={`obs_${n}ano`} value={dados[`obs_${n}ano`] || ''} onChange={handleChange} style={cssInput} />
               </div>
             </details>
           );
         })}
 
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)', borderTop: '1px solid #e2e8f0', padding: '12px 20px', display: 'flex', justifyContent: 'center', gap: '12px', zIndex: 50, boxShadow: '0 -4px 12px rgba(0,0,0,0.06)' }}>
-          <button type="button" onClick={limparFormulario} style={{ backgroundColor: '#fff', color: '#b91c1c', border: '1px solid #fecaca', padding: '12px 20px', fontSize: '14px', fontWeight: 700, borderRadius: '10px', cursor: 'pointer' }}>Limpar formulario</button>
-          <button type="submit" style={{ backgroundColor: '#1e3a8a', color: 'white', border: 'none', padding: '12px 28px', fontSize: '15px', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(30, 58, 138, 0.35)' }}>Gerar Historico (.DOCX)</button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+          <button type="button" onClick={limparFormulario} style={{ padding: '12px 18px', background: '#fff', color: '#b91c1c', border: '1px solid #fecaca', fontWeight: 700, borderRadius: '10px', cursor: 'pointer' }}>Limpar formulario</button>
+          <button type="submit" style={{ padding: '12px 22px', background: '#1e3a8a', color: '#fff', border: 'none', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(30, 58, 138, 0.35)' }}>Gerar Historico (.DOCX)</button>
         </div>
       </form>
     </div>
