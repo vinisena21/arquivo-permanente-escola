@@ -154,7 +154,7 @@ export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
         </div>
         <p style={{ margin: '10px 0 0', fontSize: 13, color: '#64748b' }}>
           {modelo === '9ano2026'
-            ? 'Escola, município, cargas horárias, anos letivos e data (1 de dezembro de 2026) já vêm preenchidos. Você só completa aluno e notas.'
+            ? 'Escola, município, cargas horárias, anos letivos e data (17 de dezembro de 2026) já vêm preenchidos. Você só completa aluno e notas.'
             : 'Formulário em branco — preencha todos os campos manualmente.'}
         </p>
       </div>
