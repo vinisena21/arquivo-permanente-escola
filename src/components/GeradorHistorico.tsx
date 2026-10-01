@@ -55,7 +55,7 @@ const MUNICIPIO_PADRAO = 'PONTO DOS VOLANTES/MG';
 
 function obterPrefillModelo9Ano2026(): Record<string, string> {
   const pre: Record<string, string> = {
-    data_extenso: '1 de dezembro de 2026',
+    data_extenso: '17 de dezembro de 2026',
     historico_escolar: 'CERTIFICADO DE CONCLUSÃO DA EDUCAÇÃO BÁSICA',
     status_curso: 'CONCLUIU',
     ano_curso: '9º ANO',
@@ -297,7 +297,7 @@ export default function GeradorHistorico({
       const prefill = obterPrefillModelo9Ano2026();
       setDados((atual) => ({ ...atual, ...prefill }));
       setAvisoPreenchimento(
-        'Modelo 9º Ano 2026 aplicado: escola, município, cargas horárias, anos letivos e data (1 de dezembro de 2026) já preenchidos. Notas e dados pessoais continuam editáveis.'
+        'Modelo 9º Ano 2026 aplicado: escola, município, cargas horárias, anos letivos e data (17 de dezembro de 2026) já preenchidos. Notas e dados pessoais continuam editáveis.'
       );
     } else {
       setAvisoPreenchimento('Modelo padrão selecionado (formulário em branco para preencher).');
