@@ -2,6 +2,7 @@ import React from 'react';
 import type { AlunoSecretariaResumo } from '../lib/alunosSecretaria';
 import type { AlunoParaHistorico } from '../lib/importacaoSecretaria';
 import { isoParaDataBR } from '../lib/importacaoSecretaria';
+import type { ModeloHistorico } from './GeradorHistorico';
 
 export interface AlunoOpcao {
   id: number;
@@ -48,6 +49,8 @@ export interface GeradorHistoricoViewProps {
     keyFaltasMeio: string;
     exibirFaltasMeio: boolean;
   }>;
+  modelo: ModeloHistorico;
+  onMudarModelo: (m: ModeloHistorico) => void;
 }
 
 export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
@@ -58,6 +61,7 @@ export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
     alunosSecretaria, buscaSecretaria, setBuscaSecretaria, alunosSecretariaFiltrados, selecionarAlunoSecretaria,
     alunos, buscaAluno, setBuscaAluno, alunosFiltrados, preencherComAluno,
     ANOS_CONFIG,
+    modelo, onMudarModelo,
   } = props;
 
   const cssCaixa = {
@@ -108,6 +112,51 @@ export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
           <h2 style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 900 }}>Gerador Oficial de Historico Escolar</h2>
         </div>
         <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '8px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}>Ponto dos Volantes - MG</div>
+      </div>
+
+      <div style={{ ...cssCaixa, borderColor: modelo === '9ano2026' ? '#22c55e' : '#cbd5e1', background: modelo === '9ano2026' ? '#f0fdf4' : '#fff' }}>
+        <label style={{ fontSize: '14px', fontWeight: 800, color: '#1e3a8a', display: 'block', marginBottom: 10 }}>
+          Modelo do histórico
+        </label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => onMudarModelo('padrao')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 10,
+              border: modelo === 'padrao' ? '2px solid #1e3a8a' : '1px solid #cbd5e1',
+              background: modelo === 'padrao' ? '#1e3a8a' : '#fff',
+              color: modelo === 'padrao' ? '#fff' : '#334155',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: 14,
+            }}
+          >
+            Modelo padrão (em branco)
+          </button>
+          <button
+            type="button"
+            onClick={() => onMudarModelo('9ano2026')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 10,
+              border: modelo === '9ano2026' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+              background: modelo === '9ano2026' ? '#16a34a' : '#fff',
+              color: modelo === '9ano2026' ? '#fff' : '#334155',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: 14,
+            }}
+          >
+            Modelo 9º Ano 2026 (pré-preenchido)
+          </button>
+        </div>
+        <p style={{ margin: '10px 0 0', fontSize: 13, color: '#64748b' }}>
+          {modelo === '9ano2026'
+            ? 'Escola, município, cargas horárias, anos letivos e data (1 de dezembro de 2026) já vêm preenchidos. Você só completa aluno e notas.'
+            : 'Formulário em branco — preencha todos os campos manualmente.'}
+        </p>
       </div>
 
       <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px', marginBottom: '18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
@@ -293,16 +342,25 @@ export default function GeradorHistoricoView(props: GeradorHistoricoViewProps) {
                 {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Geografia:</label><input name={`ch_geo_${n}ano`} value={dados[`ch_geo_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>}
                 <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Nota Ens. Religioso:</label><input name={`nota_ensr_${n}ano`} value={dados[`nota_ensr_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
                 {ano.temCHSeparada && <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>CH Ens. Religioso:</label><input name={`ch_ensr_${n}ano`} value={dados[`ch_ensr_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>}
-                <div style={{ gridColumn: '1 / -1' }}><label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Observações:</label><input name={`obs_${n}ano`} value={dados[`obs_${n}ano`] || ''} onChange={handleChange} style={cssInput} /></div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>Observações do ano:</label>
+                  <input name={`obs_${n}ano`} value={dados[`obs_${n}ano`] || ''} onChange={handleChange} style={cssInput} />
+                </div>
               </div>
             </details>
           );
         })}
 
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)', borderTop: '1px solid #e2e8f0', padding: '12px 20px', display: 'flex', justifyContent: 'center', gap: '12px', zIndex: 50, boxShadow: '0 -4px 12px rgba(0,0,0,0.06)' }}>
-          <button type="button" onClick={limparFormulario} style={{ backgroundColor: '#fff', color: '#b91c1c', border: '1px solid #fecaca', padding: '12px 20px', fontSize: '14px', fontWeight: 700, borderRadius: '10px', cursor: 'pointer' }}>Limpar formulario</button>
-          <button type="button" onClick={salvarNoBanco} disabled={salvandoHistorico} style={{ backgroundColor: '#059669', color: 'white', border: 'none', padding: '12px 22px', fontSize: '14px', fontWeight: 700, borderRadius: '10px', cursor: salvandoHistorico ? 'wait' : 'pointer', opacity: salvandoHistorico ? 0.7 : 1 }}>{salvandoHistorico ? 'Salvando...' : 'Salvar em Históricos salvos'}</button>
-          <button type="submit" style={{ backgroundColor: '#1e3a8a', color: 'white', border: 'none', padding: '12px 28px', fontSize: '15px', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(30, 58, 138, 0.35)' }}>Gerar Historico (.DOCX)</button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8, position: 'sticky', bottom: 0, background: '#f8fafc', padding: '16px 0', borderTop: '1px solid #e2e8f0' }}>
+          <button type="submit" style={{ padding: '12px 24px', background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 15, cursor: 'pointer' }}>
+            Gerar Histórico (.docx)
+          </button>
+          <button type="button" onClick={salvarNoBanco} disabled={salvandoHistorico} style={{ padding: '12px 20px', background: '#0f766e', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
+            {salvandoHistorico ? 'Salvando...' : 'Salvar no banco'}
+          </button>
+          <button type="button" onClick={limparFormulario} style={{ padding: '12px 20px', background: '#fff', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
+            Limpar formulário
+          </button>
         </div>
       </form>
     </div>
