@@ -18,7 +18,8 @@ import {
   User,
   FileText,
   FileSpreadsheet,
-  History
+  History,
+  FileCheck2
 } from 'lucide-react';
 import './App.css';
 import EditarAlunoModal, {
@@ -35,6 +36,7 @@ import { Toast, type ToastData } from './components/Toast';
 import GeradorHistorico from './components/GeradorHistorico';
 import HistoricosSalvos from './components/HistoricosSalvos';
 import ImportarAlunos from './components/ImportarAlunos';
+import ConferirHistorico from './components/ConferirHistorico';
 import { supabase } from './lib/supabase';
 import type {
   AlunoArquivo,
@@ -49,7 +51,8 @@ type AbaAtiva =
   | 'gerenciamento'
   | 'historico'
   | 'historicos-salvos'
-  | 'alunos-secretaria';
+  | 'alunos-secretaria'
+  | 'conferir-historico';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -390,6 +393,14 @@ export default function App() {
               <Settings size={19} />
               Gerenciar alunos
             </button>
+            <button
+              type="button"
+              className={abaAtiva === 'conferir-historico' ? 'navigation-button active' : 'navigation-button'}
+              onClick={() => setAbaAtiva('conferir-historico')}
+            >
+              <FileCheck2 size={19} />
+              Conferir Histórico
+            </button>
           </nav>
         </div>
       </header>
@@ -601,6 +612,10 @@ export default function App() {
             </section>
           </>
         )}
+
+        <div className="conf-host" hidden={abaAtiva !== 'conferir-historico'}>
+          <ConferirHistorico />
+        </div>
 
         {abaAtiva === 'dashboard' && <DashboardMetrics />}
 

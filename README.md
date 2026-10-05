@@ -187,6 +187,47 @@ No Gerador, use **Buscar aluno da secretaria** (ou o botão **Usar no Gerador de
 
 ---
 
+## Conferir Histórico (frente e verso)
+
+A aba **Conferir Histórico** recebe um PDF de exatamente duas páginas ou duas imagens
+PNG, JPG ou WebP, na ordem frente e verso (até 25 MB por arquivo). A digitalização
+é feita no aplicativo do scanner; esta versão não aciona a impressora diretamente.
+
+As imagens são lidas em português com Tesseract.js no navegador. O PDF é renderizado
+com PDF.js. Os arquivos e o texto reconhecido não são enviados ao Supabase ou a
+serviços de IA. Na primeira leitura, há download do mecanismo e do modelo de OCR;
+é necessário acesso à internet. O documento permanece em memória enquanto a sessão
+estiver aberta, inclusive ao alternar abas. Uma nova leitura bem-sucedida substitui
+a conferência anterior. Recarregar a página ou sair encerra esse estado.
+
+A extração sugere apenas linhas inequívocas do modelo de **Ensino Fundamental**
+presente neste repositório. Layouts diferentes, linhas duplicadas, valores sem
+separação clara e células não reconhecidas ficam pendentes de transcrição/revisão.
+Mesmo valores sugeridos precisam ser comparados com a imagem original.
+
+- As cargas são informadas em **H:MM** ou horas inteiras. Não se interpretam
+  decimais ambíguos, como `166,40`, como horas e minutos.
+- O cálculo usa minutos inteiros: `0:40 + 0:40 = 1:20`.
+- Do 1º ao 5º ano, o modelo traz carga global repetida; essas repetições não são somadas.
+- Do 6º ao 9º ano, as cargas por disciplina são somadas, incluindo cargas complementares
+  adicionadas pelo responsável. A distribuição pode ser alterada por ano.
+- Comparam-se a soma/carga global, o total impresso e a carga anual; qualquer divergência
+  é apontada. Campo vazio não equivale a zero e impede a conclusão do cálculo.
+- Cada ano pode ser incluído/excluído da conferência conforme a trajetória do aluno.
+- Alterar um valor desfaz a confirmação de sua transcrição.
+- O relatório distingue **erros**, **dúvidas** e **valores que conferem**. É possível
+  imprimir ou baixar o relatório JSON, que contém os dados transcritos e o texto OCR.
+
+**Escopo:** a conferência automática cobre cargas horárias e inconsistências de
+preenchimento. Dados pessoais, correspondência entre as páginas, assinaturas,
+carimbos, notas, frequência, situação, dias letivos e fundamento legal exigem
+conferência humana. Normas escolares não foram fornecidas para automatizar esses
+critérios. O relatório não certifica autenticidade nem conformidade legal.
+
+**Validação:** `npm run test:conferencia` executa os testes dos cálculos e da extração
+conservadora (Node.js 22.6+ com suporte a remoção de tipos; testado no Node.js 24).
+`npm run build` e `npm run lint` verificam a aplicação.
+
 ## Observações
 
 - O sistema foi desenvolvido prioritariamente para uso interno da escola.
