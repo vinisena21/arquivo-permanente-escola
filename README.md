@@ -194,8 +194,10 @@ PNG, JPG ou WebP, na ordem frente e verso (até 25 MB por arquivo). A digitaliza
 é feita no aplicativo do scanner; esta versão não aciona a impressora diretamente.
 
 As imagens são lidas em português com Tesseract.js no navegador. O PDF é renderizado
-com PDF.js. Os arquivos e o texto reconhecido não são enviados ao Supabase ou a
-serviços de IA. Na primeira leitura, há download do mecanismo e do modelo de OCR;
+com PDF.js. A leitura e as verificações automáticas não enviam o documento ao
+Supabase ou à IA. Ao solicitar **Analisar com IA**, o texto OCR, os campos transcritos
+e a orientação/regimento informado são enviados à OpenAI pelo servidor; imagens
+não são enviadas. Na primeira leitura, há download do mecanismo e do modelo de OCR;
 é necessário acesso à internet. O documento permanece em memória enquanto a sessão
 estiver aberta, inclusive ao alternar abas. Uma nova leitura bem-sucedida substitui
 a conferência anterior. Recarregar a página ou sair encerra esse estado.
@@ -218,14 +220,64 @@ Mesmo valores sugeridos precisam ser comparados com a imagem original.
 - O relatório distingue **erros**, **dúvidas** e **valores que conferem**. É possível
   imprimir ou baixar o relatório JSON, que contém os dados transcritos e o texto OCR.
 
-**Escopo:** a conferência automática cobre cargas horárias e inconsistências de
-preenchimento. Dados pessoais, correspondência entre as páginas, assinaturas,
-carimbos, notas, frequência, situação, dias letivos e fundamento legal exigem
-conferência humana. Normas escolares não foram fornecidas para automatizar esses
-critérios. O relatório não certifica autenticidade nem conformidade legal.
+**Escopo:** a conferência cobre cargas, campos pessoais, correspondência de nomes,
+datas, campos por ano, notas/conceitos, escala, situação, faltas em horas, dias e
+referências federais. Propostas do OCR devem ser confirmadas com o original. Uma
+ausência no OCR não prova ausência no papel. Assinaturas, carimbos, calendário,
+regimento, atos municipais/estaduais e autenticidade exigem conferência humana.
+O relatório não certifica conformidade legal integral.
 
-**Validação:** `npm run test:conferencia` executa os testes dos cálculos e da extração
-conservadora (Node.js 22.6+ com suporte a remoção de tipos; testado no Node.js 24).
+### Base legal e período da pandemia
+
+A base federal foi consultada em 05/10/2026 nas fontes oficiais:
+
+- [Lei 9.394/1996, art. 24](https://www.planalto.gov.br/ccivil_03/leis/l9394.htm):
+  800 horas e 200 dias no Ensino Fundamental regular, controle de frequência e
+  expedição de históricos. Não define um mínimo universal de 60 pontos.
+- [Lei 14.040/2020, art. 2º](https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l14040.htm):
+  dispensa excepcional do mínimo de dias, manutenção da carga horária e possibilidade
+  de integralização no ano seguinte/continuum, observadas as normas aplicáveis.
+- [Lei 14.218/2021, art. 1º](https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14218.htm):
+  extensão das normas excepcionais até o encerramento do ano letivo de 2021.
+
+Para anos de 2020/2021, o relatório aponta falta de observação da pandemia e de
+referências documentais como **dúvida para revisão**, não como infração legal
+demonstrada. Estas leis não estabelecem, isoladamente, uma frase obrigatória em todo
+histórico. Menos de 800 horas exige conferir a integralização e os registros; a
+extensão de 2021 não é automaticamente aplicada a 2022. Orientações locais informadas
+pelo operador são contexto não verificado, e não leis oficiais consultadas.
+
+### Ativar a análise por IA no Vercel
+
+No projeto `guia-escolar`, configure as variáveis de ambiente de **Production**:
+
+| Variável | Valor |
+|---|---|
+| `OPENAI_API_KEY` | Chave de API da OpenAI com acesso e créditos |
+| `IA_EMAILS_AUTORIZADOS` | E-mails dos usuários do Supabase autorizados, separados por vírgula |
+| `OPENAI_MODEL` | Opcional: modelo com Responses/Structured Outputs; padrão `gpt-6-astra` |
+
+As variáveis existentes `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` também
+são usadas no servidor para validar a sessão. Alternativamente, configure
+`SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. Nunca use prefixo `VITE_` para a chave
+da OpenAI e nunca versione chaves reais. Depois de configurar, faça um novo deploy.
+
+O endpoint `api/analisar-historico.ts` valida o token pelo Supabase e o e-mail pela
+lista de autorizados, limita tamanho de entrada e usa Structured Outputs. O guard
+de 10 solicitações/hora/usuário é por instância de função, não um limite global
+distribuído; defina também limites de gastos no projeto da OpenAI. Documentos e
+tokens não são registrados em logs e as chamadas usam `store: false`. Citações
+ficam restritas à base federal e evidências inexistentes são rebaixadas para dúvida.
+Editar os dados invalida o resultado anterior da IA. Falhas e falta de configuração
+são mostradas como indisponibilidade, sem resultado simulado.
+
+O desenvolvimento padrão `npm run dev` serve apenas o frontend. Para testar as
+funções com ambiente real, use o ambiente de desenvolvimento do Vercel. Os testes
+do handler usam um provedor simulado; sem chave, não validam uma chamada real à IA.
+
+**Validação:** `npm run test:conferencia` executa os testes de cálculo, extração,
+preenchimento, pandemia, autenticação, limites e contrato de IA
+(Node.js 22.6+ com suporte a remoção de tipos; testado no Node.js 24).
 `npm run build` e `npm run lint` verificam a aplicação.
 
 ## Observações

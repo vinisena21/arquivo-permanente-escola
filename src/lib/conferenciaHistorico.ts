@@ -1,3 +1,5 @@
+import type { FonteLegalId } from './fontesLegais.ts';
+
 export const DISCIPLINAS = [
   'Língua Portuguesa', 'Língua Inglesa', 'Arte', 'Educação Física',
   'Matemática', 'Ciências', 'História', 'Geografia', 'Ensino Religioso',
@@ -12,6 +14,15 @@ export interface AnoConferencia {
   total: string;
   anual: string;
   confirmado: boolean;
+  escola: string;
+  municipio: string;
+  diasLetivos: string;
+  situacao: string;
+  observacoes: string;
+  notas: string[];
+  escalaNotas: '100' | '10' | 'conceitos';
+  minimoPromocao: string;
+  faltasHoras: string;
 }
 
 export interface PaginaLida {
@@ -26,6 +37,7 @@ export interface Achado {
   nivel: 'erro' | 'duvida' | 'ok';
   campo: string;
   motivo: string;
+  fontes?: FonteLegalId[];
 }
 
 export function criarAnos(): AnoConferencia[] {
@@ -33,6 +45,9 @@ export function criarAnos(): AnoConferencia[] {
     serie: i + 1, incluido: true, anoLetivo: '',
     modo: i < 5 ? 'global' : 'disciplinas',
     cargas: Array(9).fill(''), total: '', anual: '', confirmado: false,
+    escola: '', municipio: '', diasLetivos: '', situacao: '', observacoes: '',
+    notas: Array(9).fill(''), escalaNotas: i < 3 ? 'conceitos' : '100',
+    minimoPromocao: '', faltasHoras: '',
   }));
 }
 
@@ -75,6 +90,27 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       const registro = anos[serie - 1];
       const letivo = /\bANO\s*:\s*(\d{4})\b/.exec(linha);
       if (letivo) registro.anoLetivo = letivo[1];
+      const escola = /ESTABELECIMENTO\s*:\s*(.+?)(?:\s+MUNICIPIO|$)/.exec(linha);
+      if (escola) registro.escola = escola[1].trim();
+      const municipio = /MUNICIPIO(?:\s*\/\s*ESTADO)?\s*:\s*(.+)/.exec(linha);
+      if (municipio) registro.municipio = municipio[1].trim();
+      const dias = /DIAS LETIVOS(?: ANUAIS)?\s*:\s*(\*?\d{1,3})\b/.exec(linha);
+      if (dias) registro.diasLetivos = dias[1];
+      const minimo = /MINIMO PARA PROMOCAO\s*:\s*(\d+(?:[.,]\d+)?%?)/.exec(linha);
+      if (minimo) registro.minimoPromocao = minimo[1];
+      const observacao = /OBSERVACOES\s*:\s*(.*)/.exec(linha);
+      if (observacao) registro.observacoes = observacao[1];
+      const situacao = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO)\b/.exec(linha);
+      if (situacao && /APROVEITAMENTO/.test(linha)) registro.situacao = situacao[1];
+      if (/APROVEITAMENTO/.test(linha)) {
+        const trecho = linha.split('APROVEITAMENTO')[1].split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES/)[0];
+        const notas = trecho.match(/\b(?:\d+(?:[.,]\d+)?|[ABC])\b/g) ?? [];
+        if (notas.length === (serie < 6 ? 8 : 9)) registro.notas = serie < 6 ? [notas[0], '', ...notas.slice(1)] : notas;
+      }
+      if (/FALTAS\s*\/\s*HORAS/.test(linha)) {
+        const valores = linha.split(/FALTAS\s*\/\s*HORAS/)[1].match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
+        if (valores.length === 2 && valores[0] === valores[1]) registro.faltasHoras = valores[1];
+      }
       if (/CARGA HORARIA CURRICULAR/.test(linha)) {
         const trecho = linha.split('CARGA HORARIA CURRICULAR')[1];
         const horas = trecho.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];

@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "api/analisar-historico.ts": { "maxDuration": 60 }
+  }
+}

@@ -63,3 +63,11 @@ test('cargas complementares entram no somatório e zero gera dúvida', () => {
   const zerado = { ...anoValido(), cargas: Array(9).fill('0'), total: '0', anual: '0' };
   assert.ok(avaliarConferencia(paginas, [zerado], true, true, true).some((a) => a.nivel === 'duvida'));
 });
+test('metadados, notas e observação são extraídos sem misturar a linha de carga', () => {
+  const texto = 'HISTÓRICO ESCOLAR – ENSINO FUNDAMENTAL\n6º ANO ANO: 2020\nAproveitamento 70 71 72 73 74 75 76 77 78 APROVADO Observações: Pandemia COVID-19\nESTABELECIMENTO: ESCOLA TESTE MUNICÍPIO/ESTADO: PONTO DOS VOLANTES/MG\nMÍNIMO PARA PROMOÇÃO: 60 DIAS LETIVOS ANUAIS: *180 CARGA HORÁRIA ANUAL: 800:00';
+  const ano = sugerirAnos([texto])[5];
+  assert.deepEqual(ano.notas, ['70', '71', '72', '73', '74', '75', '76', '77', '78']);
+  assert.equal(ano.escola, 'ESCOLA TESTE'); assert.equal(ano.diasLetivos, '*180');
+  assert.equal(ano.situacao, 'APROVADO'); assert.equal(ano.observacoes, 'PANDEMIA COVID-19');
+  assert.equal(ano.minimoPromocao, '60');
+});

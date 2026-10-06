@@ -614,7 +614,7 @@ export default function App() {
         )}
 
         <div className="conf-host" hidden={abaAtiva !== 'conferir-historico'}>
-          <ConferirHistorico />
+          <ConferirHistorico obterToken={async () => (await supabase.auth.getSession()).data.session?.access_token ?? null} />
         </div>
 
         {abaAtiva === 'dashboard' && <DashboardMetrics />}

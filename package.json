@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test:conferencia": "node --experimental-strip-types --test tests/conferenciaHistorico.test.mjs",
+    "test:conferencia": "node --experimental-strip-types --test tests/*.test.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -16,12 +16,14 @@
     "docxtemplater": "^3.69.3",
     "file-saver": "^2.0.5",
     "lucide-react": "^1.32.0",
+    "openai": "^7.28.0",
     "pdfjs-dist": "^6.4.299",
     "pizzip": "^3.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tesseract.js": "^7.0.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
