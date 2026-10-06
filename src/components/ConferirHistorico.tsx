@@ -128,21 +128,22 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
       </div>
 
       <div className="conf-upload conf-no-print">
-        <input ref={selecionador} type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp" aria-label="Selecionar histórico, PDF de duas páginas ou imagens de frente e verso" disabled={lendo} onChange={(e) => {
+        <input ref={selecionador} type="file" multiple accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,image/png,image/jpeg,image/webp" aria-label="Selecionar histórico: PDF de duas páginas, DOCX ou imagens de frente e verso" disabled={lendo} onChange={(e) => {
           const lista = Array.from(e.target.files ?? []);
           setArquivos(lista); setErro('');
           e.target.value = '';
         }} hidden />
-        <button type="button" className="conf-button" disabled={lendo} onClick={() => selecionador.current?.click()}><Upload size={18} /> Selecionar PDF ou imagens</button>
-        <div className="conf-files">{arquivos.length ? arquivos.map((a, i) => <span key={`${i}-${a.name}`}>{arquivos.length === 2 ? `${i === 0 ? 'Frente' : 'Verso'}: ` : ''}{a.name}</span>) : <span>PDF de 2 páginas ou 2 imagens · até 25 MB por arquivo</span>}</div>
+        <button type="button" className="conf-button" disabled={lendo} onClick={() => selecionador.current?.click()}><Upload size={18} /> Selecionar PDF, DOCX ou imagens</button>
+        <div className="conf-files">{arquivos.length ? arquivos.map((a, i) => <span key={`${i}-${a.name}`}>{arquivos.length === 2 ? `${i === 0 ? 'Frente' : 'Verso'}: ` : ''}{a.name}</span>) : <span>PDF (2 pág.), DOCX ou 2 imagens · até 25 MB por arquivo</span>}</div>
         {arquivos.length === 2 && <button type="button" className="conf-icon" title="Trocar a ordem dos arquivos" aria-label="Trocar a ordem dos arquivos" disabled={lendo} onClick={() => setArquivos([...arquivos].reverse())}><ArrowLeftRight size={18} /></button>}
-        <button type="button" className="conf-button conf-primary" disabled={!arquivos.length || lendo} onClick={() => void ler()}>{lendo ? <LoaderCircle className="conf-spin" size={18} /> : <ScanText size={18} />} {lendo ? 'Lendo documento' : 'Ler frente e verso'}</button>
+        <button type="button" className="conf-button conf-primary" disabled={!arquivos.length || lendo} onClick={() => void ler()}>{lendo ? <LoaderCircle className="conf-spin" size={18} /> : <ScanText size={18} />} {lendo ? 'Lendo documento' : 'Ler documento'}</button>
         {lendo && <button type="button" className="conf-icon" title="Cancelar leitura" aria-label="Cancelar leitura" onClick={() => cancelamento.current?.abort()}><X size={18} /></button>}
       </div>
       {lendo && <p role="status" className="conf-progress">{progresso}</p>}
       {erro && <p role="alert" className="conf-error">{erro}</p>}
 
-      {paginas.length === 0 ? <div className="conf-empty"><ScanText size={40} /><h3>Nenhum histórico carregado</h3><p>Frente e verso pendentes</p></div> : <>
+      {paginas.length === 0 ? <div className="conf-empty"><ScanText size={40} /><h3>Nenhum histórico carregado</h3><p>PDF, DOCX ou imagens de frente e verso</p></div> : <>
+        <p className="conf-scope conf-no-print" role="status">Campos de identificação, anos, notas e cargas foram pré-preenchidos automaticamente a partir do texto reconhecido. Revise e confirme com o original.</p>
         <div className="conf-pages conf-no-print">
           {paginas.map((p) => <figure key={p.lado}>
             <figcaption><strong>{p.lado}</strong><span className={p.confianca < 85 ? 'conf-warning-text' : ''}>Leitura: {Math.round(p.confianca)}%</span><button type="button" className="conf-icon" aria-label={`Ampliar ${p.lado.toLowerCase()}`} title={`Ampliar ${p.lado.toLowerCase()}`} onClick={() => setAmpliada(p)}><ZoomIn size={18} /></button></figcaption>
@@ -210,15 +211,20 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
 
         <section className="conf-section conf-no-print">
           <h3>Revisão do responsável</h3>
-          <label className="conf-check"><input type="checkbox" checked={identidade} onChange={(e) => setIdentidade(e.target.checked)} /> Identificação e dados pessoais conferidos; frente e verso correspondem ao mesmo aluno.</label>
-          <label className="conf-check"><input type="checkbox" checked={assinaturas} onChange={(e) => setAssinaturas(e.target.checked)} /> Data, assinaturas, registros e carimbos conferidos no documento original.</label>
-          <label className="conf-check"><input type="checkbox" checked={normas} onChange={(e) => setNormas(e.target.checked)} /> Notas, frequência, situação, dias letivos e fundamento legal conferidos com as normas aplicáveis.</label>
-          <button type="button" className="conf-button conf-primary" disabled={lendo} onClick={() => setRelatorio(true)}><FileCheck2 size={18} /> Avaliar histórico</button>
+          <label className="conf-check"><input type="checkbox" checked={identidade} onChange={(e) => setIdentidade(e.target.checked)} /> Conferi identidade (nome, nascimento, filiação e correspondência frente/verso)</label>
+          <label className="conf-check"><input type="checkbox" checked={assinaturas} onChange={(e) => setAssinaturas(e.target.checked)} /> Conferi data, assinaturas, registros e carimbos</label>
+          <label className="conf-check"><input type="checkbox" checked={normas} onChange={(e) => setNormas(e.target.checked)} /> Conferi notas, frequência, situação e fundamento legal com o regimento</label>
         </section>
 
-        {relatorio && <section className="conf-section conf-report" aria-live="polite">
-          <div className="conf-heading"><h3>Relatório de conferência</h3><div className="conf-report-actions conf-no-print"><button type="button" className="conf-icon" title="Baixar relatório JSON" aria-label="Baixar relatório JSON" onClick={exportar}><Download size={18} /></button><button type="button" className="conf-icon" title="Imprimir relatório" aria-label="Imprimir relatório" onClick={() => window.print()}><Printer size={18} /></button></div></div>
-          <p className={`conf-verdict ${erros.length ? 'conf-error' : duvidas.length ? 'conf-warning-text' : 'conf-success'}`}>{erros.length ? 'Divergências encontradas' : duvidas.length ? 'Revisão pendente' : 'Conferência assistida concluída'} · {erros.length} erro(s) · {duvidas.length} dúvida(s)</p>
+        <div className="conf-actions conf-no-print">
+          <button type="button" className="conf-button conf-primary" onClick={() => setRelatorio(true)}><FileCheck2 size={18} /> Gerar relatório</button>
+          <button type="button" className="conf-button" onClick={() => { setRelatorio(true); window.print(); }}><Printer size={18} /> Imprimir</button>
+          <button type="button" className="conf-button" onClick={exportar}><Download size={18} /> Exportar JSON</button>
+        </div>
+
+        {relatorio && <section className="conf-section conf-report">
+          <h3>Relatório de conferência</h3>
+          <p className={`conf-result ${erros.length ? 'conf-error' : duvidas.length ? 'conf-warning' : 'conf-success'}`}>{erros.length ? 'Divergências encontradas' : duvidas.length ? 'Revisão pendente' : 'Conferência assistida concluída'} · {erros.length} erro(s) · {duvidas.length} dúvida(s)</p>
           <p className="conf-scope">Somatória, preenchimento e referências federais: verificações automáticas. Normas locais, calendário, assinaturas e autenticidade dependem do responsável. Este relatório não certifica conformidade legal integral.</p>
           {resultadoIA && <div className="conf-ai-result"><h4>Análise assistiva por IA</h4><p>{resultadoIA.resumo}</p><p className="conf-scope">{resultadoIA.modelo} · {new Date(resultadoIA.data).toLocaleString('pt-BR')}</p>{resultadoIA.pendencias.map((p, i) => <p key={i}>{p}</p>)}</div>}
           <p className="conf-source">Documento avaliado: {fontes.join(' · ')}</p>
