@@ -88,6 +88,97 @@ export async function salvarAlunosSecretaria(
   }
 }
 
+/** Dados mínimos para cadastro manual de aluno da secretaria. */
+export type NovoAlunoSecretaria = {
+  codigo_matricula: string;
+  nome: string;
+  data_nascimento?: string | null;
+  codigo_estudante?: string | null;
+  periodo?: string | null;
+  turma?: string | null;
+  turno?: string | null;
+  situacao?: string | null;
+  nacionalidade?: string | null;
+  naturalidade?: string | null;
+  uf_naturalidade?: string | null;
+  sexo?: string | null;
+  filiacao_1?: string | null;
+  filiacao_2?: string | null;
+};
+
+/** Insere um aluno da secretaria manualmente (não sobrescreve matrícula existente). */
+export async function inserirAlunoSecretaria(
+  aluno: NovoAlunoSecretaria
+): Promise<AlunoSecretariaRow> {
+  const agora = new Date().toISOString();
+  const nome = aluno.nome.trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR');
+  const codigo = aluno.codigo_matricula.trim();
+
+  if (!nome) throw new Error('Informe o nome do aluno.');
+  if (!codigo) throw new Error('Informe o código da matrícula.');
+
+  const { data: existentes, error: erroConsulta } = await supabase
+    .from(TABELA)
+    .select('id')
+    .eq('codigo_matricula', codigo)
+    .limit(1);
+
+  if (erroConsulta) throw erroConsulta;
+  if (existentes && existentes.length > 0) {
+    throw new Error(`Já existe aluno com a matrícula ${codigo}.`);
+  }
+
+  const dados: Record<string, string | null> = {
+    Código: codigo,
+    Nome: nome,
+    'Código do estudante': aluno.codigo_estudante?.trim() || null,
+    'Data de Nascimento': aluno.data_nascimento
+      ? aluno.data_nascimento.includes('-')
+        ? aluno.data_nascimento.split('-').reverse().join('/')
+        : aluno.data_nascimento
+      : null,
+    Período: aluno.periodo?.trim() || null,
+    Turma: aluno.turma?.trim() || null,
+    Turno: aluno.turno?.trim() || null,
+    Situação: aluno.situacao?.trim() || null,
+    Nacionalidade: aluno.nacionalidade?.trim() || null,
+    Naturalidade: aluno.naturalidade?.trim() || null,
+    'UF da naturalidade': aluno.uf_naturalidade?.trim() || null,
+    Sexo: aluno.sexo?.trim() || null,
+    'Filiação 1': aluno.filiacao_1?.trim() || null,
+    'Filiação 2': aluno.filiacao_2?.trim() || null,
+  };
+
+  const payload = {
+    codigo_matricula: codigo,
+    codigo_estudante: aluno.codigo_estudante?.trim() || null,
+    nome,
+    data_nascimento: aluno.data_nascimento || null,
+    periodo: aluno.periodo?.trim() || null,
+    turma: aluno.turma?.trim() || null,
+    turno: aluno.turno?.trim() || null,
+    situacao: aluno.situacao?.trim() || 'NORMAL',
+    nacionalidade: aluno.nacionalidade?.trim() || null,
+    naturalidade: aluno.naturalidade?.trim() || null,
+    uf_naturalidade: aluno.uf_naturalidade?.trim() || null,
+    sexo: aluno.sexo?.trim() || null,
+    filiacao_1: aluno.filiacao_1?.trim() || null,
+    filiacao_2: aluno.filiacao_2?.trim() || null,
+    dados: dados as Json,
+    importado_em: agora,
+    updated_at: agora,
+  };
+
+  const { data, error } = await supabase
+    .from(TABELA)
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return data as AlunoSecretariaRow;
+}
+
 /** Exclui um registro de aluno da secretaria pelo id. */
 export async function excluirAlunoSecretaria(id: number): Promise<void> {
   const { error } = await supabase.from(TABELA).delete().eq('id', id);
@@ -124,7 +215,6 @@ export async function atualizarAlunoSecretaria(
 ): Promise<AlunoSecretariaRow> {
   const agora = new Date().toISOString();
 
-  // Sincroniza o JSON `dados` com os campos tipados editados
   const dadosBase: Record<string, string | null> =
     dadosAtuais && typeof dadosAtuais === 'object' && !Array.isArray(dadosAtuais)
       ? Object.fromEntries(
