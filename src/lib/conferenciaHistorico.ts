@@ -82,35 +82,54 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
     let fundamental = false;
     for (const linhaOriginal of texto.split('\n')) {
       const linha = normalizar(linhaOriginal);
-      if (/HISTORICO ESCOLAR.*ENSINO FUNDAMENTAL/.test(linha)) fundamental = true;
-      if (!fundamental) continue;
-      const ano = /\b([1-9])\s*[º°o]?\s*ANO\b/.exec(linha);
-      if (ano) serie = Number(ano[1]);
+      if (/HISTORICO ESCOLAR.*ENSINO FUNDAMENTAL|ENSINO FUNDAMENTAL.*HISTORICO/.test(linha)) fundamental = true;
+      if (!fundamental && !/HISTORICO ESCOLAR/.test(linha)) continue;
+      if (/HISTORICO ESCOLAR/.test(linha)) fundamental = true;
+
+      const anoMatch = /\b([1-9])\s*[º°O]?\s*ANO\b/.exec(linha);
+      if (anoMatch) serie = Number(anoMatch[1]);
       if (!serie) continue;
       const registro = anos[serie - 1];
-      const letivo = /\bANO\s*:\s*(\d{4})\b/.exec(linha);
+
+      const letivo = /\bANO\s*(?:LETIVO)?\s*:\s*(\d{4})\b/.exec(linha) ?? /\b(\d{4})\s*(?:ANO LETIVO|LETIVO)\b/.exec(linha);
       if (letivo) registro.anoLetivo = letivo[1];
-      const escola = /ESTABELECIMENTO\s*:\s*(.+?)(?:\s+MUNICIPIO|$)/.exec(linha);
+
+      const escola = /ESTABELECIMENTO\s*:\s*(.+?)(?:\s+MUNICIPIO|$)/.exec(linha)
+        ?? /ESCOLA\s*:\s*(.+?)(?:\s+MUNICIPIO|$)/.exec(linha);
       if (escola) registro.escola = escola[1].trim();
+
       const municipio = /MUNICIPIO(?:\s*\/\s*ESTADO)?\s*:\s*(.+)/.exec(linha);
       if (municipio) registro.municipio = municipio[1].trim();
+
       const dias = /DIAS LETIVOS(?: ANUAIS)?\s*:\s*(\*?\d{1,3})\b/.exec(linha);
       if (dias) registro.diasLetivos = dias[1];
+
       const minimo = /MINIMO PARA PROMOCAO\s*:\s*(\d+(?:[.,]\d+)?%?)/.exec(linha);
       if (minimo) registro.minimoPromocao = minimo[1];
+
       const observacao = /OBSERVACOES\s*:\s*(.*)/.exec(linha);
-      if (observacao) registro.observacoes = observacao[1];
+      if (observacao) registro.observacoes = observacao[1].trim();
+
       const situacao = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO)\b/.exec(linha);
-      if (situacao && /APROVEITAMENTO/.test(linha)) registro.situacao = situacao[1];
+      if (situacao && (/APROVEITAMENTO/.test(linha) || /SITUACAO/.test(linha))) registro.situacao = situacao[1];
+
       if (/APROVEITAMENTO/.test(linha)) {
-        const trecho = linha.split('APROVEITAMENTO')[1].split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES/)[0];
+        const trecho = linha.split('APROVEITAMENTO')[1].split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES|SITUACAO/)[0];
         const notas = trecho.match(/\b(?:\d+(?:[.,]\d+)?|[ABC])\b/g) ?? [];
         if (notas.length === (serie < 6 ? 8 : 9)) registro.notas = serie < 6 ? [notas[0], '', ...notas.slice(1)] : notas;
+        else if (notas.length >= 7) {
+          // Aceita parcialmente se tiver quantidade razoável
+          registro.notas = serie < 6
+            ? [notas[0] ?? '', '', ...notas.slice(1, 8)]
+            : notas.slice(0, 9).concat(Array(Math.max(0, 9 - notas.length)).fill(''));
+        }
       }
-      if (/FALTAS\s*\/\s*HORAS/.test(linha)) {
-        const valores = linha.split(/FALTAS\s*\/\s*HORAS/)[1].match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
-        if (valores.length === 2 && valores[0] === valores[1]) registro.faltasHoras = valores[1];
+
+      if (/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/.test(linha)) {
+        const valores = linha.split(/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/)[1].match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
+        if (valores.length >= 1) registro.faltasHoras = valores[valores.length - 1];
       }
+
       if (/CARGA HORARIA CURRICULAR/.test(linha)) {
         const trecho = linha.split('CARGA HORARIA CURRICULAR')[1];
         const horas = trecho.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];
@@ -120,12 +139,15 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
           continue;
         }
         encontrados.add(serie);
-        if (registro.modo === 'global' && horas.length === 2) {
-          registro.cargas[0] = horas[0]; registro.total = horas[1];
-        } else if (registro.modo === 'disciplinas' && horas.length === 10) {
+        if (registro.modo === 'global' && horas.length >= 2) {
+          registro.cargas[0] = horas[0]; registro.total = horas[horas.length - 1];
+        } else if (registro.modo === 'disciplinas' && horas.length >= 10) {
           registro.cargas = horas.slice(0, 9); registro.total = horas[9];
+        } else if (horas.length === 1) {
+          registro.cargas[0] = horas[0];
         }
       }
+
       const anual = /CARGA HORARIA ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)\b/.exec(linha);
       if (anual) registro.anual = anual[1];
     }
