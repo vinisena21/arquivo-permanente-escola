@@ -62,8 +62,14 @@ export function formatarHoras(minutos: number): string {
   return `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`;
 }
 
+/**
+ * Soma todas as cargas preenchidas (curricular + complementares).
+ * No 1º–5º, 758:20 + 41:40 deve resultar em 800:00.
+ */
 export function somarCargas(ano: AnoConferencia): number | null {
-  const valores = (ano.modo === 'global' ? ano.cargas.slice(0, 1) : ano.cargas).map(lerHoras);
+  const preenchidas = ano.cargas.filter((c) => c.trim());
+  if (!preenchidas.length) return null;
+  const valores = preenchidas.map(lerHoras);
   if (valores.some((v) => v === null)) return null;
   return valores.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
 }
@@ -77,7 +83,6 @@ function normalizarNota(token: string): string {
   return '';
 }
 
-/** Só usa o trecho de Ensino Fundamental; ignora o bloco de Ensino Médio da 1ª folha. */
 function textoFundamental(textos: string[]): string {
   const todo = textos.join('\n');
   const m = /HIST[ÓO]RICO\s+ESCOLAR\s*[-–]?\s*ENSINO\s+FUNDAMENTAL/i.exec(todo);
@@ -87,12 +92,45 @@ function textoFundamental(textos: string[]): string {
   return todo;
 }
 
-/**
- * Extrai 1º–9º ano apenas do Ensino Fundamental.
- * Layout real (DOCX em tabela):
- *   1º ANO / ANO: 2021 / Aproveitamento / 85,0 / -- / 84,0 ... / APROVADO
- *   Carga Horária Curricular / 800:00 / ... / 800:00
- */
+/** Distribui H:MM da linha de carga global: partes + total quando a soma fecha. */
+function aplicarCargasGlobais(reg: AnoConferencia, validas: string[]) {
+  if (!validas.length) return;
+  const mins = validas.map((h) => lerHoras(h)!);
+
+  // Caso 1: último valor é o total e os anteriores somam exatamente esse total
+  if (validas.length >= 2) {
+    const totalStr = validas[validas.length - 1]!;
+    const totalMin = mins[mins.length - 1]!;
+    const partes = validas.slice(0, -1);
+    const somaPartes = mins.slice(0, -1).reduce((a, b) => a + b, 0);
+    if (somaPartes === totalMin && totalMin > 0) {
+      reg.cargas = [...partes];
+      while (reg.cargas.length < 9) reg.cargas.push('');
+      reg.total = totalStr;
+      return;
+    }
+  }
+
+  // Caso 2: dois (ou mais) valores distintos cuja soma é o maior (total)
+  if (validas.length >= 2) {
+    const maxMin = Math.max(...mins);
+    const totalStr = validas[mins.indexOf(maxMin)]!;
+    const partes = validas.filter((_, i) => mins[i] !== maxMin);
+    const somaPartes = partes.reduce((a, h) => a + (lerHoras(h) ?? 0), 0);
+    if (partes.length >= 1 && somaPartes === maxMin) {
+      reg.cargas = [...partes];
+      while (reg.cargas.length < 9) reg.cargas.push('');
+      reg.total = totalStr;
+      return;
+    }
+  }
+
+  // Caso 3: um único valor (ou repetição do mesmo) = carga e total
+  const unico = validas[validas.length - 1]!;
+  reg.cargas = [unico, ...Array(8).fill('')];
+  reg.total = unico;
+}
+
 export function sugerirAnos(textos: string[]): AnoConferencia[] {
   const anos = criarAnos();
   const fund = textoFundamental(textos);
@@ -141,19 +179,7 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
         return min !== null && min <= 2000 * 60;
       });
       if (reg.modo === 'global') {
-        // Nos anos 1–5 o documento costuma repetir o mesmo total (ex.: 800:00) nas colunas.
-        // Preferimos o valor mais frequente / o último (total da linha) para evitar OCR parcial (ex.: 758:20).
-        if (validas.length >= 1) {
-          const contagem = new Map<string, number>();
-          for (const h of validas) contagem.set(h, (contagem.get(h) ?? 0) + 1);
-          let preferido = validas[validas.length - 1]!;
-          let max = 0;
-          for (const [h, n] of contagem) {
-            if (n > max) { max = n; preferido = h; }
-          }
-          reg.cargas[0] = preferido;
-          reg.total = preferido;
-        }
+        aplicarCargasGlobais(reg, validas);
       } else if (validas.length >= 9) {
         reg.cargas = validas.slice(0, 9);
         if (validas[9]) reg.total = validas[9]!;
@@ -167,14 +193,12 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
     if (anual) reg.anual = anual[1]!;
     if (!reg.anual && reg.total) reg.anual = reg.total;
     if (!reg.total && reg.anual) reg.total = reg.anual;
-    if (reg.modo === 'global' && (reg.anual || reg.total)) {
-      // Alinha carga global ao total/anual impressos (evita falso erro de somatória por OCR).
+    // Se só há total/anual e nenhuma parte, a carga curricular única é o próprio total
+    if (reg.modo === 'global' && !reg.cargas.some((c) => c.trim()) && (reg.total || reg.anual)) {
       const ref = reg.total || reg.anual;
-      if (ref) {
-        reg.cargas[0] = ref;
-        if (!reg.total) reg.total = ref;
-        if (!reg.anual) reg.anual = ref;
-      }
+      reg.cargas[0] = ref;
+      if (!reg.total) reg.total = ref;
+      if (!reg.anual) reg.anual = ref;
     }
 
     const faltas = /Faltas\s*\/?\s*Horas\s*[\s\S]{0,40}?(\d{1,4}:[0-5]\d)/i.exec(bloco);
@@ -195,7 +219,6 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
     const dias = /DIAS\s+LETIVOS(?:\s+ANUAIS)?\s*:\s*(\*?\d{1,3})\b/i.exec(bloco);
     if (dias) reg.diasLetivos = dias[1]!;
 
-    // "--" ou vazio = não informado (comum no 1º–5º)
     const min = /M[ÍI]NIMO\s+PARA\s+PROMO[ÇC][ÃA]O\s*:\s*([^\n]{0,20})/i.exec(bloco);
     if (min) {
       const raw = min[1]!.trim();
@@ -233,10 +256,9 @@ export function avaliarConferencia(
     const soma = somarCargas(ano);
     const total = lerHoras(ano.total);
     const anual = lerHoras(ano.anual);
-    const horas = ano.modo === 'global' ? ano.cargas.slice(0, 1) : ano.cargas;
+    const preenchidas = ano.cargas.filter((c) => c.trim());
 
     if (ano.modo === 'disciplinas') {
-      const preenchidas = ano.cargas.filter((c) => lerHoras(c) !== null);
       if (preenchidas.length >= 2 && soma !== null && total !== null) {
         achados.push({
           nivel: soma === total ? 'ok' : 'erro',
@@ -249,17 +271,19 @@ export function avaliarConferencia(
         achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
       }
     } else {
-      horas.forEach((hora) => {
+      // 1º–5º: carga curricular (+ complementares). Cada célula preenchida precisa ser H:MM válido.
+      preenchidas.forEach((hora, idx) => {
         if (lerHoras(hora) === null) {
           achados.push({
-            nivel: hora.trim() ? 'erro' : 'duvida',
-            campo: `${campo} / Carga global`,
-            motivo: hora.trim()
-              ? `Carga "${hora}" inválida. Use horas inteiras ou H:MM.`
-              : 'Carga global não identificada.',
+            nivel: 'erro',
+            campo: `${campo} / ${idx === 0 ? 'Carga curricular' : `Complementar ${idx}`}`,
+            motivo: `Carga "${hora}" inválida. Use horas inteiras ou H:MM.`,
           });
         }
       });
+      if (!preenchidas.length) {
+        achados.push({ nivel: 'duvida', campo: `${campo} / Carga curricular`, motivo: 'Carga curricular não identificada.' });
+      }
     }
 
     if (total === null && ano.modo === 'global') {
@@ -272,26 +296,27 @@ export function avaliarConferencia(
       achados.push({ nivel: 'duvida', campo: `${campo} / Ano letivo`, motivo: 'Ano letivo ausente, inválido ou futuro. Confira no documento.' });
     }
 
-    // 1º–5º (carga global): o total impresso e a carga anual são a referência.
-    // Se os dois conferem, a "somatória" não deve virar erro por OCR parcial da célula global.
+    // Regra central 1º–5º (e global em geral):
+    // soma(carga curricular + complementares) DEVE ser igual ao total impresso.
+    // Ex.: 758:20 + 41:40 = 800:00 → ok; se faltar complementar → erro com a diferença.
     if (ano.modo === 'global' && soma !== null && total !== null) {
+      const partes = preenchidas.map((h) => h.trim()).join(' + ');
       if (soma === total) {
         achados.push({
           nivel: 'ok',
           campo: `${campo} / Somatória`,
-          motivo: `Carga global ${formatarHoras(soma)} igual ao total impresso.`,
-        });
-      } else if (anual !== null && total === anual) {
-        achados.push({
-          nivel: 'ok',
-          campo: `${campo} / Somatória`,
-          motivo: `Total impresso e carga anual conferem (${formatarHoras(total)}). Diferença na célula de carga global provavelmente é leitura OCR; confira visualmente se quiser.`,
+          motivo: preenchidas.length > 1
+            ? `Soma (${partes} = ${formatarHoras(soma)}) igual ao total impresso (${formatarHoras(total)}).`
+            : `Carga ${formatarHoras(soma)} igual ao total impresso (${formatarHoras(total)}).`,
         });
       } else {
+        const dif = Math.abs(soma - total);
         achados.push({
           nivel: 'erro',
           campo: `${campo} / Somatória`,
-          motivo: `Soma ${formatarHoras(soma)}; total impresso ${formatarHoras(total)}; diferença ${formatarHoras(Math.abs(soma - total))}.`,
+          motivo: soma < total
+            ? `Soma ${formatarHoras(soma)} (${partes || 'sem partes'}); total impresso ${formatarHoras(total)}; falta ${formatarHoras(dif)}. Inclua a(s) carga(s) complementar(es) até fechar o total.`
+            : `Soma ${formatarHoras(soma)} (${partes}); total impresso ${formatarHoras(total)}; excesso ${formatarHoras(dif)}. Confira as partes e o total no original.`,
         });
       }
     }
