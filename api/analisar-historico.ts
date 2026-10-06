@@ -8,10 +8,11 @@ import { DATA_BASE_LEGAL, FONTES_LEGAIS } from '../src/lib/fontesLegais.ts';
 import { prepararDadosGemini } from '../src/lib/dadosGemini.ts';
 
 type RequestApi = IncomingMessage & { body?: unknown };
+type ProvedorIA = 'openai' | 'gemini' | 'groq';
 interface Dependencias {
   env: Record<string, string | undefined>;
   fetcher: typeof fetch;
-  analisar: (pedido: PedidoAnalise, modelo: string, chave: string, provedor: 'openai' | 'gemini') => Promise<ResultadoModelo>;
+  analisar: (pedido: PedidoAnalise, modelo: string, chave: string, provedor: ProvedorIA) => Promise<ResultadoModelo>;
 }
 const INSTRUCOES = `Você auxilia a Secretaria na conferência documental de históricos do Ensino Fundamental.
 Use exclusivamente a base federal fornecida para afirmações legais. Considere o ano letivo de cada série, a redação aplicável e o calendário; nunca aplique retroativamente normas posteriores. A base não contém normas municipais/estaduais nem todas as leis. Não certifique conformidade integral ou autenticidade.
@@ -44,8 +45,57 @@ export async function analisarGemini(pedido: PedidoAnalise, modelo: string, chav
   return { ...resultado, achados: resultado.achados.map((a) => ({ ...a, nivel: 'duvida', origem: a.origem === 'naoLocalizado' ? 'naoLocalizado' : 'indicadores' })) };
 }
 
-async function analisar(pedido: PedidoAnalise, modelo: string, chave: string, provedor: 'openai' | 'gemini'): Promise<ResultadoModelo> {
+/** Groq usa API compatível com OpenAI (chat.completions), não Responses API. */
+async function analisarGroq(pedido: PedidoAnalise, modelo: string, chave: string): Promise<ResultadoModelo> {
+  const cliente = new OpenAI({
+    apiKey: chave,
+    baseURL: 'https://api.groq.com/openai/v1',
+    timeout: 45_000,
+    maxRetries: 0,
+  });
+  try {
+    const response = await cliente.chat.completions.create({
+      model: modelo,
+      temperature: 0.1,
+      max_tokens: 6000,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `${INSTRUCOES}\nResponda APENAS com um JSON válido no formato: {"achados":[{"nivel":"duvida","campo":"...","motivo":"...","evidencia":"...","origem":"ocr"|"transcricao"|"indicadores"|"naoLocalizado","pagina":"frente"|"verso"|null,"fontes":[]}],"pendencias":["..."],"resumo":"..."}. Todo achado deve ter nivel "duvida" quando houver incerteza.`,
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            baseLegal: { verificadaEm: DATA_BASE_LEGAL, fontes: FONTES_LEGAIS },
+            documentoParaConferencia: pedido,
+          }),
+        },
+      ],
+    });
+    const texto = response.choices[0]?.message?.content;
+    if (!texto) throw new Error('Resposta do Groq vazia.');
+    const bruto = JSON.parse(texto) as unknown;
+    return ResultadoModeloSchema.parse(bruto);
+  } catch (e) {
+    const status = e && typeof e === 'object' && 'status' in e ? Number((e as { status: number }).status) : null;
+    if (status === 429) {
+      const erro = new Error('Limite de uso do Groq atingido.');
+      erro.name = 'LimiteGroq';
+      throw erro;
+    }
+    if (status === 503) {
+      const erro = new Error('Groq temporariamente indisponível.');
+      erro.name = 'GroqIndisponivel';
+      throw erro;
+    }
+    throw e;
+  }
+}
+
+async function analisar(pedido: PedidoAnalise, modelo: string, chave: string, provedor: ProvedorIA): Promise<ResultadoModelo> {
   if (provedor === 'gemini') return analisarGemini(pedido, modelo, chave);
+  if (provedor === 'groq') return analisarGroq(pedido, modelo, chave);
   const cliente = new OpenAI({ apiKey: chave, timeout: 45_000, maxRetries: 0 });
   const response = await cliente.responses.parse({
     model: modelo, store: false, max_output_tokens: 6000,
@@ -59,16 +109,32 @@ async function analisar(pedido: PedidoAnalise, modelo: string, chave: string, pr
   return ResultadoModeloSchema.parse(response.output_parsed);
 }
 
+function resolverProvedor(env: Record<string, string | undefined>): { provedor: ProvedorIA; chave: string | undefined } {
+  const explicit = (env.IA_PROVEDOR || '').toLowerCase().trim();
+  if (explicit === 'groq') return { provedor: 'groq', chave: env.GROQ_API_KEY };
+  if (explicit === 'gemini') return { provedor: 'gemini', chave: env.GEMINI_API_KEY };
+  if (explicit === 'openai') return { provedor: 'openai', chave: env.OPENAI_API_KEY };
+  // Auto: preferência Groq → Gemini → OpenAI
+  if (env.GROQ_API_KEY) return { provedor: 'groq', chave: env.GROQ_API_KEY };
+  if (env.GEMINI_API_KEY) return { provedor: 'gemini', chave: env.GEMINI_API_KEY };
+  if (env.OPENAI_API_KEY) return { provedor: 'openai', chave: env.OPENAI_API_KEY };
+  return { provedor: 'gemini', chave: undefined };
+}
+
+function modeloPadrao(provedor: ProvedorIA, env: Record<string, string | undefined>): string {
+  if (provedor === 'groq') return env.GROQ_MODEL || 'openai/gpt-oss-20b';
+  if (provedor === 'gemini') return env.GEMINI_MODEL || 'gemini-3.8-flash';
+  return env.OPENAI_MODEL || 'gpt-6-astra';
+}
+
 export function criarHandler(deps: Dependencias) {
-  // Per-instance guard in addition to authentication and the configured staff allowlist.
   const uso = new Map<string, { inicio: number; quantidade: number }>();
   return async (req: RequestApi, res: ServerResponse) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const enviar = (status: number, conteudo: unknown) => { res.statusCode = status; res.end(JSON.stringify(conteudo)); };
     const emails = (deps.env.IA_EMAILS_AUTORIZADOS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-    const provedor = deps.env.IA_PROVEDOR || (deps.env.GEMINI_API_KEY ? 'gemini' : 'openai');
-    const chaveIA = provedor === 'gemini' ? deps.env.GEMINI_API_KEY : provedor === 'openai' ? deps.env.OPENAI_API_KEY : undefined;
+    const { provedor, chave: chaveIA } = resolverProvedor(deps.env);
     const configurada = Boolean(chaveIA && emails.length);
     if (req.method === 'GET') { enviar(200, { configurada, provedor }); return; }
     if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); enviar(405, { erro: 'Método não permitido.' }); return; }
@@ -107,15 +173,16 @@ export function criarHandler(deps: Dependencias) {
       if (contador.quantidade >= 10) { enviar(429, { erro: 'Limite de análises atingido. Tente mais tarde.' }); return; }
       if (uso.size >= 1000) uso.delete(uso.keys().next().value!);
       contador.quantidade++; uso.set(user.id, contador);
-      if (provedor !== 'openai' && provedor !== 'gemini') { enviar(503, { erro: 'Provedor de IA inválido.' }); return; }
-      const modelo = provedor === 'gemini' ? deps.env.GEMINI_MODEL || 'gemini-3.8-flash' : deps.env.OPENAI_MODEL || 'gpt-6-astra';
+      if (provedor !== 'openai' && provedor !== 'gemini' && provedor !== 'groq') { enviar(503, { erro: 'Provedor de IA inválido.' }); return; }
+      const modelo = modeloPadrao(provedor, deps.env);
       const bruto = await deps.analisar(validado.data, modelo, chaveIA!, provedor);
       const resultado = verificarEvidencias(ResultadoModeloSchema.parse(bruto), validado.data, provedor === 'gemini' ? prepararDadosGemini(validado.data) : undefined);
       enviar(200, { ...resultado, modelo, provedor, data: new Date().toISOString() });
     } catch (e) {
-      // Never log documents, tokens or upstream error bodies containing request data.
-      if (e instanceof Error && e.name === 'LimiteGemini') { enviar(429, { erro: 'Limite de uso do Gemini atingido. Tente mais tarde; nenhum provedor alternativo foi acionado.' }); return; }
-      if (e instanceof Error && e.name === 'GeminiIndisponivel') { enviar(503, { erro: 'O Gemini está temporariamente indisponível. Tente novamente mais tarde. Nenhuma aprovação foi emitida.' }); return; }
+      if (e instanceof Error && e.name === 'LimiteGemini') { enviar(429, { erro: 'Limite de uso do Gemini atingido. Tente mais tarde.' }); return; }
+      if (e instanceof Error && e.name === 'GeminiIndisponivel') { enviar(503, { erro: 'O Gemini está temporariamente indisponível. Tente novamente mais tarde.' }); return; }
+      if (e instanceof Error && e.name === 'LimiteGroq') { enviar(429, { erro: 'Limite de uso do Groq atingido. Tente mais tarde ou troque o modelo.' }); return; }
+      if (e instanceof Error && e.name === 'GroqIndisponivel') { enviar(503, { erro: 'O Groq está temporariamente indisponível. Tente novamente mais tarde.' }); return; }
       enviar(502, { erro: 'Não foi possível concluir a análise por IA. Confira a chave, o limite de uso e a disponibilidade do serviço. Nenhuma aprovação foi emitida.' });
     }
   };
