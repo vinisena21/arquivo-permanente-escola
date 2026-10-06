@@ -4,6 +4,7 @@ import ocrWorkerUrl from 'tesseract.js/dist/worker.min.js?url';
 
 const LIMITE_BYTES = 25 * 1024 * 1024;
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp'];
+const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 function verificarCancelamento(signal: AbortSignal) {
   if (signal.aborted) throw new DOMException('Leitura cancelada.', 'AbortError');
@@ -23,8 +24,11 @@ async function aguardar<T>(promessa: Promise<T>, signal: AbortSignal): Promise<T
 export function validarArquivos(arquivos: File[]): void {
   if (arquivos.some((arquivo) => arquivo.size > LIMITE_BYTES)) throw new Error('Cada arquivo deve ter no máximo 25 MB.');
   const pdf = arquivos.length === 1 && arquivos[0].type === 'application/pdf';
+  const docx = arquivos.length === 1 && (arquivos[0].type === TIPO_DOCX || arquivos[0].name.toLowerCase().endsWith('.docx'));
   const imagens = arquivos.length === 2 && arquivos.every((arquivo) => TIPOS_IMAGEM.includes(arquivo.type));
-  if (!pdf && !imagens) throw new Error('Selecione um PDF de duas páginas ou duas imagens PNG, JPG ou WebP (frente e verso).');
+  if (!pdf && !docx && !imagens) {
+    throw new Error('Selecione um PDF de duas páginas, um DOCX ou duas imagens PNG, JPG ou WebP (frente e verso).');
+  }
 }
 
 async function carregarImagem(arquivo: File): Promise<string> {
@@ -44,16 +48,84 @@ async function carregarImagem(arquivo: File): Promise<string> {
   }
 }
 
-async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<string[]> {
+/** Extrai texto de um DOCX (word/document.xml) de forma simples e robusta. */
+async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<string> {
+  verificarCancelamento(signal);
+  const PizZip = (await import('pizzip')).default;
+  const zip = new PizZip(await arquivo.arrayBuffer());
+  const doc = zip.file('word/document.xml');
+  if (!doc) throw new Error('Arquivo DOCX inválido: não contém word/document.xml.');
+  const xml = doc.asText();
+  // Substitui fins de parágrafo e quebras por quebras de linha, remove tags e decodifica entidades básicas.
+  const texto = xml
+    .replace(/<\/w:p>/gi, '\n')
+    .replace(/<w:br\b[^/]*\/>/gi, '\n')
+    .replace(/<w:tab\b[^/]*\/>/gi, '\t')
+    .replace(/<[^>]+>/g, '')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/&/g, '&')
+    .replace(/"/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (texto.length < 50) throw new Error('Não foi possível extrair texto suficiente do DOCX. Verifique se o arquivo não está vazio ou protegido.');
+  return texto;
+}
+
+/** Cria uma imagem placeholder em branco (para DOCX, que não tem preview de página). */
+function imagemPlaceholder(): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 800;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Documento digital (DOCX)', canvas.width / 2, canvas.height / 2 - 10);
+  ctx.font = '14px system-ui, sans-serif';
+  ctx.fillText('Texto extraído automaticamente', canvas.width / 2, canvas.height / 2 + 20);
+  return canvas.toDataURL('image/png');
+}
+
+async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{ imagens: string[]; textos?: string[] }> {
   validarArquivos(arquivos);
+  const isDocx = arquivos.length === 1 && (arquivos[0].type === TIPO_DOCX || arquivos[0].name.toLowerCase().endsWith('.docx'));
+  if (isDocx) {
+    const texto = await extrairTextoDocx(arquivos[0], signal);
+    // Heurística: tenta separar frente/verso se houver marcadores comuns de histórico escolar.
+    const normalizado = texto.replace(/\r\n/g, '\n');
+    const marcadoresVerso = /(?:^|\n)\s*(?:NOME\s*:|VERSO|CARGA HOR[ÁA]RIA|OBSERVA[ÇC][ÕO]ES GERAIS)/i;
+    const idx = normalizado.search(marcadoresVerso);
+    let frente = normalizado;
+    let verso = '';
+    if (idx > 100) {
+      frente = normalizado.slice(0, idx).trim();
+      verso = normalizado.slice(idx).trim();
+    } else {
+      // Se não separou bem, coloca tudo na frente e deixa verso com o mesmo (para extração achar campos).
+      verso = normalizado;
+    }
+    const placeholder = imagemPlaceholder();
+    return { imagens: [placeholder, placeholder], textos: [frente, verso] };
+  }
   if (arquivos.length === 2) {
     const imagens: string[] = [];
     for (const arquivo of arquivos) {
       verificarCancelamento(signal);
       imagens.push(await carregarImagem(arquivo));
     }
-    return imagens;
+    return { imagens };
   }
+  // PDF
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   verificarCancelamento(signal);
@@ -75,7 +147,7 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<s
       imagens.push(canvas.toDataURL('image/png'));
       pagina.cleanup();
     }
-    return imagens;
+    return { imagens };
   } finally {
     signal.removeEventListener('abort', cancelar);
     await tarefa.destroy();
@@ -85,9 +157,23 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<s
 export async function lerDocumento(
   arquivos: File[], signal: AbortSignal, progresso: (texto: string) => void,
 ): Promise<PaginaLida[]> {
-  progresso('Preparando frente e verso…');
-  const imagens = await prepararPaginas(arquivos, signal);
+  progresso('Preparando documento…');
+  const { imagens, textos } = await prepararPaginas(arquivos, signal);
   verificarCancelamento(signal);
+
+  // DOCX: texto já extraído, sem OCR
+  if (textos) {
+    progresso('Texto do DOCX extraído automaticamente.');
+    return textos.map((texto, i) => ({
+      lado: (i === 0 ? 'Frente' : 'Verso') as 'Frente' | 'Verso',
+      imagem: imagens[i],
+      texto,
+      confianca: 99,
+      palavrasDuvidosas: [],
+    }));
+  }
+
+  // PDF ou imagens: OCR com Tesseract
   const { createWorker } = await import('tesseract.js');
   let paginaAtual = 0;
   progresso('Carregando leitura em português…');
