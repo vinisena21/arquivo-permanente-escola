@@ -19,6 +19,7 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
   const [documento, setDocumento] = useState(criarDocumento);
   const [regimento, setRegimento] = useState('');
   const [estadoIA, setEstadoIA] = useState<'verificando' | 'disponivel' | 'nao-configurada' | 'indisponivel'>('verificando');
+  const [provedorIA, setProvedorIA] = useState<'openai' | 'gemini'>('openai');
   const [analisandoIA, setAnalisandoIA] = useState(false);
   const [erroIA, setErroIA] = useState('');
   const [analiseIA, setAnaliseIA] = useState<{ assinatura: string; resultado: ResultadoAnalise } | null>(null);
@@ -40,7 +41,7 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
   const achados = [
     ...avaliarConferencia(paginas, anos, identidade, assinaturas, normas),
     ...avaliarPreenchimento(paginas, anos, documento),
-    ...(resultadoIA?.achados.map((a) => ({ ...a, campo: `IA / ${a.campo}`, motivo: `${a.motivo}${a.evidencia ? ` Evidência (${a.origem === 'ocr' ? a.pagina : 'transcrição'}): ${a.evidencia}` : ''}` })) ?? []),
+    ...(resultadoIA?.achados.map((a) => ({ ...a, campo: `IA / ${a.campo}`, motivo: `${a.motivo}${a.evidencia ? ` Evidência (${a.origem === 'ocr' ? a.pagina : a.origem === 'indicadores' ? 'indicadores sem identificadores diretos' : 'transcrição'}): ${a.evidencia}` : ''}` })) ?? []),
   ];
   const erros = achados.filter((a) => a.nivel === 'erro');
   const duvidas = achados.filter((a) => a.nivel === 'duvida');
@@ -52,7 +53,7 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
   useEffect(() => {
     const controlador = new AbortController();
     fetch('/api/analisar-historico', { signal: controlador.signal })
-      .then(async (r) => { if (!r.ok) throw new Error('Serviço indisponível.'); const dados = await r.json(); if (typeof dados.configurada !== 'boolean') throw new Error('Resposta inválida.'); return dados.configurada; })
+      .then(async (r) => { if (!r.ok) throw new Error('Serviço indisponível.'); const dados = await r.json(); if (typeof dados.configurada !== 'boolean') throw new Error('Resposta inválida.'); setProvedorIA(dados.provedor === 'gemini' ? 'gemini' : 'openai'); return dados.configurada; })
       .then((disponivel) => setEstadoIA(disponivel ? 'disponivel' : 'nao-configurada'))
       .catch(() => { if (!controlador.signal.aborted) setEstadoIA('indisponivel'); });
     return () => controlador.abort();
@@ -198,10 +199,10 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
 
         <section className="conf-section conf-no-print">
           <h3><Sparkles size={20} /> Análise de preenchimento e legislação por IA</h3>
-          <p className="conf-scope">{estadoIA === 'disponivel' ? 'O texto reconhecido e os dados transcritos serão enviados à OpenAI para esta análise.' : estadoIA === 'verificando' ? 'Verificando disponibilidade da IA…' : estadoIA === 'nao-configurada' ? 'Análise por IA pendente de configuração. As verificações automáticas continuam disponíveis.' : 'Serviço de IA indisponível. As verificações automáticas continuam disponíveis.'}</p>
-          <label className="conf-textarea">Regimento / orientação da Secretaria (opcional)<textarea rows={3} maxLength={12000} value={regimento} onChange={(e) => setRegimento(e.target.value)} /></label>
+          <p className="conf-scope">{estadoIA === 'disponivel' ? provedorIA === 'gemini' ? 'Somente dados acadêmicos e indicadores de preenchimento, sem nomes, filiação, datas pessoais ou texto integral, serão enviados ao Gemini.' : 'O texto reconhecido e os dados transcritos serão enviados à OpenAI para esta análise.' : estadoIA === 'verificando' ? 'Verificando disponibilidade da IA…' : estadoIA === 'nao-configurada' ? 'Análise por IA pendente de configuração. As verificações automáticas continuam disponíveis.' : 'Serviço de IA indisponível. As verificações automáticas continuam disponíveis.'}</p>
+          <label className="conf-textarea">{provedorIA === 'gemini' ? 'Regimento / orientação da Secretaria (revisão local; não enviado ao Gemini)' : 'Regimento / orientação da Secretaria (opcional)'}<textarea rows={3} maxLength={12000} value={regimento} onChange={(e) => setRegimento(e.target.value)} /></label>
           <details className="conf-legal-sources"><summary>Base federal consultada · {DATA_BASE_LEGAL}</summary>{FONTES_LEGAIS.map((f) => <p key={f.id}><a href={f.url} target="_blank" rel="noreferrer">{f.titulo}</a><br />{f.resumo}</p>)}</details>
-          <button type="button" className="conf-button conf-primary" disabled={estadoIA !== 'disponivel' || analisandoIA || lendo || !obterToken} onClick={() => void analisarIA()}>{analisandoIA ? <LoaderCircle className="conf-spin" size={18} /> : <Sparkles size={18} />} {analisandoIA ? 'Analisando histórico' : 'Analisar com IA'}</button>
+          <button type="button" className="conf-button conf-primary" disabled={estadoIA !== 'disponivel' || analisandoIA || lendo || !obterToken} onClick={() => void analisarIA()}>{analisandoIA ? <LoaderCircle className="conf-spin" size={18} /> : <Sparkles size={18} />} {analisandoIA ? 'Analisando histórico' : provedorIA === 'gemini' ? 'Analisar com Gemini' : 'Analisar com IA'}</button>
           {analisandoIA && <button type="button" className="conf-icon" aria-label="Cancelar análise de IA" title="Cancelar análise de IA" onClick={() => cancelamentoIA.current?.abort()}><X size={18} /></button>}
           {erroIA && <p className="conf-error" role="alert">{erroIA}</p>}
           {analiseIA && !resultadoIA && <p className="conf-warning-text">Os dados foram alterados após a análise. É necessário analisar novamente.</p>}

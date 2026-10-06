@@ -195,9 +195,12 @@ PNG, JPG ou WebP, na ordem frente e verso (até 25 MB por arquivo). A digitaliza
 
 As imagens são lidas em português com Tesseract.js no navegador. O PDF é renderizado
 com PDF.js. A leitura e as verificações automáticas não enviam o documento ao
-Supabase ou à IA. Ao solicitar **Analisar com IA**, o texto OCR, os campos transcritos
-e a orientação/regimento informado são enviados à OpenAI pelo servidor; imagens
-não são enviadas. Na primeira leitura, há download do mecanismo e do modelo de OCR;
+Supabase ou à IA. Com OpenAI, ao solicitar **Analisar com IA**, o texto OCR, os campos
+transcritos e a orientação/regimento informado são enviados à OpenAI pelo servidor.
+Com Gemini, somente valores acadêmicos em formatos controlados, categorias e
+indicadores booleanos são enviados ao Google; nomes, filiação, datas pessoais,
+escola/município em texto livre, OCR integral e texto do regimento não são enviados.
+Imagens não são enviadas a nenhum dos provedores. Na primeira leitura, há download do mecanismo e do modelo de OCR;
 é necessário acesso à internet. O documento permanece em memória enquanto a sessão
 estiver aberta, inclusive ao alternar abas. Uma nova leitura bem-sucedida substitui
 a conferência anterior. Recarregar a página ou sair encerra esse estado.
@@ -253,20 +256,41 @@ No projeto `guia-escolar`, configure as variáveis de ambiente de **Production**
 
 | Variável | Valor |
 |---|---|
-| `OPENAI_API_KEY` | Chave de API da OpenAI com acesso e créditos |
+| `IA_PROVEDOR` | `gemini` ou `openai` |
+| `GEMINI_API_KEY` | Chave do Google Gemini; tipo Sensitive, somente no servidor |
+| `GEMINI_MODEL` | Opcional: modelo Gemini compatível com JSON Schema; padrão `gemini-3.8-flash` |
+| `OPENAI_API_KEY` | Somente ao escolher OpenAI: chave com acesso e créditos |
 | `IA_EMAILS_AUTORIZADOS` | E-mails dos usuários do Supabase autorizados, separados por vírgula |
-| `OPENAI_MODEL` | Opcional: modelo com Responses/Structured Outputs; padrão `gpt-6-astra` |
+| `OPENAI_MODEL` | Somente OpenAI, opcional: modelo com Responses/Structured Outputs; padrão `gpt-6-astra` |
+
+Use apenas a chave do provedor escolhido. Não há troca automática para outro provedor
+quando há falta de chave, quota excedida ou indisponibilidade. A integração não
+habilita faturamento no Google: o uso segue a configuração e os limites do projeto
+associado à chave. O plano gratuito tem limitações e pode usar conteúdo para melhorar
+produtos; por isso o Gemini recebe uma representação sem identificadores pessoais
+diretos e sem texto livre do documento. Isso não é uma garantia de anonimização
+irreversível de toda trajetória escolar. Verifique as políticas da escola antes de
+usar serviços externos. Os achados do Gemini são sugestões para revisão e não uma
+certificação de ilegalidade. A conferência local continua verificando os dados pessoais.
+
+O Gemini utiliza a biblioteca oficial `@google/genai` com a API Interactions,
+resposta JSON validada por Zod e `store: false`. A resposta precisa estar concluída;
+erros de quota ou indisponibilidade não produzem relatório simulado. Referências:
+[Interactions](https://ai.google.dev/gemini-api/docs/interactions-overview),
+[respostas estruturadas](https://ai.google.dev/gemini-api/docs/structured-output) e
+[condições dos planos](https://ai.google.dev/gemini-api/docs/pricing).
 
 As variáveis existentes `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` também
 são usadas no servidor para validar a sessão. Alternativamente, configure
-`SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. Nunca use prefixo `VITE_` para a chave
-da OpenAI e nunca versione chaves reais. Depois de configurar, faça um novo deploy.
+`SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. Nunca use prefixo `VITE_` para chaves
+de IA e nunca versione chaves reais. Depois de configurar, faça um novo deploy.
 
 O endpoint `api/analisar-historico.ts` valida o token pelo Supabase e o e-mail pela
 lista de autorizados, limita tamanho de entrada e usa Structured Outputs. O guard
 de 10 solicitações/hora/usuário é por instância de função, não um limite global
-distribuído; defina também limites de gastos no projeto da OpenAI. Documentos e
-tokens não são registrados em logs e as chamadas usam `store: false`. Citações
+distribuído; observe também os limites do provedor. Documentos e
+tokens não são registrados em logs e as chamadas usam `store: false` (isso não
+substitui os termos de tratamento de dados de cada provedor). Citações
 ficam restritas à base federal e evidências inexistentes são rebaixadas para dúvida.
 Editar os dados invalida o resultado anterior da IA. Falhas e falta de configuração
 são mostradas como indisponibilidade, sem resultado simulado.

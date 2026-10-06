@@ -25,25 +25,25 @@ export const ResultadoModeloSchema = z.object({
   resumo: z.string().max(1500),
   achados: z.array(z.object({
     nivel: z.enum(['erro', 'duvida']), campo: z.string().max(150), motivo: z.string().max(1500),
-    origem: z.enum(['ocr', 'transcricao', 'naoLocalizado']),
+    origem: z.enum(['ocr', 'transcricao', 'indicadores', 'naoLocalizado']),
     pagina: z.enum(['Frente', 'Verso', 'Não localizada']), evidencia: z.string().max(500),
     fontes: z.array(z.enum(['ldb', 'lei14040', 'lei14218'])).max(3),
   }).strict()).max(30),
   pendencias: z.array(z.string().max(500)).max(15),
 }).strict();
-export const ResultadoAnaliseSchema = ResultadoModeloSchema.extend({ modelo: z.string(), data: z.string() });
+export const ResultadoAnaliseSchema = ResultadoModeloSchema.extend({ modelo: z.string(), data: z.string(), provedor: z.enum(['openai', 'gemini']).optional() });
 export type PedidoAnalise = z.infer<typeof PedidoAnaliseSchema>;
 export type ResultadoModelo = z.infer<typeof ResultadoModeloSchema>;
 export type ResultadoAnalise = z.infer<typeof ResultadoAnaliseSchema>;
 
 function normalizar(valor: string) { return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
-export function verificarEvidencias(resultado: ResultadoModelo, pedido: PedidoAnalise): ResultadoModelo {
+export function verificarEvidencias(resultado: ResultadoModelo, pedido: PedidoAnalise, indicadores?: unknown): ResultadoModelo {
   return { ...resultado, achados: resultado.achados.map((achado) => {
     if (achado.origem === 'naoLocalizado') return { ...achado, nivel: 'duvida' as const };
-    const fonte = achado.origem === 'ocr' ? pedido.paginas.find((p) => p.lado === achado.pagina)?.texto ?? '' : JSON.stringify({ documento: pedido.documento, anos: pedido.anos, regimento: pedido.regimento });
+    const fonte = achado.origem === 'indicadores' ? JSON.stringify(indicadores ?? {}) : achado.origem === 'ocr' ? pedido.paginas.find((p) => p.lado === achado.pagina)?.texto ?? '' : JSON.stringify({ documento: pedido.documento, anos: pedido.anos, regimento: pedido.regimento });
     if (!achado.evidencia.trim() || !normalizar(fonte).includes(normalizar(achado.evidencia))) {
       return { ...achado, nivel: 'duvida' as const, evidencia: '', motivo: `${achado.motivo} A evidência indicada pela IA não foi localizada nos dados enviados; confirme no original.` };
     }
-    return achado;
+    return achado.origem === 'indicadores' ? { ...achado, nivel: 'duvida' as const } : achado;
   }) };
 }

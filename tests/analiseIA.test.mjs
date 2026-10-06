@@ -22,7 +22,7 @@ async function chamar(handler, req = {}) {
 test('sem chave e allowlist: indisponível, nunca simula análise', async () => {
   const s = setup({ env: {} });
   const get = await chamar(s.handler, { method: 'GET' });
-  assert.deepEqual(get.json, { configurada: false });
+  assert.deepEqual(get.json, { configurada: false, provedor: 'openai' });
   assert.equal((await chamar(s.handler)).status, 503); assert.equal(s.chamadas(), 0);
 });
 test('requer autenticação validada pelo Supabase e e-mail autorizado', async () => {
@@ -56,4 +56,13 @@ test('guard por usuário limita chamadas na instância e não chama provedor nov
   const s = setup();
   for (let i = 0; i < 10; i++) assert.equal((await chamar(s.handler)).status, 200);
   assert.equal((await chamar(s.handler)).status, 429); assert.equal(s.chamadas(), 10);
+});
+test('Gemini usa sua chave/modelo e não recorre a OpenAI quando a chave falta', async () => {
+  let parametros;
+  const s = setup({ env: { ...env, IA_PROVEDOR: 'gemini', GEMINI_API_KEY: 'chave-gemini-ficticia' }, analisar: async (...args) => { parametros = args; return resultado; } });
+  const resposta = await chamar(s.handler);
+  assert.equal(resposta.status, 200); assert.equal(resposta.json.provedor, 'gemini');
+  assert.equal(parametros[1], 'gemini-3.8-flash'); assert.equal(parametros[2], 'chave-gemini-ficticia'); assert.equal(parametros[3], 'gemini');
+  const ausente = setup({ env: { ...env, IA_PROVEDOR: 'gemini' } });
+  assert.equal((await chamar(ausente.handler)).status, 503); assert.equal(ausente.chamadas(), 0);
 });
