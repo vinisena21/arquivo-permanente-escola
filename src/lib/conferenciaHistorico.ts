@@ -68,10 +68,6 @@ export function somarCargas(ano: AnoConferencia): number | null {
   return valores.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
 }
 
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-}
-
 function normalizarNota(token: string): string {
   const t = token.trim();
   if (!t || /^(--|—|–|-|=)$/.test(t)) return '';
@@ -86,7 +82,6 @@ function textoFundamental(textos: string[]): string {
   const todo = textos.join('\n');
   const m = /HIST[ÓO]RICO\s+ESCOLAR\s*[-–]?\s*ENSINO\s+FUNDAMENTAL/i.exec(todo);
   if (m) return todo.slice(m.index);
-  // Fallback: bloco que começa no Ciclo da Alfabetização
   const m2 = /CICLO\s+DA\s+ALFABETIZA[ÇC][ÃA]O/i.exec(todo);
   if (m2) return todo.slice(m2.index);
   return todo;
@@ -97,77 +92,67 @@ function textoFundamental(textos: string[]): string {
  * Layout real (DOCX em tabela):
  *   1º ANO / ANO: 2021 / Aproveitamento / 85,0 / -- / 84,0 ... / APROVADO
  *   Carga Horária Curricular / 800:00 / ... / 800:00
- *   Faltas/Horas / 00:00
- *   ESTABELECIMENTO / MUNICÍPIO / DIAS LETIVOS / CARGA HORÁRIA ANUAL
  */
 export function sugerirAnos(textos: string[]): AnoConferencia[] {
   const anos = criarAnos();
   const fund = textoFundamental(textos);
   if (!fund.trim()) return anos;
 
-  for (let s = 1; s <= 9; s++) {
+  // Localiza início de cada série no Fundamental (evita $ com flag m)
+  const inicios: { serie: number; index: number }[] = [];
+  const reInicio = /(?:^|\n)\s*([1-9])\s*[º°oO]?\s*ANO\b/gi;
+  let mIni: RegExpExecArray | null;
+  while ((mIni = reInicio.exec(fund)) !== null) {
+    const serie = Number(mIni[1]);
+    if (serie >= 1 && serie <= 9 && !inicios.some((x) => x.serie === serie)) {
+      inicios.push({ serie, index: mIni.index });
+    }
+  }
+  inicios.sort((a, b) => a.index - b.index);
+
+  for (let i = 0; i < inicios.length; i++) {
+    const { serie: s, index } = inicios[i];
     const reg = anos[s - 1];
+    const fim = i + 1 < inicios.length ? inicios[i + 1].index : fund.length;
+    const bloco = fund.slice(index, fim);
 
-    // Bloco desta série até a próxima (só dentro do Fundamental)
-    const reBloco = new RegExp(
-      `(?:^|\\n)\\s*${s}\\s*[º°oO]?\\s*ANO\\b([\\s\\S]*?)(?=(?:^|\\n)\\s*${s < 9 ? s + 1 : 99}\\s*[º°oO]?\\s*ANO\\b|$)`,
-      'im',
-    );
-    const mBloco = reBloco.exec(fund);
-    if (!mBloco) continue;
-    const bloco = mBloco[1] ?? '';
-
-    // Ano letivo
     const letivo = /\bANO\s*:\s*(\d{4})\b/i.exec(bloco);
     if (letivo) reg.anoLetivo = letivo[1];
 
-    // Situação
     const sit = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO|EM\s+CURSO)\b/i.exec(bloco);
     if (sit) reg.situacao = sit[1].toUpperCase().replace(/\s+/g, ' ').replace('EM CURSO', 'CURSANDO');
 
-    // Notas: tokens logo após "Aproveitamento", parando em situação / carga / observações
     const mApr = /Aproveitamento\s*([\s\S]*?)(?=\b(?:APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|EM\s+CURSO|Carga\s+Hor[áa]ria|Faltas|Observa)/i).exec(bloco);
     if (mApr) {
-      const trecho = mApr[1];
-      const tokens = trecho.match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
+      const tokens = mApr[1].match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
       const limpos = tokens.map(normalizarNota);
-      // Ordem: LP, Inglês, Arte, Ed. Física, Matemática, Ciências, História, Geografia, Ens. Religioso
-      reg.notas = Array.from({ length: 9 }, (_, i) => limpos[i] ?? '');
+      reg.notas = Array.from({ length: 9 }, (_, j) => limpos[j] ?? '');
       if (reg.notas.some((n) => /^\d/.test(n))) {
         const nums = reg.notas.filter((n) => /^\d/.test(n)).map((n) => Number(n));
-        const max = Math.max(...nums, 0);
-        reg.escalaNotas = max <= 10 ? '10' : '100';
+        reg.escalaNotas = Math.max(...nums, 0) <= 10 ? '10' : '100';
       } else if (reg.notas.some((n) => /^[ABC]$/i.test(n))) {
         reg.escalaNotas = 'conceitos';
       }
     }
 
-    // Carga horária curricular → tokens H:MM após o rótulo até Faltas/ESTABELECIMENTO
     const mCarga = /Carga\s+Hor[áa]ria\s+Curricular\s*([\s\S]*?)(?=\b(?:Faltas|ESTABELECIMENTO|MUNIC[ÍI]PIO|DIAS\s+LETIVOS|CARGA\s+HOR[ÁA]RIA\s+ANUAL|M[ÍI]NIMO|Observa)/i).exec(bloco);
     if (mCarga) {
-      const hs = (mCarga[1].match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => !h.startsWith('00:') || h === '00:00');
-      // Filtra lixo de âncoras (ex.: números enormes sem sentido escolar já excluídos pelo regex H:MM)
-      const validas = hs.filter((h) => {
+      const validas = (mCarga[1].match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => {
         const min = lerHoras(h);
-        return min !== null && min <= 2000 * 60; // até 2000h
+        return min !== null && min <= 2000 * 60;
       });
       if (reg.modo === 'global') {
         if (validas[0]) reg.cargas[0] = validas[0];
         if (validas.length >= 2) reg.total = validas[validas.length - 1]!;
         else if (validas[0]) reg.total = validas[0];
-      } else {
-        // 6º–9º: preenche por disciplina se houver várias H:MM; senão só total
-        if (validas.length >= 9) {
-          reg.cargas = validas.slice(0, 9);
-          if (validas[9]) reg.total = validas[9];
-        } else if (validas.length >= 1) {
-          reg.total = validas[validas.length - 1]!;
-          // se só uma, não força em cargas[0] no modo disciplinas (evita falso "só LP")
-        }
+      } else if (validas.length >= 9) {
+        reg.cargas = validas.slice(0, 9);
+        if (validas[9]) reg.total = validas[9];
+      } else if (validas.length >= 1) {
+        reg.total = validas[validas.length - 1]!;
       }
     }
 
-    // Carga anual
     const anual = /CARGA\s+HOR[ÁA]RIA\s+ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco)
       ?? /CH\.?\s*ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco);
     if (anual) reg.anual = anual[1];
@@ -177,33 +162,27 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       reg.cargas[0] = reg.anual || reg.total;
     }
 
-    // Faltas (evita capturar "5611" solto sem : se for absurdo — mas mantém H:MM)
     const faltas = /Faltas\s*\/?\s*Horas\s*[\s\S]{0,40}?(\d{1,4}:[0-5]\d)/i.exec(bloco);
     if (faltas) reg.faltasHoras = faltas[1];
 
-    // Escola
     const escola = /ESTABELECIMENTO\s*:\s*([^\n]+)/i.exec(bloco);
     if (escola) {
       const e = escola[1].replace(/\s+/g, ' ').trim();
       if (e && !/^-+$/.test(e)) reg.escola = e;
     }
 
-    // Município
     const mun = /MUNIC[ÍI]PIO(?:\s*\/\s*ESTADO)?\s*:\s*([^\n]+)/i.exec(bloco);
     if (mun) {
-      const m = mun[1].replace(/\s+/g, ' ').trim();
-      if (m && !/^-+$/.test(m)) reg.municipio = m;
+      const mv = mun[1].replace(/\s+/g, ' ').trim();
+      if (mv && !/^-+$/.test(mv)) reg.municipio = mv;
     }
 
-    // Dias letivos
     const dias = /DIAS\s+LETIVOS(?:\s+ANUAIS)?\s*:\s*(\*?\d{1,3})\b/i.exec(bloco);
     if (dias) reg.diasLetivos = dias[1];
 
-    // Mínimo promoção
     const min = /M[ÍI]NIMO\s+PARA\s+PROMO[ÇC][ÃA]O\s*:\s*(\d+(?:[.,]\d+)?%?)/i.exec(bloco);
     if (min) reg.minimoPromocao = min[1];
 
-    // Observações
     const obs = /Observa[çc][õo]es\s*:?\s*([^\n]{3,150})/i.exec(bloco);
     if (obs) reg.observacoes = obs[1].replace(/\s+/g, ' ').trim();
   }
@@ -235,7 +214,6 @@ export function avaliarConferencia(
     const horas = ano.modo === 'global' ? ano.cargas.slice(0, 1) : ano.cargas;
 
     if (ano.modo === 'disciplinas') {
-      // 6º–9º: se houver cargas por disciplina, confere se a soma bate com o total
       const preenchidas = ano.cargas.filter((c) => lerHoras(c) !== null);
       if (preenchidas.length >= 2 && soma !== null && total !== null) {
         achados.push({
@@ -249,7 +227,7 @@ export function avaliarConferencia(
         achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
       }
     } else {
-      horas.forEach((hora, i) => {
+      horas.forEach((hora) => {
         if (lerHoras(hora) === null) {
           achados.push({
             nivel: hora.trim() ? 'erro' : 'duvida',
