@@ -48,7 +48,7 @@ async function carregarImagem(arquivo: File): Promise<string> {
   }
 }
 
-/** Extrai texto de um DOCX (word/document.xml) de forma simples e robusta. */
+/** Extrai texto de um DOCX preservando separação de células de tabela. */
 async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<string> {
   verificarCancelamento(signal);
   const PizZip = (await import('pizzip')).default;
@@ -56,8 +56,10 @@ async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<str
   const doc = zip.file('word/document.xml');
   if (!doc) throw new Error('Arquivo DOCX inválido: não contém word/document.xml.');
   const xml = doc.asText();
-  // Substitui fins de parágrafo e quebras por quebras de linha, remove tags e decodifica entidades básicas.
+  // Células de tabela → espaço; fim de linha de tabela e parágrafo → quebra de linha
   const texto = xml
+    .replace(/<w:tc[\s>]/gi, ' ')
+    .replace(/<\/w:tr>/gi, '\n')
     .replace(/<\/w:p>/gi, '\n')
     .replace(/<w:br\b[^/]*\/>/gi, '\n')
     .replace(/<w:tab\b[^/]*\/>/gi, '\t')
@@ -68,14 +70,15 @@ async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<str
     .replace(/"/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/[ \t]+\n/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (texto.length < 50) throw new Error('Não foi possível extrair texto suficiente do DOCX. Verifique se o arquivo não está vazio ou protegido.');
   return texto;
 }
 
-/** Cria uma imagem placeholder em branco (para DOCX, que não tem preview de página). */
 function imagemPlaceholder(): string {
   const canvas = document.createElement('canvas');
   canvas.width = 600;
@@ -101,18 +104,14 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{
   const isDocx = arquivos.length === 1 && (arquivos[0].type === TIPO_DOCX || arquivos[0].name.toLowerCase().endsWith('.docx'));
   if (isDocx) {
     const texto = await extrairTextoDocx(arquivos[0], signal);
-    // Heurística: tenta separar frente/verso se houver marcadores comuns de histórico escolar.
     const normalizado = texto.replace(/\r\n/g, '\n');
-    const marcadoresVerso = /(?:^|\n)\s*(?:NOME\s*:|VERSO|CARGA HOR[ÁA]RIA|OBSERVA[ÇC][ÕO]ES GERAIS)/i;
-    const idx = normalizado.search(marcadoresVerso);
+    // Separa pelo título do histórico fundamental (verso) quando existir
+    const idxFund = normalizado.search(/HIST[ÓO]RICO ESCOLAR\s*[-–]?\s*ENSINO FUNDAMENTAL/i);
     let frente = normalizado;
-    let verso = '';
-    if (idx > 100) {
-      frente = normalizado.slice(0, idx).trim();
-      verso = normalizado.slice(idx).trim();
-    } else {
-      // Se não separou bem, coloca tudo na frente e deixa verso com o mesmo (para extração achar campos).
-      verso = normalizado;
+    let verso = normalizado;
+    if (idxFund > 80) {
+      frente = normalizado.slice(0, idxFund).trim();
+      verso = normalizado.slice(idxFund).trim();
     }
     const placeholder = imagemPlaceholder();
     return { imagens: [placeholder, placeholder], textos: [frente, verso] };
@@ -125,7 +124,6 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{
     }
     return { imagens };
   }
-  // PDF
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   verificarCancelamento(signal);
@@ -161,7 +159,6 @@ export async function lerDocumento(
   const { imagens, textos } = await prepararPaginas(arquivos, signal);
   verificarCancelamento(signal);
 
-  // DOCX: texto já extraído, sem OCR
   if (textos) {
     progresso('Texto do DOCX extraído automaticamente.');
     return textos.map((texto, i) => ({
@@ -173,7 +170,6 @@ export async function lerDocumento(
     }));
   }
 
-  // PDF ou imagens: OCR com Tesseract
   const { createWorker } = await import('tesseract.js');
   let paginaAtual = 0;
   progresso('Carregando leitura em português…');
@@ -183,7 +179,6 @@ export async function lerDocumento(
       if (!signal.aborted && status === 'recognizing text') progresso(`Lendo ${paginaAtual === 0 ? 'frente' : 'verso'}: ${Math.round(progress * 100)}%`);
     },
   });
-  // Worker creation can finish after cancellation; terminate that late worker as well.
   void criandoWorker.then((w) => { if (signal.aborted) void w.terminate(); }, () => {});
   const worker = await aguardar(criandoWorker, signal);
   const cancelar = () => { void worker.terminate(); };
@@ -195,7 +190,6 @@ export async function lerDocumento(
       verificarCancelamento(signal);
       const { data } = await aguardar(worker.recognize(imagens[paginaAtual], { rotateAuto: true }, { text: true, blocks: true }), signal);
       const palavras = (data.blocks ?? []).flatMap((bloco) => bloco.paragraphs.flatMap((p) => p.lines.flatMap((linha) => linha.words)));
-      // Preserve table row order from word positions instead of OCR paragraph ordering.
       const ordenadas = [...palavras].sort((a, b) => a.bbox.y0 - b.bbox.y0);
       const linhas: typeof palavras[] = [];
       for (const palavra of ordenadas) {
