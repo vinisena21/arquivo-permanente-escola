@@ -20,27 +20,23 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
   const verso = paginas[1]?.texto ?? '';
   const todo = `${frente}\n${verso}`;
 
-  // Nome na frente (vários padrões comuns em históricos)
   dados.nomeFrente =
     /Certificamos que\s*:\s*(.+?)(?:\s+natural de\s*:|\n|$)/i.exec(frente)?.[1]?.trim()
     ?? /(?:^|\n)\s*NOME\s*(?:DO\s*ALUNO)?\s*:\s*([^\n]+)/i.exec(frente)?.[1]?.trim()
     ?? /(?:^|\n)\s*Aluno\(a\)\s*:\s*([^\n]+)/i.exec(frente)?.[1]?.trim()
     ?? '';
 
-  // Nome no verso
   dados.nomeVerso =
     /(?:^|\n)\s*NOME\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
     ?? /(?:^|\n)\s*NOME\s*(?:DO\s*ALUNO)?\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
     ?? '';
 
-  // Data de nascimento
   dados.nascimento =
     /Nascid[oa](?:\(a\))?\s*em\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(frente)?.[1]
     ?? /(?:Data de\s*)?Nascimento\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(todo)?.[1]
     ?? /Nasc\.?\s*em\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(todo)?.[1]
     ?? '';
 
-  // Filiação (vários formatos)
   const filiacao1 = /Filho\(a\)\s*de\s*:\s*(.+?)\s+e de\s*:\s*([^\n]+)/i.exec(frente);
   if (filiacao1) {
     dados.nomePai = filiacao1[1]?.trim() ?? '';
@@ -48,9 +44,8 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
   } else {
     const mae = /(?:Filia[çc][ãa]o\s*1|M[ãa]e|Filia[çc][ãa]o\s*materna)\s*:\s*([^\n]+)/i.exec(todo);
     const pai = /(?:Filia[çc][ãa]o\s*2|Pai|Filia[çc][ãa]o\s*paterna)\s*:\s*([^\n]+)/i.exec(todo);
-    if (mae) dados.nomeMae = mae[1].trim();
-    if (pai) dados.nomePai = pai[1].trim();
-    // Formato "Filiação: PAI e MÃE"
+    if (mae) dados.nomeMae = mae[1]!.trim();
+    if (pai) dados.nomePai = pai[1]!.trim();
     const filiacao2 = /Filia[çc][ãa]o\s*:\s*(.+?)\s+e\s+([^\n]+)/i.exec(frente);
     if (filiacao2 && !dados.nomePai) {
       dados.nomePai = filiacao2[1]?.trim() ?? '';
@@ -58,7 +53,6 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
     }
   }
 
-  // UF e naturalidade
   dados.uf = /\bUF\s*:\s*([A-Z]{2})\b/i.exec(frente)?.[1]?.toUpperCase()
     ?? /\bUF\s*:\s*([A-Z]{2})\b/i.exec(todo)?.[1]?.toUpperCase()
     ?? '';
@@ -67,7 +61,6 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
     ?? /Naturalidade\s*:\s*(.+?)(?:\s+UF\s*:|\n|$)/i.exec(todo)?.[1]?.trim()
     ?? '';
 
-  // Nacionalidade e sexo
   dados.nacionalidade =
     /nacionalidade\s*:\s*(.+?)(?:\s+do sexo|\n|$)/i.exec(frente)?.[1]?.trim()
     ?? /Nacionalidade\s*:\s*([^\n]+)/i.exec(todo)?.[1]?.trim()
@@ -77,26 +70,22 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
     ?? /Sexo\s*:\s*([^\n]+)/i.exec(todo)?.[1]?.trim()
     ?? '';
 
-  // Título
   dados.titulo = frente.split('\n').find((l) => /CERTIFICADO DE CONCLUS|HIST[ÓO]RICO ESCOLAR/i.test(l))?.trim() ?? '';
 
-  // Observações gerais
   dados.observacoesGerais =
     /Observa[çc][õo]es gerais\s*:\s*([^\n]+(?:\n(?!\s*[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ]{3,})[^\n]+)*)/i.exec(verso)?.[1]?.trim()
     ?? /Observa[çc][õo]es gerais\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
     ?? '';
 
-  // Data de expedição (vários formatos)
   const expedicaoMatch =
     /(?:Data de\s*)?Expedi[çc][ãa]o\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i.exec(todo)
     ?? /(?:Data de\s*)?Expedi[çc][ãa]o\s*:\s*(\d{1,2}\s+de\s+[A-Za-zçÇ]+\s+de\s+\d{4})/i.exec(todo)
     ?? /(?:emitido|expedido)\s+em\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i.exec(todo)
     ?? /(?:emitido|expedido)\s+em\s+(\d{1,2}\s+de\s+[A-Za-zçÇ]+\s+de\s+\d{4})/i.exec(todo);
   if (expedicaoMatch) {
-    dados.expedicao = dataExpedicaoBR(expedicaoMatch[1]) || expedicaoMatch[1].trim();
+    dados.expedicao = dataExpedicaoBR(expedicaoMatch[1]!) || expedicaoMatch[1]!.trim();
   }
 
-  // Fundamentação legal
   dados.fundamentacao =
     /Fundament[açc][ãa]o\s*legal\s*:\s*([^\n]+(?:\n(?!\s*[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ]{4,}\s*:)[^\n]+)*)/i.exec(todo)?.[1]?.trim()
     ?? /(?:Lei\s*n?[º°]?\s*9\.?394\/?1996|LDB|Lei de Diretrizes)[^\n]*/i.exec(todo)?.[0]?.trim()
@@ -110,8 +99,8 @@ export function dataExpedicaoBR(valor: string): string {
   const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   const match = /^(\d{1,2}) DE ([A-Z]+) DE (\d{4})$/.exec(normalizarConferencia(valor));
   if (!match) return '';
-  const mes = meses.indexOf(match[2].toLowerCase());
-  return mes < 0 ? '' : `${match[1].padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${match[3]}`;
+  const mes = meses.indexOf(match[2]!.toLowerCase());
+  return mes < 0 ? '' : `${match[1]!.padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${match[3]}`;
 }
 
 export function avaliarPreenchimento(paginas: PaginaLida[], anos: AnoConferencia[], dados: DocumentoConferencia): Achado[] {
@@ -164,10 +153,23 @@ export function avaliarPreenchimento(paginas: PaginaLida[], anos: AnoConferencia
     const faltas = lerHoras(ano.faltasHoras);
     if (faltas === null) achados.push({ nivel: ano.faltasHoras.trim() ? 'erro' : 'duvida', campo: `${campo} / Faltas em horas`, motivo: 'Faltas em horas não identificadas ou inválidas. Não converter dias/aulas em horas sem os dados do calendário.' });
     else if (horas !== null && horas > 0 && (faltas > horas || (horas - faltas) / horas < .75)) achados.push({ nivel: 'duvida', campo: `${campo} / Frequência`, motivo: faltas > horas ? 'Faltas maiores que a carga anual; confira a unidade e a transcrição.' : 'Frequência calculada abaixo de 75%. Confira o regimento, a contabilização de atividades e a situação do aluno.', fontes: ['ldb'] });
+
     const limite = ano.escalaNotas === '10' ? 10 : 100;
     const minimoTexto = ano.minimoPromocao.replace('%', '').replace(',', '.');
     const minimo = /^\d+(?:\.\d+)?$/.test(minimoTexto) ? Number(minimoTexto) * (ano.minimoPromocao.includes('%') ? limite / 100 : 1) : null;
-    if (ano.escalaNotas !== 'conceitos' && (minimo === null || minimo > limite)) achados.push({ nivel: ano.minimoPromocao ? 'erro' : 'duvida', campo: `${campo} / Mínimo para promoção`, motivo: 'Mínimo não transcrito ou inválido para a escala selecionada. Confira o regimento; não presumir 60 pontos.' });
+
+    // 1º–5º ano: mínimo para promoção costuma ser "--" / não aplicável no modelo; não exige.
+    // 6º–9º: se a escala for numérica, avisa se estiver ausente/inválido.
+    if (ano.serie >= 6 && ano.escalaNotas !== 'conceitos') {
+      if (minimo === null || minimo > limite) {
+        achados.push({
+          nivel: ano.minimoPromocao.trim() && !/^(--|—|–|-)$/.test(ano.minimoPromocao.trim()) ? 'erro' : 'duvida',
+          campo: `${campo} / Mínimo para promoção`,
+          motivo: 'Mínimo não transcrito ou inválido para a escala selecionada. Confira o regimento; não presumir 60 pontos.',
+        });
+      }
+    }
+
     for (let i = 0; i < 9; i++) {
       if (i === 1 && ano.serie < 6) continue;
       const valor = ano.notas[i]?.trim() ?? '';
