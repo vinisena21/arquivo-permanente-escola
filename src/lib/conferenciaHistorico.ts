@@ -98,7 +98,6 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
   const fund = textoFundamental(textos);
   if (!fund.trim()) return anos;
 
-  // Localiza início de cada série no Fundamental (evita $ com flag m)
   const inicios: { serie: number; index: number }[] = [];
   const reInicio = /(?:^|\n)\s*([1-9])\s*[º°oO]?\s*ANO\b/gi;
   let mIni: RegExpExecArray | null;
@@ -122,7 +121,7 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
     const sit = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO|EM\s+CURSO)\b/i.exec(bloco);
     if (sit) reg.situacao = sit[1].toUpperCase().replace(/\s+/g, ' ').replace('EM CURSO', 'CURSANDO');
 
-    const mApr = /Aproveitamento\s*([\s\S]*?)(?=\b(?:APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|EM\s+CURSO|Carga\s+Hor[áa]ria|Faltas|Observa)/i).exec(bloco);
+    const mApr = /Aproveitamento\s*([\s\S]*?)(?=\b(?:APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|EM\s+CURSO|Carga\s+Hor[áa]ria|Faltas|Observa))/i.exec(bloco);
     if (mApr) {
       const tokens = mApr[1].match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
       const limpos = tokens.map(normalizarNota);
@@ -135,7 +134,7 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       }
     }
 
-    const mCarga = /Carga\s+Hor[áa]ria\s+Curricular\s*([\s\S]*?)(?=\b(?:Faltas|ESTABELECIMENTO|MUNIC[ÍI]PIO|DIAS\s+LETIVOS|CARGA\s+HOR[ÁA]RIA\s+ANUAL|M[ÍI]NIMO|Observa)/i).exec(bloco);
+    const mCarga = /Carga\s+Hor[áa]ria\s+Curricular\s*([\s\S]*?)(?=\b(?:Faltas|ESTABELECIMENTO|MUNIC[ÍI]PIO|DIAS\s+LETIVOS|CARGA\s+HOR[ÁA]RIA\s+ANUAL|M[ÍI]NIMO|Observa))/i.exec(bloco);
     if (mCarga) {
       const validas = (mCarga[1].match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => {
         const min = lerHoras(h);
@@ -143,13 +142,13 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       });
       if (reg.modo === 'global') {
         if (validas[0]) reg.cargas[0] = validas[0];
-        if (validas.length >= 2) reg.total = validas[validas.length - 1]!;
+        if (validas.length >= 2) reg.total = validas[validas.length - 1] ?? '';
         else if (validas[0]) reg.total = validas[0];
       } else if (validas.length >= 9) {
         reg.cargas = validas.slice(0, 9);
         if (validas[9]) reg.total = validas[9];
       } else if (validas.length >= 1) {
-        reg.total = validas[validas.length - 1]!;
+        reg.total = validas[validas.length - 1] ?? '';
       }
     }
 
@@ -221,7 +220,7 @@ export function avaliarConferencia(
           campo: `${campo} / Somatória das disciplinas`,
           motivo: soma === total
             ? `Soma das cargas (${formatarHoras(soma)}) igual ao total impresso (${formatarHoras(total)}).`
-            : `Soma das disciplinas ${formatarHoras(soma)} ≠ total ${formatarHoras(total)} (diferença ${formatarHoras(Math.abs(soma - total))}).`,
+            : `Soma das disciplinas ${formatarHoras(soma)} ≠ total ${formatarHoras(total)} (diferença ${formatarHoras(Math.abs(soma - total))}.`,
         });
       } else if (preenchidas.length === 0 && total === null && anual === null && /^\d{4}$/.test(ano.anoLetivo)) {
         achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
