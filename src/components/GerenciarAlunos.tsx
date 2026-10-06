@@ -10,6 +10,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { inserirAlunoSecretaria } from '../lib/alunosSecretaria';
 import type { AlunoArquivo } from '../types/database';
 import {
   validarNome,
@@ -28,9 +29,12 @@ interface AlunoResumo {
 /** @deprecated Use AlunoArquivo from types/database */
 export type AlunoCadastrado = AlunoArquivo;
 
+type DestinoCadastro = 'arquivo' | 'secretaria';
+
 interface GerenciarAlunosProps {
   alunos: AlunoResumo[];
   onAlunoCadastrado: (aluno: AlunoArquivo) => void;
+  onAlunoSecretariaCadastrado?: () => void;
 }
 
 interface ErrosCampos {
@@ -38,6 +42,7 @@ interface ErrosCampos {
   dataNascimento?: string;
   pasta?: string;
   numero?: string;
+  matricula?: string;
 }
 
 function formatarDataParaExibicao(data: string | null): string {
@@ -73,12 +78,23 @@ function encontrarPrimeiroDisponivel(
 
 export default function GerenciarAlunos({
   alunos,
-  onAlunoCadastrado
+  onAlunoCadastrado,
+  onAlunoSecretariaCadastrado,
 }: GerenciarAlunosProps) {
+  const [destino, setDestino] = useState<DestinoCadastro>('arquivo');
   const [nome, setNome] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
   const [pastaSelecionada, setPastaSelecionada] = useState('');
   const [numero, setNumero] = useState('');
+  // Secretaria
+  const [matricula, setMatricula] = useState('');
+  const [codigoEstudante, setCodigoEstudante] = useState('');
+  const [turma, setTurma] = useState('');
+  const [periodo, setPeriodo] = useState('');
+  const [turno, setTurno] = useState('');
+  const [situacao, setSituacao] = useState('NORMAL');
+  const [filiacao1, setFiliacao1] = useState('');
+  const [filiacao2, setFiliacao2] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [erroGeral, setErroGeral] = useState('');
@@ -156,6 +172,13 @@ export default function GerenciarAlunos({
     setMensagem(`Pasta ${pastaRecomendada.codigo} selecionada.`);
   }
 
+  function trocarDestino(novo: DestinoCadastro) {
+    setDestino(novo);
+    setMensagem('');
+    setErroGeral('');
+    setErros({});
+  }
+
   function validarFormulario(): boolean {
     const novosErros: ErrosCampos = {};
 
@@ -165,14 +188,119 @@ export default function GerenciarAlunos({
     const erroData = validarDataISO(dataNascimento, false);
     if (erroData) novosErros.dataNascimento = erroData;
 
-    const erroPasta = validarPasta(pastaAtual);
-    if (erroPasta) novosErros.pasta = erroPasta;
+    if (destino === 'arquivo') {
+      const erroPasta = validarPasta(pastaAtual);
+      if (erroPasta) novosErros.pasta = erroPasta;
 
-    const erroNumero = validarNumeroArquivo(numeroAtual);
-    if (erroNumero) novosErros.numero = erroNumero;
+      const erroNumero = validarNumeroArquivo(numeroAtual);
+      if (erroNumero) novosErros.numero = erroNumero;
+    } else {
+      if (!matricula.trim()) {
+        novosErros.matricula = 'Informe o código da matrícula.';
+      }
+    }
 
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
+  }
+
+  async function cadastrarArquivo() {
+    const nomeTratado = nome
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLocaleUpperCase('pt-BR');
+
+    const numeroTratado = Number(numeroAtual);
+
+    const { data: numeroExistente, error: erroConsulta } = await supabase
+      .from('alunos')
+      .select('id')
+      .eq('codigo_pasta', pastaAtual)
+      .eq('numero', numeroTratado)
+      .limit(1);
+
+    if (erroConsulta) throw erroConsulta;
+
+    if (numeroExistente && numeroExistente.length > 0) {
+      setErros((e) => ({
+        ...e,
+        numero: `O número ${numeroTratado} já está ocupado na pasta ${pastaAtual}.`
+      }));
+      return;
+    }
+
+    const { data: novoAluno, error: erroCadastro } = await supabase
+      .from('alunos')
+      .insert({
+        nome: nomeTratado,
+        data_nascimento: dataNascimento || null,
+        codigo_pasta: pastaAtual,
+        numero: numeroTratado,
+        status: 'Arquivado'
+      })
+      .select('id, nome, data_nascimento, codigo_pasta, numero, status')
+      .single();
+
+    if (erroCadastro) throw erroCadastro;
+
+    if (novoAluno) {
+      onAlunoCadastrado({
+        id: novoAluno.id,
+        nome: novoAluno.nome,
+        dataNascimento: formatarDataParaExibicao(novoAluno.data_nascimento),
+        codigoPasta: novoAluno.codigo_pasta,
+        numero: novoAluno.numero,
+        status: novoAluno.status
+      });
+    }
+
+    setMensagem(
+      `${nomeTratado} foi cadastrado no arquivo permanente — pasta ${pastaAtual}, número ${numeroTratado}.`
+    );
+
+    setNome('');
+    setDataNascimento('');
+    setPastaSelecionada('');
+    setNumero('');
+    setErros({});
+  }
+
+  async function cadastrarSecretaria() {
+    const nomeTratado = nome
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLocaleUpperCase('pt-BR');
+
+    await inserirAlunoSecretaria({
+      codigo_matricula: matricula.trim(),
+      nome: nomeTratado,
+      data_nascimento: dataNascimento || null,
+      codigo_estudante: codigoEstudante.trim() || null,
+      turma: turma.trim() || null,
+      periodo: periodo.trim() || null,
+      turno: turno.trim() || null,
+      situacao: situacao.trim() || 'NORMAL',
+      filiacao_1: filiacao1.trim() || null,
+      filiacao_2: filiacao2.trim() || null,
+    });
+
+    onAlunoSecretariaCadastrado?.();
+
+    setMensagem(
+      `${nomeTratado} foi cadastrado na secretaria — matrícula ${matricula.trim()}.`
+    );
+
+    setNome('');
+    setDataNascimento('');
+    setMatricula('');
+    setCodigoEstudante('');
+    setTurma('');
+    setPeriodo('');
+    setTurno('');
+    setSituacao('NORMAL');
+    setFiliacao1('');
+    setFiliacao2('');
+    setErros({});
   }
 
   async function cadastrarAluno(evento: FormEvent<HTMLFormElement>) {
@@ -184,70 +312,21 @@ export default function GerenciarAlunos({
       return;
     }
 
-    const nomeTratado = nome
-      .trim()
-      .replace(/\s+/g, ' ')
-      .toLocaleUpperCase('pt-BR');
-
-    const numeroTratado = Number(numeroAtual);
-
     setSalvando(true);
 
     try {
-      const { data: numeroExistente, error: erroConsulta } = await supabase
-        .from('alunos')
-        .select('id')
-        .eq('codigo_pasta', pastaAtual)
-        .eq('numero', numeroTratado)
-        .limit(1);
-
-      if (erroConsulta) throw erroConsulta;
-
-      if (numeroExistente && numeroExistente.length > 0) {
-        setErros((e) => ({
-          ...e,
-          numero: `O número ${numeroTratado} já está ocupado na pasta ${pastaAtual}.`
-        }));
-        return;
+      if (destino === 'arquivo') {
+        await cadastrarArquivo();
+      } else {
+        await cadastrarSecretaria();
       }
-
-      const { data: novoAluno, error: erroCadastro } = await supabase
-        .from('alunos')
-        .insert({
-          nome: nomeTratado,
-          data_nascimento: dataNascimento || null,
-          codigo_pasta: pastaAtual,
-          numero: numeroTratado,
-          status: 'Arquivado'
-        })
-        .select('id, nome, data_nascimento, codigo_pasta, numero, status')
-        .single();
-
-      if (erroCadastro) throw erroCadastro;
-
-      if (novoAluno) {
-        onAlunoCadastrado({
-          id: novoAluno.id,
-          nome: novoAluno.nome,
-          dataNascimento: formatarDataParaExibicao(novoAluno.data_nascimento),
-          codigoPasta: novoAluno.codigo_pasta,
-          numero: novoAluno.numero,
-          status: novoAluno.status
-        });
-      }
-
-      setMensagem(
-        `${nomeTratado} foi cadastrado na pasta ${pastaAtual}, número ${numeroTratado}.`
-      );
-
-      setNome('');
-      setDataNascimento('');
-      setPastaSelecionada('');
-      setNumero('');
-      setErros({});
     } catch (erroEncontrado) {
       console.error(erroEncontrado);
-      setErroGeral('Não foi possível cadastrar o aluno. Tente novamente.');
+      const msg =
+        erroEncontrado instanceof Error && erroEncontrado.message
+          ? erroEncontrado.message
+          : 'Não foi possível cadastrar o aluno. Tente novamente.';
+      setErroGeral(msg);
     } finally {
       setSalvando(false);
     }
@@ -258,12 +337,33 @@ export default function GerenciarAlunos({
       <div className="gerenciar-titulo">
         <div>
           <h2>Gerenciar alunos</h2>
-          <p>Cadastre novos registros no arquivo permanente.</p>
+          <p>Cadastre no arquivo permanente ou na listagem da secretaria.</p>
         </div>
         <UserPlus size={30} />
       </div>
 
-      {pastaRecomendada && (
+      <div className="gerenciar-destino" role="tablist" aria-label="Destino do cadastro">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={destino === 'arquivo'}
+          className={destino === 'arquivo' ? 'ativo' : ''}
+          onClick={() => trocarDestino('arquivo')}
+        >
+          Arquivo permanente
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={destino === 'secretaria'}
+          className={destino === 'secretaria' ? 'ativo' : ''}
+          onClick={() => trocarDestino('secretaria')}
+        >
+          Secretaria (matrícula)
+        </button>
+      </div>
+
+      {destino === 'arquivo' && pastaRecomendada && (
         <div className="recomendacao-card">
           <div className="recomendacao-icone">
             <Sparkles size={24} />
@@ -323,43 +423,142 @@ export default function GerenciarAlunos({
           )}
         </div>
 
-        <div className="campo">
-          <label htmlFor="aluno-pasta">Pasta</label>
-          <div className="campo-com-icone">
-            <FolderOpen size={19} />
-            <select
-              id="aluno-pasta"
-              value={pastaAtual}
-              onChange={(evento) => selecionarPasta(evento.target.value)}
-              aria-invalid={Boolean(erros.pasta)}
-            >
-              <option value="">Selecione uma pasta</option>
-              {pastasOrdenadas.map((pasta) => (
-                <option key={pasta.codigo} value={pasta.codigo}>
-                  {pasta.codigo} — {pasta.quantidade} alunos
-                </option>
-              ))}
-            </select>
-          </div>
-          {erros.pasta && <p className="gerenciar-erro-campo">{erros.pasta}</p>}
-        </div>
+        {destino === 'arquivo' ? (
+          <>
+            <div className="campo">
+              <label htmlFor="aluno-pasta">Pasta</label>
+              <div className="campo-com-icone">
+                <FolderOpen size={19} />
+                <select
+                  id="aluno-pasta"
+                  value={pastaAtual}
+                  onChange={(evento) => selecionarPasta(evento.target.value)}
+                  aria-invalid={Boolean(erros.pasta)}
+                >
+                  <option value="">Selecione uma pasta</option>
+                  {pastasOrdenadas.map((pasta) => (
+                    <option key={pasta.codigo} value={pasta.codigo}>
+                      {pasta.codigo} — {pasta.quantidade} alunos
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {erros.pasta && <p className="gerenciar-erro-campo">{erros.pasta}</p>}
+            </div>
 
-        <div className="campo">
-          <label htmlFor="aluno-numero">Número do arquivo</label>
-          <input
-            id="aluno-numero"
-            type="number"
-            min="1"
-            value={numeroAtual}
-            onChange={(evento) => {
-              setNumero(evento.target.value);
-              if (erros.numero) setErros((e) => ({ ...e, numero: undefined }));
-            }}
-            aria-invalid={Boolean(erros.numero)}
-          />
-          <small>Primeiro disponível: {numeroSugerido}</small>
-          {erros.numero && <p className="gerenciar-erro-campo">{erros.numero}</p>}
-        </div>
+            <div className="campo">
+              <label htmlFor="aluno-numero">Número do arquivo</label>
+              <input
+                id="aluno-numero"
+                type="number"
+                min="1"
+                value={numeroAtual}
+                onChange={(evento) => {
+                  setNumero(evento.target.value);
+                  if (erros.numero) setErros((e) => ({ ...e, numero: undefined }));
+                }}
+                aria-invalid={Boolean(erros.numero)}
+              />
+              <small>Primeiro disponível: {numeroSugerido}</small>
+              {erros.numero && <p className="gerenciar-erro-campo">{erros.numero}</p>}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="campo">
+              <label htmlFor="sec-matricula">Código da matrícula *</label>
+              <input
+                id="sec-matricula"
+                type="text"
+                value={matricula}
+                onChange={(evento) => {
+                  setMatricula(evento.target.value);
+                  if (erros.matricula) setErros((e) => ({ ...e, matricula: undefined }));
+                }}
+                placeholder="Ex.: 2024001234"
+                aria-invalid={Boolean(erros.matricula)}
+              />
+              {erros.matricula && <p className="gerenciar-erro-campo">{erros.matricula}</p>}
+            </div>
+
+            <div className="campo">
+              <label htmlFor="sec-estudante">Código do estudante</label>
+              <input
+                id="sec-estudante"
+                type="text"
+                value={codigoEstudante}
+                onChange={(evento) => setCodigoEstudante(evento.target.value)}
+              />
+            </div>
+
+            <div className="campo">
+              <label htmlFor="sec-turma">Turma</label>
+              <input
+                id="sec-turma"
+                type="text"
+                value={turma}
+                onChange={(evento) => setTurma(evento.target.value)}
+                placeholder="Ex.: 6º A"
+              />
+            </div>
+
+            <div className="campo">
+              <label htmlFor="sec-periodo">Período</label>
+              <input
+                id="sec-periodo"
+                type="text"
+                value={periodo}
+                onChange={(evento) => setPeriodo(evento.target.value)}
+              />
+            </div>
+
+            <div className="campo">
+              <label htmlFor="sec-turno">Turno</label>
+              <input
+                id="sec-turno"
+                type="text"
+                value={turno}
+                onChange={(evento) => setTurno(evento.target.value)}
+                placeholder="Manhã / Tarde"
+              />
+            </div>
+
+            <div className="campo">
+              <label htmlFor="sec-situacao">Situação</label>
+              <select
+                id="sec-situacao"
+                value={situacao}
+                onChange={(evento) => setSituacao(evento.target.value)}
+              >
+                <option value="NORMAL">NORMAL</option>
+                <option value="TRANSFERIDO">TRANSFERIDO</option>
+                <option value="DESISTENTE">DESISTENTE</option>
+                <option value="CLASSIFICADO">CLASSIFICADO</option>
+                <option value="REMANEJADO">REMANEJADO</option>
+              </select>
+            </div>
+
+            <div className="campo campo-largo">
+              <label htmlFor="sec-filiacao1">Filiação 1 (mãe)</label>
+              <input
+                id="sec-filiacao1"
+                type="text"
+                value={filiacao1}
+                onChange={(evento) => setFiliacao1(evento.target.value)}
+              />
+            </div>
+
+            <div className="campo campo-largo">
+              <label htmlFor="sec-filiacao2">Filiação 2 (pai)</label>
+              <input
+                id="sec-filiacao2"
+                type="text"
+                value={filiacao2}
+                onChange={(evento) => setFiliacao2(evento.target.value)}
+              />
+            </div>
+          </>
+        )}
 
         {erroGeral && <p className="gerenciar-erro">{erroGeral}</p>}
         {mensagem && <p className="gerenciar-sucesso">{mensagem}</p>}
@@ -373,7 +572,7 @@ export default function GerenciarAlunos({
           ) : (
             <>
               <UserPlus size={20} />
-              Cadastrar aluno
+              {destino === 'arquivo' ? 'Cadastrar no arquivo' : 'Cadastrar na secretaria'}
             </>
           )}
         </button>
