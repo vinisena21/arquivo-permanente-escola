@@ -116,8 +116,11 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       if (/APROVEITAMENTO/.test(linha)) {
         const trecho = linha.split('APROVEITAMENTO')[1].split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES|SITUACAO/)[0];
         const notas = trecho.match(/\b(?:\d+(?:[.,]\d+)?|[ABC])\b/g) ?? [];
-        if (notas.length === (serie < 6 ? 8 : 9)) registro.notas = serie < 6 ? [notas[0], '', ...notas.slice(1)] : notas;
-        else if (notas.length >= 7) {
+        if (notas.length === (serie < 6 ? 8 : 9)) {
+          registro.notas = serie < 6
+            ? [notas[0] ?? '', '', ...notas.slice(1)]
+            : notas;
+        } else if (notas.length >= 7) {
           // Aceita parcialmente se tiver quantidade razoável
           registro.notas = serie < 6
             ? [notas[0] ?? '', '', ...notas.slice(1, 8)]
@@ -127,7 +130,7 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
 
       if (/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/.test(linha)) {
         const valores = linha.split(/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/)[1].match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
-        if (valores.length >= 1) registro.faltasHoras = valores[valores.length - 1];
+        if (valores.length >= 1) registro.faltasHoras = valores[valores.length - 1] ?? '';
       }
 
       if (/CARGA HORARIA CURRICULAR/.test(linha)) {
@@ -140,11 +143,13 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
         }
         encontrados.add(serie);
         if (registro.modo === 'global' && horas.length >= 2) {
-          registro.cargas[0] = horas[0]; registro.total = horas[horas.length - 1];
+          registro.cargas[0] = horas[0] ?? '';
+          registro.total = horas[horas.length - 1] ?? '';
         } else if (registro.modo === 'disciplinas' && horas.length >= 10) {
-          registro.cargas = horas.slice(0, 9); registro.total = horas[9];
+          registro.cargas = horas.slice(0, 9);
+          registro.total = horas[9] ?? '';
         } else if (horas.length === 1) {
-          registro.cargas[0] = horas[0];
+          registro.cargas[0] = horas[0] ?? '';
         }
       }
 
