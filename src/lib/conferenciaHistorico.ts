@@ -46,7 +46,7 @@ export function criarAnos(): AnoConferencia[] {
     modo: i < 5 ? 'global' : 'disciplinas',
     cargas: Array(9).fill(''), total: '', anual: '', confirmado: false,
     escola: '', municipio: '', diasLetivos: '', situacao: '', observacoes: '',
-    notas: Array(9).fill(''), escalaNotas: i < 3 ? 'conceitos' : '100',
+    notas: Array(9).fill(''), escalaNotas: '100',
     minimoPromocao: '', faltasHoras: '',
   }));
 }
@@ -72,153 +72,139 @@ function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
-/** Converte token de nota do documento (85,0 | 85.0 | 85 | A | --) para valor do formulário. */
 function normalizarNota(token: string): string {
   const t = token.trim();
-  if (!t || /^(--|—|–|-)$/.test(t)) return '';
+  if (!t || /^(--|—|–|-|=)$/.test(t)) return '';
   if (/^[ABC]$/i.test(t)) return t.toUpperCase();
   const num = t.replace(',', '.');
   if (/^\d+(?:\.\d+)?$/.test(num)) return num;
   return '';
 }
 
+/** Só usa o trecho de Ensino Fundamental; ignora o bloco de Ensino Médio da 1ª folha. */
+function textoFundamental(textos: string[]): string {
+  const todo = textos.join('\n');
+  const m = /HIST[ÓO]RICO\s+ESCOLAR\s*[-–]?\s*ENSINO\s+FUNDAMENTAL/i.exec(todo);
+  if (m) return todo.slice(m.index);
+  // Fallback: bloco que começa no Ciclo da Alfabetização
+  const m2 = /CICLO\s+DA\s+ALFABETIZA[ÇC][ÃA]O/i.exec(todo);
+  if (m2) return todo.slice(m2.index);
+  return todo;
+}
+
 /**
- * Extrai anos a partir do texto plano (OCR ou DOCX de tabela).
- * Layout real observado: "1º ANO" + "ANO: 2021" + "Aproveitamento" + notas + "APROVADO"
- * e linhas "Carga Horária Curricular 800:00", "Faltas/Horas 00:00", ESTABELECIMENTO, etc.
+ * Extrai 1º–9º ano apenas do Ensino Fundamental.
+ * Layout real (DOCX em tabela):
+ *   1º ANO / ANO: 2021 / Aproveitamento / 85,0 / -- / 84,0 ... / APROVADO
+ *   Carga Horária Curricular / 800:00 / ... / 800:00
+ *   Faltas/Horas / 00:00
+ *   ESTABELECIMENTO / MUNICÍPIO / DIAS LETIVOS / CARGA HORÁRIA ANUAL
  */
 export function sugerirAnos(textos: string[]): AnoConferencia[] {
   const anos = criarAnos();
-  const texto = textos.join('\n');
-  const norm = normalizar(texto);
-
-  // Só processa se parecer Ensino Fundamental (evita bloco de Ensino Médio vazio do mesmo arquivo)
-  const eFundamental = /HISTORICO ESCOLAR\s*[-–]?\s*ENSINO FUNDAMENTAL|CICLO DA ALFABETIZACAO|CICLO COMPLEMENTAR|CICLO INTERMEDIARIO/.test(norm);
-  if (!eFundamental && !/\d\s*[º°O]?\s*ANO\s+ANO\s*:\s*\d{4}/.test(norm)) {
-    // ainda tenta se houver padrões de série + ano letivo
-  }
+  const fund = textoFundamental(textos);
+  if (!fund.trim()) return anos;
 
   for (let s = 1; s <= 9; s++) {
     const reg = anos[s - 1];
 
-    // Localiza bloco do ano: "1º ANO" ... até próximo "Nº ANO" ou fim
+    // Bloco desta série até a próxima (só dentro do Fundamental)
     const reBloco = new RegExp(
-      `${s}\\s*[º°O]?\\s*ANO\\b([\\s\\S]*?)(?=${s < 9 ? `${s + 1}\\s*[º°O]?\\s*ANO\\b` : '$'})`,
-      'i',
+      `(?:^|\\n)\\s*${s}\\s*[º°oO]?\\s*ANO\\b([\\s\\S]*?)(?=(?:^|\\n)\\s*${s < 9 ? s + 1 : 99}\\s*[º°oO]?\\s*ANO\\b|$)`,
+      'im',
     );
-    const mBloco = reBloco.exec(texto);
-    const bloco = mBloco?.[1] ?? '';
-    const blocoN = normalizar(bloco);
+    const mBloco = reBloco.exec(fund);
+    if (!mBloco) continue;
+    const bloco = mBloco[1] ?? '';
 
     // Ano letivo
-    const letivo = /\bANO\s*:\s*(\d{4})\b/i.exec(bloco) ?? /\bANO\s*:\s*(\d{4})\b/i.exec(texto);
-    if (letivo && (!reg.anoLetivo || mBloco)) reg.anoLetivo = letivo[1];
+    const letivo = /\bANO\s*:\s*(\d{4})\b/i.exec(bloco);
+    if (letivo) reg.anoLetivo = letivo[1];
 
     // Situação
-    const sit = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO|EM CURSO)\b/i.exec(bloco);
-    if (sit) reg.situacao = sit[1].toUpperCase().replace('EM CURSO', 'CURSANDO');
+    const sit = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO|EM\s+CURSO)\b/i.exec(bloco);
+    if (sit) reg.situacao = sit[1].toUpperCase().replace(/\s+/g, ' ').replace('EM CURSO', 'CURSANDO');
 
-    // Notas após "Aproveitamento"
-    const idxApr = blocoN.search(/APROVEITAMENTO/);
-    if (idxApr >= 0) {
-      const trechoApr = bloco.slice(idxApr);
-      // Tokens: números com vírgula/ponto, letras A-C, ou --
-      const tokens = trechoApr.match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
-      // Para 1º–5º: LP, (skip inglês), Arte, EdF, Mat, Cie, Hist, Geo, ER → 8 valores úteis
-      // Ordem no documento: LP, Inglês(--), Arte, EdF, Mat, Ciências, História, Geografia, Ensino Religioso
+    // Notas: tokens logo após "Aproveitamento", parando em situação / carga / observações
+    const mApr = /Aproveitamento\s*([\s\S]*?)(?=\b(?:APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|EM\s+CURSO|Carga\s+Hor[áa]ria|Faltas|Observa)/i).exec(bloco);
+    if (mApr) {
+      const trecho = mApr[1];
+      const tokens = trecho.match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
       const limpos = tokens.map(normalizarNota);
-      // Pega até 9 primeiros tokens significativos após Aproveitamento
-      const candidatas = limpos.slice(0, 12);
-      if (candidatas.length >= 6) {
-        if (s < 6) {
-          // índice 0 = LP, 1 = Inglês (pode ser --), 2.. = resto
-          reg.notas = [
-            candidatas[0] ?? '',
-            candidatas[1] ?? '', // inglês vazio no fundamental I
-            candidatas[2] ?? '',
-            candidatas[3] ?? '',
-            candidatas[4] ?? '',
-            candidatas[5] ?? '',
-            candidatas[6] ?? '',
-            candidatas[7] ?? '',
-            candidatas[8] ?? '',
-          ];
-        } else {
-          reg.notas = candidatas.slice(0, 9);
-          while (reg.notas.length < 9) reg.notas.push('');
-        }
-        // Escala numérica se houver números
-        if (reg.notas.some((n) => /^\d/.test(n))) {
-          reg.escalaNotas = reg.notas.some((n) => /^\d{1,2}(?:\.\d+)?$/.test(n) && Number(n) <= 10 && !n.includes('.'))
-            ? '10'
-            : '100';
-          // Se tem decimais tipo 85.0 ou 71.5 → escala 100
-          if (reg.notas.some((n) => /^\d{2,}/.test(n) || (n.includes('.') && Number(n) > 10))) {
-            reg.escalaNotas = '100';
-          }
-        }
+      // Ordem: LP, Inglês, Arte, Ed. Física, Matemática, Ciências, História, Geografia, Ens. Religioso
+      reg.notas = Array.from({ length: 9 }, (_, i) => limpos[i] ?? '');
+      if (reg.notas.some((n) => /^\d/.test(n))) {
+        const nums = reg.notas.filter((n) => /^\d/.test(n)).map((n) => Number(n));
+        const max = Math.max(...nums, 0);
+        reg.escalaNotas = max <= 10 ? '10' : '100';
+      } else if (reg.notas.some((n) => /^[ABC]$/i.test(n))) {
+        reg.escalaNotas = 'conceitos';
       }
     }
 
-    // Carga horária curricular
-    const cargaMatch = /CARGA\s*HORARIA\s*CURRICULAR[\s\S]{0,200}?(\d{1,5}:[0-5]\d)/i.exec(bloco);
-    if (cargaMatch) {
-      const horas = bloco.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];
-      // Primeira H:MM após o rótulo costuma ser a carga global ou a 1ª disciplina
-      const primeira = cargaMatch[1];
+    // Carga horária curricular → tokens H:MM após o rótulo até Faltas/ESTABELECIMENTO
+    const mCarga = /Carga\s+Hor[áa]ria\s+Curricular\s*([\s\S]*?)(?=\b(?:Faltas|ESTABELECIMENTO|MUNIC[ÍI]PIO|DIAS\s+LETIVOS|CARGA\s+HOR[ÁA]RIA\s+ANUAL|M[ÍI]NIMO|Observa)/i).exec(bloco);
+    if (mCarga) {
+      const hs = (mCarga[1].match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => !h.startsWith('00:') || h === '00:00');
+      // Filtra lixo de âncoras (ex.: números enormes sem sentido escolar já excluídos pelo regex H:MM)
+      const validas = hs.filter((h) => {
+        const min = lerHoras(h);
+        return min !== null && min <= 2000 * 60; // até 2000h
+      });
       if (reg.modo === 'global') {
-        reg.cargas[0] = primeira;
-        // Última H:MM do trecho de carga costuma ser o total da linha
-        if (horas.length >= 2) reg.total = horas[horas.length - 1] ?? primeira;
-        else reg.total = primeira;
+        if (validas[0]) reg.cargas[0] = validas[0];
+        if (validas.length >= 2) reg.total = validas[validas.length - 1]!;
+        else if (validas[0]) reg.total = validas[0];
       } else {
-        // 6º–9º: tenta preencher por disciplina se houver várias
-        const apos = bloco.slice(bloco.toUpperCase().search(/CARGA\s*HORARIA\s*CURRICULAR/i));
-        const hs = apos.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];
-        if (hs.length >= 9) {
-          reg.cargas = hs.slice(0, 9);
-          if (hs.length >= 10) reg.total = hs[9] ?? '';
-        } else if (hs.length >= 1) {
-          // Só total / global no 6º em curso
-          reg.cargas[0] = hs[0] ?? '';
-          reg.total = hs[hs.length - 1] ?? hs[0] ?? '';
+        // 6º–9º: preenche por disciplina se houver várias H:MM; senão só total
+        if (validas.length >= 9) {
+          reg.cargas = validas.slice(0, 9);
+          if (validas[9]) reg.total = validas[9];
+        } else if (validas.length >= 1) {
+          reg.total = validas[validas.length - 1]!;
+          // se só uma, não força em cargas[0] no modo disciplinas (evita falso "só LP")
         }
       }
     }
 
-    // Carga anual explícita
-    const anual = /CARGA\s*HORARIA\s*ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco)
+    // Carga anual
+    const anual = /CARGA\s+HOR[ÁA]RIA\s+ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco)
       ?? /CH\.?\s*ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco);
     if (anual) reg.anual = anual[1];
     if (!reg.anual && reg.total) reg.anual = reg.total;
     if (!reg.total && reg.anual) reg.total = reg.anual;
-    if (reg.modo === 'global' && !reg.cargas[0] && reg.anual) reg.cargas[0] = reg.anual;
-
-    // Faltas
-    const faltas = /FALTAS\s*\/?\s*HORAS[\s\S]{0,80}?(\d{1,5}:[0-5]\d|\d{1,5})/i.exec(bloco);
-    if (faltas) {
-      const v = faltas[1];
-      reg.faltasHoras = v.includes(':') ? v : `${v}:00`;
+    if (reg.modo === 'global' && !reg.cargas[0] && (reg.anual || reg.total)) {
+      reg.cargas[0] = reg.anual || reg.total;
     }
 
+    // Faltas (evita capturar "5611" solto sem : se for absurdo — mas mantém H:MM)
+    const faltas = /Faltas\s*\/?\s*Horas\s*[\s\S]{0,40}?(\d{1,4}:[0-5]\d)/i.exec(bloco);
+    if (faltas) reg.faltasHoras = faltas[1];
+
     // Escola
-    const escola = /ESTABELECIMENTO\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ0-9][A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ0-9\s.\-ºª]+?)(?=\s*MUNICIPIO|\s*DIAS|\s*$)/i.exec(bloco);
-    if (escola) reg.escola = escola[1].replace(/\s+/g, ' ').trim();
+    const escola = /ESTABELECIMENTO\s*:\s*([^\n]+)/i.exec(bloco);
+    if (escola) {
+      const e = escola[1].replace(/\s+/g, ' ').trim();
+      if (e && !/^-+$/.test(e)) reg.escola = e;
+    }
 
     // Município
-    const mun = /MUNICIPIO(?:\s*\/\s*ESTADO)?\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ][A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ\s.\/\-]+)/i.exec(bloco);
-    if (mun) reg.municipio = mun[1].replace(/\s+/g, ' ').trim();
+    const mun = /MUNIC[ÍI]PIO(?:\s*\/\s*ESTADO)?\s*:\s*([^\n]+)/i.exec(bloco);
+    if (mun) {
+      const m = mun[1].replace(/\s+/g, ' ').trim();
+      if (m && !/^-+$/.test(m)) reg.municipio = m;
+    }
 
     // Dias letivos
-    const dias = /DIAS\s*LETIVOS(?:\s*ANUAIS)?\s*:\s*(\*?\d{1,3})/i.exec(bloco);
+    const dias = /DIAS\s+LETIVOS(?:\s+ANUAIS)?\s*:\s*(\*?\d{1,3})\b/i.exec(bloco);
     if (dias) reg.diasLetivos = dias[1];
 
     // Mínimo promoção
-    const min = /MINIMO\s*PARA\s*PROMOCAO\s*:\s*(\d+(?:[.,]\d+)?%?|--)/i.exec(bloco);
-    if (min && min[1] !== '--') reg.minimoPromocao = min[1];
+    const min = /M[ÍI]NIMO\s+PARA\s+PROMO[ÇC][ÃA]O\s*:\s*(\d+(?:[.,]\d+)?%?)/i.exec(bloco);
+    if (min) reg.minimoPromocao = min[1];
 
-    // Observações do ano
-    const obs = /OBSERVACOES\s*:?\s*([^\n]{3,120})/i.exec(bloco);
+    // Observações
+    const obs = /Observa[çc][õo]es\s*:?\s*([^\n]{3,150})/i.exec(bloco);
     if (obs) reg.observacoes = obs[1].replace(/\s+/g, ' ').trim();
   }
 
@@ -247,20 +233,61 @@ export function avaliarConferencia(
     const total = lerHoras(ano.total);
     const anual = lerHoras(ano.anual);
     const horas = ano.modo === 'global' ? ano.cargas.slice(0, 1) : ano.cargas;
-    horas.forEach((hora, i) => {
-      if (lerHoras(hora) === null) achados.push({ nivel: hora.trim() ? 'erro' : 'duvida', campo: `${campo} / ${ano.modo === 'global' ? 'Carga global' : (DISCIPLINAS[i] ?? `Componente ${i + 1}`)}`, motivo: hora.trim() ? `Carga "${hora}" inválida ou ambígua. Use horas inteiras ou H:MM, com minutos de 00 a 59.` : 'Carga não identificada. Campo vazio não equivale a zero.' });
-    });
-    if (total === null) achados.push({ nivel: ano.total.trim() ? 'erro' : 'duvida', campo: `${campo} / Total impresso`, motivo: 'Total ausente ou inválido.' });
-    if (anual === null) achados.push({ nivel: ano.anual.trim() ? 'erro' : 'duvida', campo: `${campo} / Carga anual`, motivo: 'Carga anual ausente ou inválida.' });
-    if (!/^\d{4}$/.test(ano.anoLetivo) || Number(ano.anoLetivo) < 1900 || Number(ano.anoLetivo) > new Date().getFullYear()) {
+
+    if (ano.modo === 'disciplinas') {
+      // 6º–9º: se houver cargas por disciplina, confere se a soma bate com o total
+      const preenchidas = ano.cargas.filter((c) => lerHoras(c) !== null);
+      if (preenchidas.length >= 2 && soma !== null && total !== null) {
+        achados.push({
+          nivel: soma === total ? 'ok' : 'erro',
+          campo: `${campo} / Somatória das disciplinas`,
+          motivo: soma === total
+            ? `Soma das cargas (${formatarHoras(soma)}) igual ao total impresso (${formatarHoras(total)}).`
+            : `Soma das disciplinas ${formatarHoras(soma)} ≠ total ${formatarHoras(total)} (diferença ${formatarHoras(Math.abs(soma - total))}).`,
+        });
+      } else if (preenchidas.length === 0 && total === null && anual === null && /^\d{4}$/.test(ano.anoLetivo)) {
+        achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
+      }
+    } else {
+      horas.forEach((hora, i) => {
+        if (lerHoras(hora) === null) {
+          achados.push({
+            nivel: hora.trim() ? 'erro' : 'duvida',
+            campo: `${campo} / Carga global`,
+            motivo: hora.trim()
+              ? `Carga "${hora}" inválida. Use horas inteiras ou H:MM.`
+              : 'Carga global não identificada.',
+          });
+        }
+      });
+    }
+
+    if (total === null && ano.modo === 'global') {
+      achados.push({ nivel: ano.total.trim() ? 'erro' : 'duvida', campo: `${campo} / Total impresso`, motivo: 'Total ausente ou inválido.' });
+    }
+    if (anual === null && /^\d{4}$/.test(ano.anoLetivo) && ano.situacao && !/CURSANDO|EM CURSO/i.test(ano.situacao)) {
+      achados.push({ nivel: ano.anual.trim() ? 'erro' : 'duvida', campo: `${campo} / Carga anual`, motivo: 'Carga anual ausente ou inválida.' });
+    }
+    if (!/^\d{4}$/.test(ano.anoLetivo) || Number(ano.anoLetivo) < 1900 || Number(ano.anoLetivo) > new Date().getFullYear() + 1) {
       achados.push({ nivel: 'duvida', campo: `${campo} / Ano letivo`, motivo: 'Ano letivo ausente, inválido ou futuro. Confira no documento.' });
     }
-    if (soma !== null && total !== null) {
-      achados.push({ nivel: soma === total ? 'ok' : 'erro', campo: `${campo} / Somatória`, motivo: soma === total ? `Soma ${formatarHoras(soma)} igual ao total impresso.` : `Soma ${formatarHoras(soma)}; total impresso ${formatarHoras(total)}; diferença ${formatarHoras(Math.abs(soma - total))}.` });
-      if (soma === 0) achados.push({ nivel: 'duvida', campo, motivo: 'Carga horária igual a zero. Verifique se os componentes foram preenchidos.' });
+    if (ano.modo === 'global' && soma !== null && total !== null) {
+      achados.push({
+        nivel: soma === total ? 'ok' : 'erro',
+        campo: `${campo} / Somatória`,
+        motivo: soma === total
+          ? `Soma ${formatarHoras(soma)} igual ao total impresso.`
+          : `Soma ${formatarHoras(soma)}; total impresso ${formatarHoras(total)}; diferença ${formatarHoras(Math.abs(soma - total))}.`,
+      });
     }
     if (total !== null && anual !== null) {
-      achados.push({ nivel: total === anual ? 'ok' : 'erro', campo: `${campo} / Carga anual`, motivo: total === anual ? 'Total impresso igual à carga horária anual.' : `Total ${formatarHoras(total)} diferente da carga anual ${formatarHoras(anual)}. Confira atividades complementares e observações.` });
+      achados.push({
+        nivel: total === anual ? 'ok' : 'erro',
+        campo: `${campo} / Carga anual`,
+        motivo: total === anual
+          ? 'Total impresso igual à carga horária anual.'
+          : `Total ${formatarHoras(total)} diferente da carga anual ${formatarHoras(anual)}. Confira atividades complementares e observações.`,
+      });
     }
     if (!ano.confirmado) achados.push({ nivel: 'duvida', campo, motivo: 'Transcrição ainda não conferida com a imagem original.' });
   }
