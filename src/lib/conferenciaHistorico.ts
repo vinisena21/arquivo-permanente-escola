@@ -74,6 +74,51 @@ export function somarCargas(ano: AnoConferencia): number | null {
   return valores.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
 }
 
+/**
+ * Se a soma das cargas preenchidas for menor que o total impresso (ou anual),
+ * preenche o próximo slot vazio com a diferença (carga complementar).
+ * Ex.: curricular 758:20, total 800:00 → complementar 41:40.
+ * Não sobrescreve complementares já informados; só completa o que falta.
+ */
+export function sugerirCargaComplementar(ano: AnoConferencia): AnoConferencia {
+  if (ano.modo !== 'global') return ano;
+  const total = lerHoras(ano.total) ?? lerHoras(ano.anual);
+  if (total === null || total <= 0) return ano;
+
+  const soma = somarCargas(ano);
+  // Sem nenhuma carga: usa o total como curricular
+  if (soma === null) {
+    const cargas = [...ano.cargas];
+    while (cargas.length < 9) cargas.push('');
+    cargas[0] = formatarHoras(total);
+    return {
+      ...ano,
+      cargas,
+      total: ano.total.trim() ? ano.total : formatarHoras(total),
+      anual: ano.anual.trim() ? ano.anual : formatarHoras(total),
+    };
+  }
+
+  if (soma >= total) return ano;
+
+  const dif = total - soma;
+  // Limite de sanidade: complementar até 500 h (evita lixo de OCR)
+  if (dif <= 0 || dif > 500 * 60) return ano;
+
+  const cargas = [...ano.cargas];
+  while (cargas.length < 9) cargas.push('');
+  const slot = cargas.findIndex((c, i) => i > 0 && !c.trim());
+  if (slot >= 0) cargas[slot] = formatarHoras(dif);
+  else cargas.push(formatarHoras(dif));
+
+  return {
+    ...ano,
+    cargas,
+    total: ano.total.trim() ? ano.total : formatarHoras(total),
+    anual: ano.anual.trim() ? ano.anual : (ano.total.trim() || formatarHoras(total)),
+  };
+}
+
 function normalizarNota(token: string): string {
   const t = token.trim();
   if (!t || /^(--|—|–|-|=)$/.test(t)) return '';
@@ -125,7 +170,24 @@ function aplicarCargasGlobais(reg: AnoConferencia, validas: string[]) {
     }
   }
 
-  // Caso 3: um único valor (ou repetição do mesmo) = carga e total
+  // Caso 3: há um total (maior) e uma ou mais partes menores que não fecham sozinhas
+  // → guarda as partes e deixa sugerirCargaComplementar completar a diferença
+  if (validas.length >= 2) {
+    const maxMin = Math.max(...mins);
+    const totalStr = validas[mins.indexOf(maxMin)]!;
+    const menores = validas.filter((_, i) => mins[i]! < maxMin);
+    if (menores.length >= 1) {
+      const somaMenores = menores.reduce((a, h) => a + (lerHoras(h) ?? 0), 0);
+      if (somaMenores > 0 && somaMenores < maxMin) {
+        reg.cargas = [...menores];
+        while (reg.cargas.length < 9) reg.cargas.push('');
+        reg.total = totalStr;
+        return;
+      }
+    }
+  }
+
+  // Caso 4: um único valor (ou repetição do mesmo) = carga e total
   const unico = validas[validas.length - 1]!;
   reg.cargas = [unico, ...Array(8).fill('')];
   reg.total = unico;
@@ -193,12 +255,13 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
     if (anual) reg.anual = anual[1]!;
     if (!reg.anual && reg.total) reg.anual = reg.total;
     if (!reg.total && reg.anual) reg.total = reg.anual;
-    // Se só há total/anual e nenhuma parte, a carga curricular única é o próprio total
-    if (reg.modo === 'global' && !reg.cargas.some((c) => c.trim()) && (reg.total || reg.anual)) {
-      const ref = reg.total || reg.anual;
-      reg.cargas[0] = ref;
-      if (!reg.total) reg.total = ref;
-      if (!reg.anual) reg.anual = ref;
+
+    // Completa curricular e/ou complementar para fechar o total (1º–5º)
+    if (reg.modo === 'global') {
+      const atualizado = sugerirCargaComplementar(reg);
+      reg.cargas = atualizado.cargas;
+      reg.total = atualizado.total;
+      reg.anual = atualizado.anual;
     }
 
     const faltas = /Faltas\s*\/?\s*Horas\s*[\s\S]{0,40}?(\d{1,4}:[0-5]\d)/i.exec(bloco);
@@ -271,7 +334,6 @@ export function avaliarConferencia(
         achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
       }
     } else {
-      // 1º–5º: carga curricular (+ complementares). Cada célula preenchida precisa ser H:MM válido.
       preenchidas.forEach((hora, idx) => {
         if (lerHoras(hora) === null) {
           achados.push({
@@ -296,9 +358,6 @@ export function avaliarConferencia(
       achados.push({ nivel: 'duvida', campo: `${campo} / Ano letivo`, motivo: 'Ano letivo ausente, inválido ou futuro. Confira no documento.' });
     }
 
-    // Regra central 1º–5º (e global em geral):
-    // soma(carga curricular + complementares) DEVE ser igual ao total impresso.
-    // Ex.: 758:20 + 41:40 = 800:00 → ok; se faltar complementar → erro com a diferença.
     if (ano.modo === 'global' && soma !== null && total !== null) {
       const partes = preenchidas.map((h) => h.trim()).join(' + ');
       if (soma === total) {
@@ -315,7 +374,7 @@ export function avaliarConferencia(
           nivel: 'erro',
           campo: `${campo} / Somatória`,
           motivo: soma < total
-            ? `Soma ${formatarHoras(soma)} (${partes || 'sem partes'}); total impresso ${formatarHoras(total)}; falta ${formatarHoras(dif)}. Inclua a(s) carga(s) complementar(es) até fechar o total.`
+            ? `Soma ${formatarHoras(soma)} (${partes || 'sem partes'}); total impresso ${formatarHoras(total)}; falta ${formatarHoras(dif)}. Use "Sugerir complementar" ou informe a carga que fecha o total.`
             : `Soma ${formatarHoras(soma)} (${partes}); total impresso ${formatarHoras(total)}; excesso ${formatarHoras(dif)}. Confira as partes e o total no original.`,
         });
       }
