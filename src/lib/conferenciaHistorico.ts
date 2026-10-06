@@ -110,20 +110,20 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
   inicios.sort((a, b) => a.index - b.index);
 
   for (let i = 0; i < inicios.length; i++) {
-    const { serie: s, index } = inicios[i];
-    const reg = anos[s - 1];
-    const fim = i + 1 < inicios.length ? inicios[i + 1].index : fund.length;
+    const { serie: s, index } = inicios[i]!;
+    const reg = anos[s - 1]!;
+    const fim = i + 1 < inicios.length ? inicios[i + 1]!.index : fund.length;
     const bloco = fund.slice(index, fim);
 
     const letivo = /\bANO\s*:\s*(\d{4})\b/i.exec(bloco);
-    if (letivo) reg.anoLetivo = letivo[1];
+    if (letivo) reg.anoLetivo = letivo[1]!;
 
     const sit = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO|EM\s+CURSO)\b/i.exec(bloco);
-    if (sit) reg.situacao = sit[1].toUpperCase().replace(/\s+/g, ' ').replace('EM CURSO', 'CURSANDO');
+    if (sit) reg.situacao = sit[1]!.toUpperCase().replace(/\s+/g, ' ').replace('EM CURSO', 'CURSANDO');
 
     const mApr = /Aproveitamento\s*([\s\S]*?)(?=\b(?:APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|EM\s+CURSO|Carga\s+Hor[áa]ria|Faltas|Observa))/i.exec(bloco);
     if (mApr) {
-      const tokens = mApr[1].match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
+      const tokens = mApr[1]!.match(/\b\d{1,3}(?:[.,]\d{1,2})?\b|\b[ABC]\b|--|—/gi) ?? [];
       const limpos = tokens.map(normalizarNota);
       reg.notas = Array.from({ length: 9 }, (_, j) => limpos[j] ?? '');
       if (reg.notas.some((n) => /^\d/.test(n))) {
@@ -136,17 +136,27 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
 
     const mCarga = /Carga\s+Hor[áa]ria\s+Curricular\s*([\s\S]*?)(?=\b(?:Faltas|ESTABELECIMENTO|MUNIC[ÍI]PIO|DIAS\s+LETIVOS|CARGA\s+HOR[ÁA]RIA\s+ANUAL|M[ÍI]NIMO|Observa))/i.exec(bloco);
     if (mCarga) {
-      const validas = (mCarga[1].match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => {
+      const validas = (mCarga[1]!.match(/\b\d{1,5}:[0-5]\d\b/g) ?? []).filter((h) => {
         const min = lerHoras(h);
         return min !== null && min <= 2000 * 60;
       });
       if (reg.modo === 'global') {
-        if (validas[0]) reg.cargas[0] = validas[0];
-        if (validas.length >= 2) reg.total = validas[validas.length - 1] ?? '';
-        else if (validas[0]) reg.total = validas[0];
+        // Nos anos 1–5 o documento costuma repetir o mesmo total (ex.: 800:00) nas colunas.
+        // Preferimos o valor mais frequente / o último (total da linha) para evitar OCR parcial (ex.: 758:20).
+        if (validas.length >= 1) {
+          const contagem = new Map<string, number>();
+          for (const h of validas) contagem.set(h, (contagem.get(h) ?? 0) + 1);
+          let preferido = validas[validas.length - 1]!;
+          let max = 0;
+          for (const [h, n] of contagem) {
+            if (n > max) { max = n; preferido = h; }
+          }
+          reg.cargas[0] = preferido;
+          reg.total = preferido;
+        }
       } else if (validas.length >= 9) {
         reg.cargas = validas.slice(0, 9);
-        if (validas[9]) reg.total = validas[9];
+        if (validas[9]) reg.total = validas[9]!;
       } else if (validas.length >= 1) {
         reg.total = validas[validas.length - 1] ?? '';
       }
@@ -154,36 +164,49 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
 
     const anual = /CARGA\s+HOR[ÁA]RIA\s+ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco)
       ?? /CH\.?\s*ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)/i.exec(bloco);
-    if (anual) reg.anual = anual[1];
+    if (anual) reg.anual = anual[1]!;
     if (!reg.anual && reg.total) reg.anual = reg.total;
     if (!reg.total && reg.anual) reg.total = reg.anual;
-    if (reg.modo === 'global' && !reg.cargas[0] && (reg.anual || reg.total)) {
-      reg.cargas[0] = reg.anual || reg.total;
+    if (reg.modo === 'global' && (reg.anual || reg.total)) {
+      // Alinha carga global ao total/anual impressos (evita falso erro de somatória por OCR).
+      const ref = reg.total || reg.anual;
+      if (ref) {
+        reg.cargas[0] = ref;
+        if (!reg.total) reg.total = ref;
+        if (!reg.anual) reg.anual = ref;
+      }
     }
 
     const faltas = /Faltas\s*\/?\s*Horas\s*[\s\S]{0,40}?(\d{1,4}:[0-5]\d)/i.exec(bloco);
-    if (faltas) reg.faltasHoras = faltas[1];
+    if (faltas) reg.faltasHoras = faltas[1]!;
 
     const escola = /ESTABELECIMENTO\s*:\s*([^\n]+)/i.exec(bloco);
     if (escola) {
-      const e = escola[1].replace(/\s+/g, ' ').trim();
+      const e = escola[1]!.replace(/\s+/g, ' ').trim();
       if (e && !/^-+$/.test(e)) reg.escola = e;
     }
 
     const mun = /MUNIC[ÍI]PIO(?:\s*\/\s*ESTADO)?\s*:\s*([^\n]+)/i.exec(bloco);
     if (mun) {
-      const mv = mun[1].replace(/\s+/g, ' ').trim();
+      const mv = mun[1]!.replace(/\s+/g, ' ').trim();
       if (mv && !/^-+$/.test(mv)) reg.municipio = mv;
     }
 
     const dias = /DIAS\s+LETIVOS(?:\s+ANUAIS)?\s*:\s*(\*?\d{1,3})\b/i.exec(bloco);
-    if (dias) reg.diasLetivos = dias[1];
+    if (dias) reg.diasLetivos = dias[1]!;
 
-    const min = /M[ÍI]NIMO\s+PARA\s+PROMO[ÇC][ÃA]O\s*:\s*(\d+(?:[.,]\d+)?%?)/i.exec(bloco);
-    if (min) reg.minimoPromocao = min[1];
+    // "--" ou vazio = não informado (comum no 1º–5º)
+    const min = /M[ÍI]NIMO\s+PARA\s+PROMO[ÇC][ÃA]O\s*:\s*([^\n]{0,20})/i.exec(bloco);
+    if (min) {
+      const raw = min[1]!.trim();
+      if (raw && !/^(--|—|–|-|=|\.+)$/.test(raw)) {
+        const num = /(\d+(?:[.,]\d+)?%?)/.exec(raw);
+        if (num) reg.minimoPromocao = num[1]!;
+      }
+    }
 
     const obs = /Observa[çc][õo]es\s*:?\s*([^\n]{3,150})/i.exec(bloco);
-    if (obs) reg.observacoes = obs[1].replace(/\s+/g, ' ').trim();
+    if (obs) reg.observacoes = obs[1]!.replace(/\s+/g, ' ').trim();
   }
 
   return anos;
@@ -220,7 +243,7 @@ export function avaliarConferencia(
           campo: `${campo} / Somatória das disciplinas`,
           motivo: soma === total
             ? `Soma das cargas (${formatarHoras(soma)}) igual ao total impresso (${formatarHoras(total)}).`
-            : `Soma das disciplinas ${formatarHoras(soma)} ≠ total ${formatarHoras(total)} (diferença ${formatarHoras(Math.abs(soma - total))}.`,
+            : `Soma das disciplinas ${formatarHoras(soma)} ≠ total ${formatarHoras(total)} (diferença ${formatarHoras(Math.abs(soma - total))}).`,
         });
       } else if (preenchidas.length === 0 && total === null && anual === null && /^\d{4}$/.test(ano.anoLetivo)) {
         achados.push({ nivel: 'duvida', campo: `${campo} / Carga`, motivo: 'Cargas por disciplina e total não identificados. Confira no original (comum em ano em curso).' });
@@ -248,15 +271,31 @@ export function avaliarConferencia(
     if (!/^\d{4}$/.test(ano.anoLetivo) || Number(ano.anoLetivo) < 1900 || Number(ano.anoLetivo) > new Date().getFullYear() + 1) {
       achados.push({ nivel: 'duvida', campo: `${campo} / Ano letivo`, motivo: 'Ano letivo ausente, inválido ou futuro. Confira no documento.' });
     }
+
+    // 1º–5º (carga global): o total impresso e a carga anual são a referência.
+    // Se os dois conferem, a "somatória" não deve virar erro por OCR parcial da célula global.
     if (ano.modo === 'global' && soma !== null && total !== null) {
-      achados.push({
-        nivel: soma === total ? 'ok' : 'erro',
-        campo: `${campo} / Somatória`,
-        motivo: soma === total
-          ? `Soma ${formatarHoras(soma)} igual ao total impresso.`
-          : `Soma ${formatarHoras(soma)}; total impresso ${formatarHoras(total)}; diferença ${formatarHoras(Math.abs(soma - total))}.`,
-      });
+      if (soma === total) {
+        achados.push({
+          nivel: 'ok',
+          campo: `${campo} / Somatória`,
+          motivo: `Carga global ${formatarHoras(soma)} igual ao total impresso.`,
+        });
+      } else if (anual !== null && total === anual) {
+        achados.push({
+          nivel: 'ok',
+          campo: `${campo} / Somatória`,
+          motivo: `Total impresso e carga anual conferem (${formatarHoras(total)}). Diferença na célula de carga global provavelmente é leitura OCR; confira visualmente se quiser.`,
+        });
+      } else {
+        achados.push({
+          nivel: 'erro',
+          campo: `${campo} / Somatória`,
+          motivo: `Soma ${formatarHoras(soma)}; total impresso ${formatarHoras(total)}; diferença ${formatarHoras(Math.abs(soma - total))}.`,
+        });
+      }
     }
+
     if (total !== null && anual !== null) {
       achados.push({
         nivel: total === anual ? 'ok' : 'erro',
@@ -270,8 +309,8 @@ export function avaliarConferencia(
   }
   const preenchidos = incluidos.filter((ano) => /^\d{4}$/.test(ano.anoLetivo));
   for (let i = 1; i < preenchidos.length; i++) {
-    if (Number(preenchidos[i].anoLetivo) <= Number(preenchidos[i - 1].anoLetivo)) {
-      achados.push({ nivel: 'duvida', campo: `${preenchidos[i].serie}º ano / Sequência`, motivo: 'Ano letivo igual ou anterior ao da série precedente. Verifique a trajetória escolar.' });
+    if (Number(preenchidos[i]!.anoLetivo) <= Number(preenchidos[i - 1]!.anoLetivo)) {
+      achados.push({ nivel: 'duvida', campo: `${preenchidos[i]!.serie}º ano / Sequência`, motivo: 'Ano letivo igual ou anterior ao da série precedente. Verifique a trajetória escolar.' });
     }
   }
   if (!identidade) achados.push({ nivel: 'duvida', campo: 'Identificação', motivo: 'Nome, nascimento, filiação e correspondência entre frente e verso ainda não conferidos.' });
