@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeftRight, CheckCircle2, Download, FileCheck2, LoaderCircle, Plus, Printer, ScanText, Sparkles, Upload, X, ZoomIn } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import {
-  avaliarConferencia, criarAnos, DISCIPLINAS, formatarHoras, somarCargas, sugerirAnos,
+  avaliarConferencia, criarAnos, DISCIPLINAS, formatarHoras, somarCargas, sugerirAnos, sugerirCargaComplementar,
   type AnoConferencia, type PaginaLida,
 } from '../lib/conferenciaHistorico';
 import { lerDocumento, validarArquivos } from '../lib/leituraHistorico';
@@ -203,6 +203,19 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
                 }} /></label>
               ))}
               <button type="button" className="conf-button conf-add" onClick={() => alterarAno({ cargas: [...ano.cargas, ''] })}><Plus size={16} /> Carga complementar</button>
+              {ano.modo === 'global' && (
+                <button
+                  type="button"
+                  className="conf-button conf-add"
+                  title="Preenche a diferença entre o total impresso e a soma das cargas já informadas"
+                  onClick={() => {
+                    const atualizado = sugerirCargaComplementar(ano);
+                    alterarAno({ cargas: atualizado.cargas, total: atualizado.total, anual: atualizado.anual });
+                  }}
+                >
+                  Sugerir complementar
+                </button>
+              )}
             </div>
             <div className="conf-totals">
               <label>Total impresso<input placeholder="H:MM" aria-label={`${serie}º ano, total impresso`} value={ano.total} onChange={(e) => alterarAno({ total: e.target.value })} /></label>
