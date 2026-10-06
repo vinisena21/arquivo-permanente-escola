@@ -26,6 +26,7 @@ dist-ssr
 .vercel
 
 .env.local
+/work/compiled-api/
 
 # Planilhas exportadas com dados pessoais de alunos (LGPD) — nunca versionar
 *.xls

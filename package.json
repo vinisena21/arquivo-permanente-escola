@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test:conferencia": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:conferencia": "node --experimental-strip-types --test tests/*.test.mjs && node tests/apiRuntime.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

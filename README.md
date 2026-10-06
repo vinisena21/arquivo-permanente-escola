@@ -277,7 +277,8 @@ do handler usam um provedor simulado; sem chave, não validam uma chamada real �
 
 **Validação:** `npm run test:conferencia` executa os testes de cálculo, extração,
 preenchimento, pandemia, autenticação, limites e contrato de IA
-(Node.js 22.6+ com suporte a remoção de tipos; testado no Node.js 24).
+(Node.js 22.6+ com suporte a remoção de tipos; testado no Node.js 24), e carrega a
+função compilada para JavaScript para conferir seus imports e respostas básicas.
 `npm run build` e `npm run lint` verificam a aplicação.
 
 ## Observações
