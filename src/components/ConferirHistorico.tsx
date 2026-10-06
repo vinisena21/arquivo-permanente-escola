@@ -19,7 +19,6 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
   const [documento, setDocumento] = useState(criarDocumento);
   const [regimento, setRegimento] = useState('');
   const [estadoIA, setEstadoIA] = useState<'verificando' | 'disponivel' | 'nao-configurada' | 'indisponivel'>('verificando');
-  const [provedorIA, setProvedorIA] = useState<'openai' | 'gemini'>('openai');
   const [analisandoIA, setAnalisandoIA] = useState(false);
   const [erroIA, setErroIA] = useState('');
   const [analiseIA, setAnaliseIA] = useState<{ assinatura: string; resultado: ResultadoAnalise } | null>(null);
@@ -53,7 +52,12 @@ export default function ConferirHistorico({ obterToken }: { obterToken?: () => P
   useEffect(() => {
     const controlador = new AbortController();
     fetch('/api/analisar-historico', { signal: controlador.signal })
-      .then(async (r) => { if (!r.ok) throw new Error('Serviço indisponível.'); const dados = await r.json(); if (typeof dados.configurada !== 'boolean') throw new Error('Resposta inválida.'); setProvedorIA(dados.provedor === 'gemini' ? 'gemini' : 'openai'); return dados.configurada; })
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Serviço indisponível.');
+        const dados = await r.json();
+        if (typeof dados.configurada !== 'boolean') throw new Error('Resposta inválida.');
+        return dados.configurada as boolean;
+      })
       .then((disponivel) => setEstadoIA(disponivel ? 'disponivel' : 'nao-configurada'))
       .catch(() => { if (!controlador.signal.aborted) setEstadoIA('indisponivel'); });
     return () => controlador.abort();
