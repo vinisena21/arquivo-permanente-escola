@@ -73,24 +73,62 @@ function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
+function extrairNotasDoTrecho(trecho: string, serie: number): string[] | null {
+  const notas = trecho.match(/\b(?:\d{1,3}(?:[.,]\d{1,2})?|[ABC])\b/gi) ?? [];
+  const esperadas = serie < 6 ? 8 : 9;
+  if (notas.length >= esperadas) {
+    const selecionadas = notas.slice(0, esperadas).map((n) => n.replace(',', '.'));
+    return serie < 6 ? [selecionadas[0] ?? '', '', ...selecionadas.slice(1)] : selecionadas;
+  }
+  if (notas.length >= 6) {
+    // Preenche o que conseguiu; resto fica vazio para revisão
+    const base = notas.map((n) => n.replace(',', '.'));
+    if (serie < 6) {
+      const arr = [base[0] ?? '', '', ...base.slice(1)];
+      while (arr.length < 9) arr.push('');
+      return arr.slice(0, 9);
+    }
+    while (base.length < 9) base.push('');
+    return base.slice(0, 9);
+  }
+  return null;
+}
+
+function extrairHorasDoTrecho(trecho: string): string[] {
+  return trecho.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];
+}
+
 /** Only unambiguous rows from the repository's model are proposed; every proposal needs review. */
 export function sugerirAnos(textos: string[]): AnoConferencia[] {
   const anos = criarAnos();
-  const encontrados = new Set<number>();
+  const encontradosCarga = new Set<number>();
+  const preenchidosNotas = new Set<number>();
+
   for (const texto of textos) {
     let serie: number | null = null;
     let fundamental = false;
+    let aguardandoNotas = false;
+    let aguardandoCarga = false;
+
     for (const linhaOriginal of texto.split('\n')) {
       const linha = normalizar(linhaOriginal);
-      if (/HISTORICO ESCOLAR.*ENSINO FUNDAMENTAL|ENSINO FUNDAMENTAL.*HISTORICO/.test(linha)) fundamental = true;
-      if (!fundamental && !/HISTORICO ESCOLAR/.test(linha)) continue;
-      if (/HISTORICO ESCOLAR/.test(linha)) fundamental = true;
+      if (!linha.trim()) continue;
+
+      if (/HISTORICO ESCOLAR.*ENSINO FUNDAMENTAL|ENSINO FUNDAMENTAL.*HISTORICO|HISTORICO ESCOLAR/.test(linha)) {
+        fundamental = true;
+      }
+      if (!fundamental && !/HISTORICO|APROVEITAMENTO|CARGA HORARIA|\d\s*[º°O]?\s*ANO/.test(linha)) continue;
 
       const anoMatch = /\b([1-9])\s*[º°O]?\s*ANO\b/.exec(linha);
-      if (anoMatch) serie = Number(anoMatch[1]);
+      if (anoMatch) {
+        serie = Number(anoMatch[1]);
+        aguardandoNotas = false;
+        aguardandoCarga = false;
+      }
       if (!serie) continue;
       const registro = anos[serie - 1];
 
+      // Metadados do ano
       const letivo = /\bANO\s*(?:LETIVO)?\s*:\s*(\d{4})\b/.exec(linha) ?? /\b(\d{4})\s*(?:ANO LETIVO|LETIVO)\b/.exec(linha);
       if (letivo) registro.anoLetivo = letivo[1];
 
@@ -111,52 +149,116 @@ export function sugerirAnos(textos: string[]): AnoConferencia[] {
       if (observacao) registro.observacoes = observacao[1].trim();
 
       const situacao = /\b(APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|CLASSIFICADO)\b/.exec(linha);
-      if (situacao && (/APROVEITAMENTO/.test(linha) || /SITUACAO/.test(linha))) registro.situacao = situacao[1];
+      if (situacao && (/APROVEITAMENTO/.test(linha) || /SITUACAO/.test(linha) || !registro.situacao)) {
+        registro.situacao = situacao[1];
+      }
 
-      if (/APROVEITAMENTO/.test(linha)) {
-        const trecho = linha.split('APROVEITAMENTO')[1].split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES|SITUACAO/)[0];
-        const notas = trecho.match(/\b(?:\d+(?:[.,]\d+)?|[ABC])\b/g) ?? [];
-        if (notas.length === (serie < 6 ? 8 : 9)) {
-          registro.notas = serie < 6
-            ? [notas[0] ?? '', '', ...notas.slice(1)]
-            : notas;
-        } else if (notas.length >= 7) {
-          // Aceita parcialmente se tiver quantidade razoável
-          registro.notas = serie < 6
-            ? [notas[0] ?? '', '', ...notas.slice(1, 8)]
-            : notas.slice(0, 9).concat(Array(Math.max(0, 9 - notas.length)).fill(''));
+      // ——— NOTAS / APROVEITAMENTO ———
+      if (/APROVEITAMENTO|NOTAS?|CONCEITOS?/.test(linha)) {
+        aguardandoNotas = true;
+        const trecho = linha
+          .replace(/.*(?:APROVEITAMENTO|NOTAS?|CONCEITOS?)\s*/i, '')
+          .split(/APROVADO|REPROVADO|RETIDO|TRANSFERIDO|CURSANDO|OBSERVACOES|SITUACAO|CARGA/)[0];
+        const extraidas = extrairNotasDoTrecho(trecho, serie);
+        if (extraidas && !preenchidosNotas.has(serie)) {
+          registro.notas = extraidas;
+          preenchidosNotas.add(serie);
+          aguardandoNotas = false;
+        }
+      } else if (aguardandoNotas && !preenchidosNotas.has(serie)) {
+        // Linha seguinte ainda pode trazer as notas
+        const extraidas = extrairNotasDoTrecho(linha, serie);
+        if (extraidas) {
+          registro.notas = extraidas;
+          preenchidosNotas.add(serie);
+          aguardandoNotas = false;
+        } else if (/CARGA|ESTABELECIMENTO|MUNICIPIO|DIAS LETIVOS|\d\s*[º°O]?\s*ANO/.test(linha)) {
+          aguardandoNotas = false;
         }
       }
 
-      if (/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/.test(linha)) {
-        const valores = linha.split(/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS/)[1].match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
+      // ——— FALTAS ———
+      if (/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS|FALTAS\s*:/.test(linha)) {
+        const valores = linha.split(/FALTAS\s*\/\s*HORAS|FALTAS\s*EM\s*HORAS|FALTAS\s*:/)[1]?.match(/\b\d+(?::[0-5]\d)?\b/g) ?? [];
         if (valores.length >= 1) registro.faltasHoras = valores[valores.length - 1] ?? '';
       }
 
-      if (/CARGA HORARIA CURRICULAR/.test(linha)) {
-        const trecho = linha.split('CARGA HORARIA CURRICULAR')[1];
-        const horas = trecho.match(/\b\d{1,5}:[0-5]\d\b/g) ?? [];
-        // A repeated/ambiguous row must never be silently replaced by another row.
-        if (encontrados.has(serie)) {
-          registro.cargas = Array(9).fill(''); registro.total = '';
-          continue;
+      // ——— CARGA HORÁRIA CURRICULAR ———
+      if (/CARGA HORARIA CURRICULAR|CARGA HORARIA\s*:|CH\s*CURRICULAR/.test(linha)) {
+        aguardandoCarga = true;
+        const trecho = linha.split(/CARGA HORARIA CURRICULAR|CARGA HORARIA\s*:|CH\s*CURRICULAR/)[1] ?? linha;
+        const horas = extrairHorasDoTrecho(trecho);
+        if (horas.length > 0 && !encontradosCarga.has(serie)) {
+          encontradosCarga.add(serie);
+          if (registro.modo === 'global') {
+            registro.cargas[0] = horas[0] ?? '';
+            if (horas.length >= 2) registro.total = horas[horas.length - 1] ?? '';
+          } else if (horas.length >= 9) {
+            registro.cargas = horas.slice(0, 9);
+            if (horas.length >= 10) registro.total = horas[9] ?? '';
+          } else if (horas.length >= 1) {
+            // Preenche o que tiver
+            for (let i = 0; i < Math.min(horas.length, 9); i++) {
+              registro.cargas[i] = horas[i] ?? '';
+            }
+            if (horas.length > 9) registro.total = horas[horas.length - 1] ?? '';
+          }
+          aguardandoCarga = horas.length < (registro.modo === 'global' ? 1 : 9);
         }
-        encontrados.add(serie);
-        if (registro.modo === 'global' && horas.length >= 2) {
-          registro.cargas[0] = horas[0] ?? '';
-          registro.total = horas[horas.length - 1] ?? '';
-        } else if (registro.modo === 'disciplinas' && horas.length >= 10) {
-          registro.cargas = horas.slice(0, 9);
-          registro.total = horas[9] ?? '';
-        } else if (horas.length === 1) {
-          registro.cargas[0] = horas[0] ?? '';
+      } else if (aguardandoCarga && !encontradosCarga.has(serie)) {
+        const horas = extrairHorasDoTrecho(linha);
+        if (horas.length > 0) {
+          encontradosCarga.add(serie);
+          if (registro.modo === 'global') {
+            registro.cargas[0] = horas[0] ?? '';
+            if (horas.length >= 2) registro.total = horas[horas.length - 1] ?? '';
+          } else {
+            for (let i = 0; i < Math.min(horas.length, 9); i++) {
+              registro.cargas[i] = horas[i] ?? '';
+            }
+            if (horas.length >= 10) registro.total = horas[9] ?? '';
+            else if (horas.length > 9) registro.total = horas[horas.length - 1] ?? '';
+          }
+          aguardandoCarga = false;
+        } else if (/ESTABELECIMENTO|MUNICIPIO|DIAS LETIVOS|\d\s*[º°O]?\s*ANO|APROVEITAMENTO/.test(linha)) {
+          aguardandoCarga = false;
         }
       }
 
-      const anual = /CARGA HORARIA ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)\b/.exec(linha);
+      // Carga anual (pode estar em linha própria)
+      const anual = /CARGA HORARIA ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)\b/.exec(linha)
+        ?? /CH\s*ANUAL\s*:?\s*(\d{1,5}:[0-5]\d)\b/.exec(linha);
       if (anual) registro.anual = anual[1];
+
+      // Se ainda não tem total, tenta pegar um H:MM isolado depois de “total”
+      if (!registro.total) {
+        const totalMatch = /TOTAL\s*:?\s*(\d{1,5}:[0-5]\d)\b/.exec(linha);
+        if (totalMatch) registro.total = totalMatch[1];
+      }
+
+      // Se ainda não tem carga global e achou um único H:MM grande em linha de carga
+      if (registro.modo === 'global' && !registro.cargas[0] && /CARGA|HORARIA|CH\b/.test(linha)) {
+        const horas = extrairHorasDoTrecho(linha);
+        if (horas.length === 1) registro.cargas[0] = horas[0] ?? '';
+        else if (horas.length >= 2) {
+          registro.cargas[0] = horas[0] ?? '';
+          registro.total = horas[horas.length - 1] ?? '';
+        }
+      }
     }
   }
+
+  // Pós-processamento: se tem cargas por disciplina mas não tem total, não inventa;
+  // se tem anual e não tem total, copia anual para total em modo global quando fizer sentido
+  for (const registro of anos) {
+    if (registro.modo === 'global' && registro.cargas[0] && !registro.total && registro.anual) {
+      registro.total = registro.anual;
+    }
+    if (registro.modo === 'global' && !registro.anual && registro.total) {
+      registro.anual = registro.total;
+    }
+  }
+
   return anos;
 }
 
