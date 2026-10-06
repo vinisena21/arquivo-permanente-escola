@@ -39,13 +39,6 @@ function statusHttp(e: unknown): number | null {
   return null;
 }
 
-function erroRecuperavel(e: unknown): boolean {
-  if (!(e instanceof Error)) return false;
-  if (['LimiteGroq', 'GroqIndisponivel', 'LimiteOpenRouter', 'OpenRouterIndisponivel', 'LimiteGemini', 'GeminiIndisponivel'].includes(e.name)) return true;
-  const s = statusHttp(e);
-  return s === 429 || s === 503 || s === 502;
-}
-
 export async function analisarGemini(pedido: PedidoAnalise, modelo: string, chave: string, fetcher = fetch): Promise<ResultadoModelo> {
   const dados = prepararDadosGemini(pedido);
   const schema = JSON.parse(JSON.stringify(z.toJSONSchema(ResultadoModeloSchema), (key, value) => ['$schema', 'maxLength', 'minLength'].includes(key) ? undefined : value));
@@ -60,14 +53,15 @@ export async function analisarGemini(pedido: PedidoAnalise, modelo: string, chav
     }, { timeout: 45_000, maxRetries: 0 });
   } catch (e) {
     const status = statusHttp(e);
-    if (status === 429 || status === 503) {
-      const erro = new Error('Gemini indisponível.');
-      erro.name = status === 429 ? 'LimiteGemini' : 'GeminiIndisponivel';
-      throw erro;
-    }
-    throw new Error('Falha no Gemini.');
+    const erro = new Error(status === 429 ? 'Limite de uso do Gemini atingido.' : 'Gemini indisponível ou falhou.');
+    erro.name = status === 429 ? 'LimiteGemini' : 'GeminiIndisponivel';
+    throw erro;
   }
-  if (interaction.status !== 'completed' || !interaction.output_text) throw new Error('Resposta do Gemini incompleta.');
+  if (interaction.status !== 'completed' || !interaction.output_text) {
+    const erro = new Error('Resposta do Gemini incompleta.');
+    erro.name = 'GeminiIndisponivel';
+    throw erro;
+  }
   const resultado = ResultadoModeloSchema.parse(JSON.parse(interaction.output_text));
   return { ...resultado, achados: resultado.achados.map((a) => ({ ...a, nivel: 'duvida', origem: a.origem === 'naoLocalizado' ? 'naoLocalizado' : 'indicadores' })) };
 }
@@ -91,7 +85,7 @@ async function analisarChatOpenAICompativel(
     const response = await cliente.chat.completions.create({
       model: modelo,
       temperature: 0.1,
-      max_tokens: 6000,
+      max_tokens: 4000,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: `${INSTRUCOES}\n${FORMATO_JSON}` },
@@ -106,7 +100,9 @@ async function analisarChatOpenAICompativel(
     });
     const texto = response.choices[0]?.message?.content;
     if (!texto) throw new Error(`Resposta do ${nomeProvedor} vazia.`);
-    return ResultadoModeloSchema.parse(JSON.parse(texto) as unknown);
+    // Alguns modelos envolvem o JSON em ```json
+    const limpo = texto.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    return ResultadoModeloSchema.parse(JSON.parse(limpo) as unknown);
   } catch (e) {
     const status = statusHttp(e);
     const capitalizado = nomeProvedor === 'groq' ? 'Groq' : 'OpenRouter';
@@ -115,12 +111,9 @@ async function analisarChatOpenAICompativel(
       erro.name = nomeProvedor === 'groq' ? 'LimiteGroq' : 'LimiteOpenRouter';
       throw erro;
     }
-    if (status === 503 || status === 502) {
-      const erro = new Error(`${capitalizado} temporariamente indisponível.`);
-      erro.name = nomeProvedor === 'groq' ? 'GroqIndisponivel' : 'OpenRouterIndisponivel';
-      throw erro;
-    }
-    throw e;
+    const erro = new Error(`${capitalizado} falhou (${status ?? 'erro'}).`);
+    erro.name = nomeProvedor === 'groq' ? 'GroqIndisponivel' : 'OpenRouterIndisponivel';
+    throw erro;
   }
 }
 
@@ -147,17 +140,16 @@ async function analisar(pedido: PedidoAnalise, modelo: string, chave: string, pr
 }
 
 function modeloPadrao(provedor: ProvedorIA, env: Record<string, string | undefined>): string {
-  if (provedor === 'groq') return env.GROQ_MODEL || 'openai/gpt-oss-20b';
-  if (provedor === 'openrouter') return env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
-  if (provedor === 'gemini') return env.GEMINI_MODEL || 'gemini-3.8-flash';
-  return env.OPENAI_MODEL || 'gpt-6-astra';
+  if (provedor === 'groq') return env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  if (provedor === 'openrouter') return env.OPENROUTER_MODEL || 'openrouter/free';
+  if (provedor === 'gemini') return env.GEMINI_MODEL || 'gemini-2.0-flash';
+  return env.OPENAI_MODEL || 'gpt-4o-mini';
 }
 
 /** Cadeia padrão: Groq → OpenRouter → Gemini (só slots com chave). */
 function listarSlots(env: Record<string, string | undefined>): SlotProvedor[] {
   const ordem: ProvedorIA[] = ['groq', 'openrouter', 'gemini'];
   const explicit = (env.IA_PROVEDOR || '').toLowerCase().trim();
-  // Se forçar um provedor específico (não auto), usa só ele.
   if (explicit && explicit !== 'auto' && explicit !== 'fallback') {
     const chave =
       explicit === 'groq' ? env.GROQ_API_KEY :
@@ -196,9 +188,8 @@ async function analisarComFallback(
       return { resultado, provedor: slot.provedor, modelo: slot.modelo, tentativas };
     } catch (e) {
       ultimoErro = e;
-      const podeProximo = i < slots.length - 1 && erroRecuperavel(e);
-      if (!podeProximo) throw e;
-      // Continua para o próximo provedor.
+      // Sempre tenta o próximo se houver — cotas, modelo inválido, timeout, etc.
+      if (i >= slots.length - 1) throw e;
     }
   }
   throw ultimoErro instanceof Error ? ultimoErro : new Error('Nenhum provedor de IA disponível.');
@@ -250,7 +241,7 @@ export function criarHandler(deps: Dependencias) {
       const agora = Date.now();
       const registro = uso.get(user.id);
       const contador = !registro || agora - registro.inicio > 3600_000 ? { inicio: agora, quantidade: 0 } : registro;
-      if (contador.quantidade >= 10) { enviar(429, { erro: 'Limite de análises atingido. Tente mais tarde.' }); return; }
+      if (contador.quantidade >= 10) { enviar(429, { erro: 'Limite de análises do aplicativo atingido (10/hora). Tente mais tarde.' }); return; }
       if (uso.size >= 1000) uso.delete(uso.keys().next().value!);
       contador.quantidade++; uso.set(user.id, contador);
 
@@ -262,13 +253,10 @@ export function criarHandler(deps: Dependencias) {
       );
       enviar(200, { ...resultado, modelo, provedor, tentativas, data: new Date().toISOString() });
     } catch (e) {
-      if (e instanceof Error && e.name === 'LimiteGemini') { enviar(429, { erro: 'Limite de uso do Gemini atingido em todos os provedores tentados. Tente mais tarde.' }); return; }
-      if (e instanceof Error && e.name === 'GeminiIndisponivel') { enviar(503, { erro: 'Gemini e demais provedores estão indisponíveis. Tente mais tarde.' }); return; }
-      if (e instanceof Error && e.name === 'LimiteGroq') { enviar(429, { erro: 'Limite de uso do Groq atingido e não há outro provedor disponível. Configure OPENROUTER_API_KEY ou aguarde o reset.' }); return; }
-      if (e instanceof Error && e.name === 'GroqIndisponivel') { enviar(503, { erro: 'Groq indisponível e não há outro provedor disponível.' }); return; }
-      if (e instanceof Error && e.name === 'LimiteOpenRouter') { enviar(429, { erro: 'Limite do OpenRouter atingido. Tente mais tarde.' }); return; }
-      if (e instanceof Error && e.name === 'OpenRouterIndisponivel') { enviar(503, { erro: 'OpenRouter indisponível. Tente mais tarde.' }); return; }
-      enviar(502, { erro: 'Não foi possível concluir a análise por IA. Confira a chave, o limite de uso e a disponibilidade do serviço. Nenhuma aprovação foi emitida.' });
+      const msg = e instanceof Error ? e.message : 'Falha desconhecida';
+      enviar(502, {
+        erro: `Todos os provedores de IA falharam (${msg}). As cotas gratuitas (Groq, OpenRouter ~50/dia, Gemini) podem estar esgotadas. A conferência automática continua disponível. Tente amanhã ou use um plano pago.`,
+      });
     }
   };
 }
