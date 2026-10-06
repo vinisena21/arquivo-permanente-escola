@@ -18,17 +18,90 @@ export function sugerirDocumento(paginas: PaginaLida[]): DocumentoConferencia {
   const dados = criarDocumento();
   const frente = paginas[0]?.texto ?? '';
   const verso = paginas[1]?.texto ?? '';
-  dados.nomeFrente = /Certificamos que\s*:\s*(.+?)(?:\s+natural de\s*:|\n|$)/i.exec(frente)?.[1]?.trim() ?? '';
-  dados.nomeVerso = /(?:^|\n)\s*NOME\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim() ?? '';
-  dados.nascimento = /Nascid[oa](?:\(a\))?\s*em\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(frente)?.[1] ?? '';
-  const filiacao = /Filho\(a\)\s*de\s*:\s*(.+?)\s+e de\s*:\s*([^\n]+)/i.exec(frente);
-  dados.nomePai = filiacao?.[1]?.trim() ?? ''; dados.nomeMae = filiacao?.[2]?.trim() ?? '';
-  dados.uf = /\bUF\s*:\s*([A-Z]{2})\b/i.exec(frente)?.[1]?.toUpperCase() ?? '';
-  dados.naturalidade = /natural de\s*:\s*(.+?)(?:\s+UF\s*:|\n|$)/i.exec(frente)?.[1]?.trim() ?? '';
-  dados.nacionalidade = /nacionalidade\s*:\s*(.+?)(?:\s+do sexo|\n|$)/i.exec(frente)?.[1]?.trim() ?? '';
-  dados.sexo = /do sexo\s*:\s*(.+?)(?:\s+Nascid|\n|$)/i.exec(frente)?.[1]?.trim() ?? '';
-  dados.titulo = frente.split('\n').find((l) => /CERTIFICADO DE CONCLUS|HIST[ÓO]RICO ESCOLAR/i.test(l)) ?? '';
-  dados.observacoesGerais = /Observa[çc][õo]es gerais\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim() ?? '';
+  const todo = `${frente}\n${verso}`;
+
+  // Nome na frente (vários padrões comuns em históricos)
+  dados.nomeFrente =
+    /Certificamos que\s*:\s*(.+?)(?:\s+natural de\s*:|\n|$)/i.exec(frente)?.[1]?.trim()
+    ?? /(?:^|\n)\s*NOME\s*(?:DO\s*ALUNO)?\s*:\s*([^\n]+)/i.exec(frente)?.[1]?.trim()
+    ?? /(?:^|\n)\s*Aluno\(a\)\s*:\s*([^\n]+)/i.exec(frente)?.[1]?.trim()
+    ?? '';
+
+  // Nome no verso
+  dados.nomeVerso =
+    /(?:^|\n)\s*NOME\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
+    ?? /(?:^|\n)\s*NOME\s*(?:DO\s*ALUNO)?\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
+    ?? '';
+
+  // Data de nascimento
+  dados.nascimento =
+    /Nascid[oa](?:\(a\))?\s*em\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(frente)?.[1]
+    ?? /(?:Data de\s*)?Nascimento\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(todo)?.[1]
+    ?? /Nasc\.?\s*em\s*:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(todo)?.[1]
+    ?? '';
+
+  // Filiação (vários formatos)
+  const filiacao1 = /Filho\(a\)\s*de\s*:\s*(.+?)\s+e de\s*:\s*([^\n]+)/i.exec(frente);
+  if (filiacao1) {
+    dados.nomePai = filiacao1[1]?.trim() ?? '';
+    dados.nomeMae = filiacao1[2]?.trim() ?? '';
+  } else {
+    const mae = /(?:Filia[çc][ãa]o\s*1|M[ãa]e|Filia[çc][ãa]o\s*materna)\s*:\s*([^\n]+)/i.exec(todo);
+    const pai = /(?:Filia[çc][ãa]o\s*2|Pai|Filia[çc][ãa]o\s*paterna)\s*:\s*([^\n]+)/i.exec(todo);
+    if (mae) dados.nomeMae = mae[1].trim();
+    if (pai) dados.nomePai = pai[1].trim();
+    // Formato "Filiação: PAI e MÃE"
+    const filiacao2 = /Filia[çc][ãa]o\s*:\s*(.+?)\s+e\s+([^\n]+)/i.exec(frente);
+    if (filiacao2 && !dados.nomePai) {
+      dados.nomePai = filiacao2[1]?.trim() ?? '';
+      dados.nomeMae = filiacao2[2]?.trim() ?? '';
+    }
+  }
+
+  // UF e naturalidade
+  dados.uf = /\bUF\s*:\s*([A-Z]{2})\b/i.exec(frente)?.[1]?.toUpperCase()
+    ?? /\bUF\s*:\s*([A-Z]{2})\b/i.exec(todo)?.[1]?.toUpperCase()
+    ?? '';
+  dados.naturalidade =
+    /natural de\s*:\s*(.+?)(?:\s+UF\s*:|\n|$)/i.exec(frente)?.[1]?.trim()
+    ?? /Naturalidade\s*:\s*(.+?)(?:\s+UF\s*:|\n|$)/i.exec(todo)?.[1]?.trim()
+    ?? '';
+
+  // Nacionalidade e sexo
+  dados.nacionalidade =
+    /nacionalidade\s*:\s*(.+?)(?:\s+do sexo|\n|$)/i.exec(frente)?.[1]?.trim()
+    ?? /Nacionalidade\s*:\s*([^\n]+)/i.exec(todo)?.[1]?.trim()
+    ?? '';
+  dados.sexo =
+    /do sexo\s*:\s*(.+?)(?:\s+Nascid|\n|$)/i.exec(frente)?.[1]?.trim()
+    ?? /Sexo\s*:\s*([^\n]+)/i.exec(todo)?.[1]?.trim()
+    ?? '';
+
+  // Título
+  dados.titulo = frente.split('\n').find((l) => /CERTIFICADO DE CONCLUS|HIST[ÓO]RICO ESCOLAR/i.test(l))?.trim() ?? '';
+
+  // Observações gerais
+  dados.observacoesGerais =
+    /Observa[çc][õo]es gerais\s*:\s*([^\n]+(?:\n(?!\s*[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ]{3,})[^\n]+)*)/i.exec(verso)?.[1]?.trim()
+    ?? /Observa[çc][õo]es gerais\s*:\s*([^\n]+)/i.exec(verso)?.[1]?.trim()
+    ?? '';
+
+  // Data de expedição (vários formatos)
+  const expedicaoMatch =
+    /(?:Data de\s*)?Expedi[çc][ãa]o\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i.exec(todo)
+    ?? /(?:Data de\s*)?Expedi[çc][ãa]o\s*:\s*(\d{1,2}\s+de\s+[A-Za-zçÇ]+\s+de\s+\d{4})/i.exec(todo)
+    ?? /(?:emitido|expedido)\s+em\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i.exec(todo)
+    ?? /(?:emitido|expedido)\s+em\s+(\d{1,2}\s+de\s+[A-Za-zçÇ]+\s+de\s+\d{4})/i.exec(todo);
+  if (expedicaoMatch) {
+    dados.expedicao = dataExpedicaoBR(expedicaoMatch[1]) || expedicaoMatch[1].trim();
+  }
+
+  // Fundamentação legal
+  dados.fundamentacao =
+    /Fundament[açc][ãa]o\s*legal\s*:\s*([^\n]+(?:\n(?!\s*[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ]{4,}\s*:)[^\n]+)*)/i.exec(todo)?.[1]?.trim()
+    ?? /(?:Lei\s*n?[º°]?\s*9\.?394\/?1996|LDB|Lei de Diretrizes)[^\n]*/i.exec(todo)?.[0]?.trim()
+    ?? '';
+
   return dados;
 }
 
