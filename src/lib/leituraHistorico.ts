@@ -31,7 +31,34 @@ export function validarArquivos(arquivos: File[]): void {
   }
 }
 
-async function carregarImagem(arquivo: File): Promise<string> {
+/** Contraste + escala de cinza para melhorar OCR em scans. */
+function preprocessarCanvas(origem: HTMLCanvasElement): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = origem.width;
+  canvas.height = origem.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return origem;
+  ctx.drawImage(origem, 0, 0);
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = img.data;
+  // Escala de cinza + contraste moderado
+  const fator = 1.35;
+  const meio = 128;
+  for (let i = 0; i < d.length; i += 4) {
+    const cinza = 0.299 * d[i]! + 0.587 * d[i + 1]! + 0.114 * d[i + 2]!;
+    let v = meio + fator * (cinza - meio);
+    if (v < 0) v = 0;
+    if (v > 255) v = 255;
+    // Limiar suave: escurece traços de texto
+    if (v < 160) v = Math.max(0, v - 25);
+    else if (v > 200) v = 255;
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas;
+}
+
+async function carregarImagem(arquivo: File, paraOcr = false): Promise<string> {
   const bitmap = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
   try {
     const escala = Math.min(1, 2800 / Math.max(bitmap.width, bitmap.height));
@@ -40,26 +67,57 @@ async function carregarImagem(arquivo: File): Promise<string> {
     canvas.height = Math.round(bitmap.height * escala);
     const contexto = canvas.getContext('2d');
     if (!contexto) throw new Error('Não foi possível abrir a imagem.');
-    contexto.fillStyle = '#fff'; contexto.fillRect(0, 0, canvas.width, canvas.height);
+    contexto.fillStyle = '#fff';
+    contexto.fillRect(0, 0, canvas.width, canvas.height);
     contexto.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/png');
+    const final = paraOcr ? preprocessarCanvas(canvas) : canvas;
+    return final.toDataURL('image/png');
   } finally {
     bitmap.close();
   }
 }
 
-/** Extrai texto de um DOCX preservando separação de células de tabela. */
+function textoDeCelula(xmlCelula: string): string {
+  return xmlCelula
+    .replace(/<w:tab\b[^/]*\/>/gi, ' ')
+    .replace(/<w:br\b[^/]*\/>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/&/g, '&')
+    .replace(/"/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extrai texto de DOCX preservando estrutura de tabela:
+ * células separadas por " | " e linhas de tabela por quebra de linha.
+ */
 async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<string> {
   verificarCancelamento(signal);
   const PizZip = (await import('pizzip')).default;
   const zip = new PizZip(await arquivo.arrayBuffer());
   const doc = zip.file('word/document.xml');
   if (!doc) throw new Error('Arquivo DOCX inválido: não contém word/document.xml.');
-  const xml = doc.asText();
-  // Células de tabela → espaço; fim de linha de tabela e parágrafo → quebra de linha
+  let xml = doc.asText();
+
+  // Normaliza cada linha de tabela: células com separador |
+  xml = xml.replace(/<w:tr[\s>][\s\S]*?<\/w:tr>/gi, (linha) => {
+    const celulas: string[] = [];
+    const reTc = /<w:tc[\s>][\s\S]*?<\/w:tc>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = reTc.exec(linha)) !== null) {
+      celulas.push(textoDeCelula(m[0]));
+    }
+    if (!celulas.length) return '\n';
+    return `\n${celulas.join(' | ')}\n`;
+  });
+
   const texto = xml
-    .replace(/<w:tc[\s>]/gi, ' ')
-    .replace(/<\/w:tr>/gi, '\n')
     .replace(/<\/w:p>/gi, '\n')
     .replace(/<w:br\b[^/]*\/>/gi, '\n')
     .replace(/<w:tab\b[^/]*\/>/gi, '\t')
@@ -75,7 +133,10 @@ async function extrairTextoDocx(arquivo: File, signal: AbortSignal): Promise<str
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-  if (texto.length < 50) throw new Error('Não foi possível extrair texto suficiente do DOCX. Verifique se o arquivo não está vazio ou protegido.');
+
+  if (texto.length < 50) {
+    throw new Error('Não foi possível extrair texto suficiente do DOCX. Verifique se o arquivo não está vazio ou protegido.');
+  }
   return texto;
 }
 
@@ -99,13 +160,12 @@ function imagemPlaceholder(): string {
   return canvas.toDataURL('image/png');
 }
 
-async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{ imagens: string[]; textos?: string[] }> {
+async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{ imagens: string[]; imagensOcr?: string[]; textos?: string[] }> {
   validarArquivos(arquivos);
   const isDocx = arquivos.length === 1 && (arquivos[0].type === TIPO_DOCX || arquivos[0].name.toLowerCase().endsWith('.docx'));
   if (isDocx) {
     const texto = await extrairTextoDocx(arquivos[0], signal);
     const normalizado = texto.replace(/\r\n/g, '\n');
-    // Separa pelo título do histórico fundamental (verso) quando existir
     const idxFund = normalizado.search(/HIST[ÓO]RICO ESCOLAR\s*[-–]?\s*ENSINO FUNDAMENTAL/i);
     let frente = normalizado;
     let verso = normalizado;
@@ -118,11 +178,13 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{
   }
   if (arquivos.length === 2) {
     const imagens: string[] = [];
+    const imagensOcr: string[] = [];
     for (const arquivo of arquivos) {
       verificarCancelamento(signal);
-      imagens.push(await carregarImagem(arquivo));
+      imagens.push(await carregarImagem(arquivo, false));
+      imagensOcr.push(await carregarImagem(arquivo, true));
     }
-    return { imagens };
+    return { imagens, imagensOcr };
   }
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -134,18 +196,21 @@ async function prepararPaginas(arquivos: File[], signal: AbortSignal): Promise<{
     const pdf = await tarefa.promise;
     if (pdf.numPages !== 2) throw new Error(`O PDF tem ${pdf.numPages} página(s). É necessário exatamente frente e verso.`);
     const imagens: string[] = [];
+    const imagensOcr: string[] = [];
     for (let n = 1; n <= 2; n++) {
       verificarCancelamento(signal);
       const pagina = await pdf.getPage(n);
       const base = pagina.getViewport({ scale: 1 });
       const viewport = pagina.getViewport({ scale: Math.min(3, 2800 / Math.max(base.width, base.height)) });
       const canvas = document.createElement('canvas');
-      canvas.width = Math.round(viewport.width); canvas.height = Math.round(viewport.height);
+      canvas.width = Math.round(viewport.width);
+      canvas.height = Math.round(viewport.height);
       await pagina.render({ canvas, viewport }).promise;
       imagens.push(canvas.toDataURL('image/png'));
+      imagensOcr.push(preprocessarCanvas(canvas).toDataURL('image/png'));
       pagina.cleanup();
     }
-    return { imagens };
+    return { imagens, imagensOcr };
   } finally {
     signal.removeEventListener('abort', cancelar);
     await tarefa.destroy();
@@ -156,20 +221,21 @@ export async function lerDocumento(
   arquivos: File[], signal: AbortSignal, progresso: (texto: string) => void,
 ): Promise<PaginaLida[]> {
   progresso('Preparando documento…');
-  const { imagens, textos } = await prepararPaginas(arquivos, signal);
+  const { imagens, imagensOcr, textos } = await prepararPaginas(arquivos, signal);
   verificarCancelamento(signal);
 
   if (textos) {
-    progresso('Texto do DOCX extraído automaticamente.');
+    progresso('Texto do DOCX extraído automaticamente (tabelas preservadas).');
     return textos.map((texto, i) => ({
       lado: (i === 0 ? 'Frente' : 'Verso') as 'Frente' | 'Verso',
-      imagem: imagens[i],
+      imagem: imagens[i]!,
       texto,
       confianca: 99,
       palavrasDuvidosas: [],
     }));
   }
 
+  const fontesOcr = imagensOcr ?? imagens;
   const { createWorker } = await import('tesseract.js');
   let paginaAtual = 0;
   progresso('Carregando leitura em português…');
@@ -186,21 +252,28 @@ export async function lerDocumento(
   try {
     verificarCancelamento(signal);
     const paginas: PaginaLida[] = [];
-    for (paginaAtual = 0; paginaAtual < imagens.length; paginaAtual++) {
+    for (paginaAtual = 0; paginaAtual < fontesOcr.length; paginaAtual++) {
       verificarCancelamento(signal);
-      const { data } = await aguardar(worker.recognize(imagens[paginaAtual], { rotateAuto: true }, { text: true, blocks: true }), signal);
+      const { data } = await aguardar(
+        worker.recognize(fontesOcr[paginaAtual]!, { rotateAuto: true }, { text: true, blocks: true }),
+        signal,
+      );
       const palavras = (data.blocks ?? []).flatMap((bloco) => bloco.paragraphs.flatMap((p) => p.lines.flatMap((linha) => linha.words)));
       const ordenadas = [...palavras].sort((a, b) => a.bbox.y0 - b.bbox.y0);
       const linhas: typeof palavras[] = [];
       for (const palavra of ordenadas) {
         const ultima = linhas.at(-1);
         const tolerancia = Math.max(4, (palavra.bbox.y1 - palavra.bbox.y0) * 0.55);
-        if (ultima && Math.abs(palavra.bbox.y0 - ultima[0].bbox.y0) <= tolerancia) ultima.push(palavra);
+        if (ultima && Math.abs(palavra.bbox.y0 - ultima[0]!.bbox.y0) <= tolerancia) ultima.push(palavra);
         else linhas.push([palavra]);
       }
-      const texto = linhas.length ? linhas.map((linha) => linha.sort((a, b) => a.bbox.x0 - b.bbox.x0).map((p) => p.text).join(' ')).join('\n') : data.text;
+      const texto = linhas.length
+        ? linhas.map((linha) => linha.sort((a, b) => a.bbox.x0 - b.bbox.x0).map((p) => p.text).join(' ')).join('\n')
+        : data.text;
       paginas.push({
-        lado: paginaAtual === 0 ? 'Frente' : 'Verso', imagem: imagens[paginaAtual], texto,
+        lado: paginaAtual === 0 ? 'Frente' : 'Verso',
+        imagem: imagens[paginaAtual]!,
+        texto,
         confianca: data.confidence,
         palavrasDuvidosas: palavras.filter((p) => p.confidence < 80 && /[\p{L}\d]/u.test(p.text)).map((p) => p.text),
       });
