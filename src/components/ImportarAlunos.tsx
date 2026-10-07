@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, CheckCircle2, Database, Download, Eye, FileSpreadsheet,
+  AlertTriangle, CheckCircle2, Download, Eye, FileSpreadsheet,
   FileText, LoaderCircle, Pencil, RefreshCw, Search, Trash2, Upload, Users, X,
 } from 'lucide-react';
 import {
@@ -223,7 +223,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
       {leitura && comparacao && (
         <div className="ia-import-card">
           <h3><FileSpreadsheet size={18} /> Prévia: {nomeArquivo}</h3>
-          <p>{leitura.registros.length} registro(s) · {comparacao.novos} novo(s) · {comparacao.atualizacoes} atualização(ões)</p>
+          <p>{leitura.registros.length} registro(s) · {comparacao.novos} novo(s) · {comparacao.situacaoAlterada + comparacao.outrosAlterados} atualização(ões)</p>
           {erroImportacao && <p className="ia-alert ia-alert-error">{erroImportacao}</p>}
           <div className="ia-import-actions">
             <button type="button" className="ia-btn" onClick={cancelarImportacao} disabled={salvando}>Cancelar</button>
