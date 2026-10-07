@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   Archive,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Folder,
@@ -79,16 +78,13 @@ export default function App() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 20;
 
-  /** Dados de histórico salvo para abrir no gerador e continuar editando */
   const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<
     Record<string, string> | null
   >(null);
 
-  /** Aluno da secretaria escolhido para preencher o gerador de histórico */
   const [alunoSecretariaParaHistorico, setAlunoSecretariaParaHistorico] =
     useState<AlunoSecretariaRow | null>(null);
 
-  /** Incrementa para forçar recarga da lista em ImportarAlunos */
   const [versaoListaSecretaria, setVersaoListaSecretaria] = useState(0);
 
   useEffect(() => {
