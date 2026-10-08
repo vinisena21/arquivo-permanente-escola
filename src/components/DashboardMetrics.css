@@ -1,0 +1,150 @@
+/* Dashboard — apenas esta aba */
+
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dash-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dash-header h2 {
+  margin: 0 0 0.25rem;
+  color: #1f2937;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.dash-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.dash-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dash-refresh:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.dash-refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dash-spin {
+  animation: dash-spin 0.9s linear infinite;
+}
+
+@keyframes dash-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dash-erro {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.dash-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dash-card-body {
+  min-width: 0;
+}
+
+.dash-card-title {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dash-card-value {
+  margin: 0.35rem 0 0;
+  color: #111827;
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.dash-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: #fff;
+}
+
+.dash-card--azul .dash-card-icon {
+  background: #2563eb;
+}
+
+.dash-card--verde .dash-card-icon {
+  background: #059669;
+}
+
+.dash-card--ambar .dash-card-icon {
+  background: #d97706;
+}
+
+.dash-card--violeta .dash-card-icon {
+  background: #7c3aed;
+}
+
+.dash-card--cinza .dash-card-icon {
+  background: #4b5563;
+}
+
+@media (max-width: 480px) {
+  .dash-card-value {
+    font-size: 1.4rem;
+  }
+}

@@ -1,120 +1,182 @@
-import React, { useEffect, useState } from 'react';
-import { Users, Folder, Clock, ArrowRightLeft } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Users,
+  Folder,
+  Clock,
+  ArrowRightLeft,
+  FolderTree,
+  FileSpreadsheet,
+  FileText,
+  RefreshCw
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import './DashboardMetrics.css';
 
 interface Metrics {
   totalAlunos: number;
   totalArquivados: number;
   totalPendentes: number;
   totalTransferidos: number;
+  totalPastas: number;
+  totalSecretaria: number;
+  totalHistoricos: number;
 }
 
+const METRICS_INICIAL: Metrics = {
+  totalAlunos: 0,
+  totalArquivados: 0,
+  totalPendentes: 0,
+  totalTransferidos: 0,
+  totalPastas: 0,
+  totalSecretaria: 0,
+  totalHistoricos: 0
+};
+
 export const DashboardMetrics: React.FC = () => {
-  const [metrics, setMetrics] = useState<Metrics>({
-    totalAlunos: 0,
-    totalArquivados: 0,
-    totalPendentes: 0,
-    totalTransferidos: 0,
-  });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [metrics, setMetrics] = useState<Metrics>(METRICS_INICIAL);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    setErro('');
+    try {
+      const [
+        totalRes,
+        arquivadosRes,
+        pendentesRes,
+        transferidosRes,
+        secretariaRes,
+        historicosRes
+      ] = await Promise.all([
+        supabase.from('alunos').select('*', { count: 'exact', head: true }),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Arquivado'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Pendente'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Transferido'),
+        supabase.from('alunos_secretaria').select('*', { count: 'exact', head: true }),
+        supabase.from('historicos_gerados').select('*', { count: 'exact', head: true })
+      ]);
+
+      // Conta pastas distintas em lotes (Supabase limita ~1000 por request)
+      const pastasUnicas = new Set<string>();
+      const lote = 1000;
+      let inicio = 0;
+      while (true) {
+        const { data } = await supabase
+          .from('alunos')
+          .select('codigo_pasta')
+          .range(inicio, inicio + lote - 1);
+        const rows = data ?? [];
+        for (const r of rows) {
+          if (r.codigo_pasta) pastasUnicas.add(String(r.codigo_pasta));
+        }
+        if (rows.length < lote) break;
+        inicio += lote;
+      }
+
+      setMetrics({
+        totalAlunos: totalRes.count ?? 0,
+        totalArquivados: arquivadosRes.count ?? 0,
+        totalPendentes: pendentesRes.count ?? 0,
+        totalTransferidos: transferidosRes.count ?? 0,
+        totalPastas: pastasUnicas.size,
+        totalSecretaria: secretariaRes.error ? 0 : (secretariaRes.count ?? 0),
+        totalHistoricos: historicosRes.error ? 0 : (historicosRes.count ?? 0)
+      });
+    } catch (error) {
+      console.error('Erro ao carregar métricas:', error);
+      setErro('Não foi possível carregar algumas estatísticas.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        setLoading(true);
-
-        const { count: total } = await supabase
-          .from('alunos')
-          .select('*', { count: 'exact', head: true });
-
-        const { count: arquivados } = await supabase
-          .from('alunos')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'Arquivado');
-
-        const { count: pendentes } = await supabase
-          .from('alunos')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'Pendente');
-
-        const { count: transferidos } = await supabase
-          .from('alunos')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'Transferido');
-
-        setMetrics({
-          totalAlunos: total || 0,
-          totalArquivados: arquivados || 0,
-          totalPendentes: pendentes || 0,
-          totalTransferidos: transferidos || 0,
-        });
-      } catch (error) {
-        console.error('Erro ao carregar métricas:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMetrics();
-  }, []);
+    void carregar();
+  }, [carregar]);
 
   const cards = [
     {
       title: 'Total de Prontuários',
       value: metrics.totalAlunos,
       icon: Users,
-      color: 'bg-blue-600',
+      tone: 'azul'
     },
     {
       title: 'Arquivados',
       value: metrics.totalArquivados,
       icon: Folder,
-      color: 'bg-emerald-600',
+      tone: 'verde'
     },
     {
       title: 'Pendentes',
       value: metrics.totalPendentes,
       icon: Clock,
-      color: 'bg-amber-500',
+      tone: 'ambar'
     },
     {
       title: 'Transferidos',
       value: metrics.totalTransferidos,
       icon: ArrowRightLeft,
-      color: 'bg-violet-600',
+      tone: 'violeta'
     },
+    {
+      title: 'Pastas no acervo',
+      value: metrics.totalPastas,
+      icon: FolderTree,
+      tone: 'cinza'
+    },
+    {
+      title: 'Alunos da secretaria',
+      value: metrics.totalSecretaria,
+      icon: FileSpreadsheet,
+      tone: 'azul'
+    },
+    {
+      title: 'Históricos gerados',
+      value: metrics.totalHistoricos,
+      icon: FileText,
+      tone: 'verde'
+    }
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Painel do Arquivo Permanente</h1>
-        <p className="text-gray-500 text-sm">Visão geral do acervo e estatísticas</p>
-      </div>
+    <section className="dash">
+      <header className="dash-header">
+        <div>
+          <h2>Painel do Arquivo Permanente</h2>
+          <p>Visão geral do acervo e estatísticas atualizadas</p>
+        </div>
+        <button
+          type="button"
+          className="dash-refresh"
+          onClick={() => void carregar()}
+          disabled={loading}
+          title="Atualizar métricas"
+        >
+          <RefreshCw size={16} className={loading ? 'dash-spin' : undefined} />
+          Atualizar
+        </button>
+      </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((card, index) => {
-          const IconComponent = card.icon;
+      {erro && <p className="dash-erro">{erro}</p>}
+
+      <div className="dash-grid">
+        {cards.map((card) => {
+          const Icon = card.icon;
           return (
-            <div
-              key={index}
-              className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex items-center justify-between"
-            >
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  {card.title}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {loading ? '...' : card.value}
-                </p>
+            <article key={card.title} className={`dash-card dash-card--${card.tone}`}>
+              <div className="dash-card-body">
+                <p className="dash-card-title">{card.title}</p>
+                <p className="dash-card-value">{loading ? '…' : card.value.toLocaleString('pt-BR')}</p>
               </div>
-              <div className={`p-3 rounded-lg ${card.color} text-white`}>
-                <IconComponent className="w-6 h-6" />
+              <div className="dash-card-icon">
+                <Icon size={22} />
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 };
