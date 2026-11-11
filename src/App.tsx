@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   Archive,
@@ -27,7 +27,7 @@ import GerenciarAlunos, {
   type AlunoCadastrado
 } from './components/GerenciarAlunos';
 import Login from './components/Login';
-import { DashboardMetrics } from './components/DashboardMetrics';
+
 import PainelGestao from './components/PainelGestao';
 import DeclaracoesModal from './components/DeclaracoesModal';
 import { ChevronDown, GraduationCap } from 'lucide-react';
@@ -141,7 +141,7 @@ export default function App() {
         );
       } catch (erroEncontrado) {
         console.error(erroEncontrado);
-        setErro('Não foi possível carregar os alunos do banco de dados.');
+        setErro('NÃ£o foi possÃ­vel carregar os alunos do banco de dados.');
       } finally {
         setCarregando(false);
       }
@@ -189,10 +189,10 @@ export default function App() {
       const { error } = await supabase.from('alunos').delete().eq('id', alunoParaExcluir.id);
       if (error) throw error;
       setAlunos((alunosAtuais) => alunosAtuais.filter((item) => item.id !== alunoParaExcluir.id));
-      setToast({ message: `${alunoParaExcluir.nome} foi excluído com sucesso.`, type: 'success' });
+      setToast({ message: `${alunoParaExcluir.nome} foi excluÃ­do com sucesso.`, type: 'success' });
     } catch (erroEncontrado) {
       console.error(erroEncontrado);
-      setToast({ message: 'Não foi possível excluir o registro do aluno.', type: 'error' });
+      setToast({ message: 'NÃ£o foi possÃ­vel excluir o registro do aluno.', type: 'error' });
     } finally {
       setExcluindoId(null);
       setAlunoParaExcluir(null);
@@ -220,7 +220,7 @@ export default function App() {
       .filter((aluno) => aluno.codigoPasta === codigoPasta)
       .map((aluno) => ({
         id: aluno.id,
-        name: `Nº ${String(aluno.numero).padStart(2, '0')} - ${aluno.nome}`,
+        name: `NÂº ${String(aluno.numero).padStart(2, '0')} - ${aluno.nome}`,
         type: 'documento' as const
       }))
   }));
@@ -245,7 +245,7 @@ export default function App() {
               <Archive className="logo-icon" size={36} />
               <div>
                 <h1>Guia Escolar</h1>
-                <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</p>
+                <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃƒO</p>
               </div>
             </div>
             <div className="user-area">
@@ -259,8 +259,8 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="main-navigation" aria-label="Navegação principal">
-            {/* 1. Painel de Gestão (Início) */}
+          <nav className="main-navigation" aria-label="NavegaÃ§Ã£o principal">
+            {/* 1. Painel de GestÃ£o (InÃ­cio) */}
             <button
               type="button"
               className={abaAtiva === 'dashboard' ? 'navigation-button active' : 'navigation-button'}
@@ -269,10 +269,10 @@ export default function App() {
                 setMenuDropdownAberto(null);
               }}
             >
-              <BarChart2 size={18} /> Início (Gestão)
+              <BarChart2 size={18} /> InÃ­cio (GestÃ£o)
             </button>
 
-            {/* 2. Consulta Rápida */}
+            {/* 2. Consulta RÃ¡pida */}
             <button
               type="button"
               className={abaAtiva === 'consulta' ? 'navigation-button active' : 'navigation-button'}
@@ -310,7 +310,7 @@ export default function App() {
                     <Settings size={16} />
                     <div>
                       <span>Gerenciar Alunos</span>
-                      <span className="nav-dropdown-item-desc">Cadastrar novo prontuário</span>
+                      <span className="nav-dropdown-item-desc">Cadastrar novo prontuÃ¡rio</span>
                     </div>
                   </button>
 
@@ -341,15 +341,15 @@ export default function App() {
                   >
                     <FolderTree size={16} />
                     <div>
-                      <span>Árvore do Acervo</span>
-                      <span className="nav-dropdown-item-desc">Estrutura física de pastas</span>
+                      <span>Ãrvore do Acervo</span>
+                      <span className="nav-dropdown-item-desc">Estrutura fÃ­sica de pastas</span>
                     </div>
                   </button>
                 </div>
               )}
             </div>
 
-            {/* 4. Dropdown Arquivo & Históricos */}
+            {/* 4. Dropdown Arquivo & HistÃ³ricos */}
             <div className="nav-dropdown">
               <button
                 type="button"
@@ -359,7 +359,7 @@ export default function App() {
                   setMenuDropdownAberto(menuDropdownAberto === 'arquivo' ? null : 'arquivo');
                 }}
               >
-                <Archive size={18} /> Arquivo & Históricos <ChevronDown size={14} />
+                <Archive size={18} /> Arquivo & HistÃ³ricos <ChevronDown size={14} />
               </button>
 
               {menuDropdownAberto === 'arquivo' && (
@@ -374,8 +374,8 @@ export default function App() {
                   >
                     <FileText size={16} />
                     <div>
-                      <span>Gerar Histórico</span>
-                      <span className="nav-dropdown-item-desc">Preencher e emitir histórico</span>
+                      <span>Gerar HistÃ³rico</span>
+                      <span className="nav-dropdown-item-desc">Preencher e emitir histÃ³rico</span>
                     </div>
                   </button>
 
@@ -389,7 +389,7 @@ export default function App() {
                   >
                     <History size={16} />
                     <div>
-                      <span>Históricos Salvos</span>
+                      <span>HistÃ³ricos Salvos</span>
                       <span className="nav-dropdown-item-desc">Consultar documentos emitidos</span>
                     </div>
                   </button>
@@ -405,14 +405,14 @@ export default function App() {
                     <FileCheck2 size={16} />
                     <div>
                       <span>Conferir com IA</span>
-                      <span className="nav-dropdown-item-desc">Verificação e auditoria</span>
+                      <span className="nav-dropdown-item-desc">VerificaÃ§Ã£o e auditoria</span>
                     </div>
                   </button>
                 </div>
               )}
             </div>
 
-            {/* 5. Emissor de Declarações */}
+            {/* 5. Emissor de DeclaraÃ§Ãµes */}
             <button
               type="button"
               className="navigation-button"
@@ -420,9 +420,9 @@ export default function App() {
                 setModalDeclaracoesAberta(true);
                 setMenuDropdownAberto(null);
               }}
-              title="Emitir Declaração de Matrícula, Escolaridade ou Comparecimento"
+              title="Emitir DeclaraÃ§Ã£o de MatrÃ­cula, Escolaridade ou Comparecimento"
             >
-              <GraduationCap size={18} /> Declarações
+              <GraduationCap size={18} /> DeclaraÃ§Ãµes
             </button>
           </nav>
         </div>
@@ -457,7 +457,7 @@ export default function App() {
                 <Search className="search-icon" size={20} />
                 <input
                   type="text"
-                  placeholder="Buscar por nome do aluno, pasta ou nÃºmero..."
+                  placeholder="Buscar por nome do aluno, pasta ou nÃƒÂºmero..."
                   value={busca}
                   onChange={(evento) => alterarBusca(evento.target.value)}
                   aria-label="Buscar aluno"
@@ -469,7 +469,7 @@ export default function App() {
                     onClick={() => alterarBusca('')}
                     aria-label="Limpar pesquisa"
                   >
-                    ✕
+                    âœ•
                   </button>
                 )}
               </div>
@@ -503,16 +503,16 @@ export default function App() {
                           <th>
                             <Layers size={16} /> Pasta
                           </th>
-                          <th>Nº Arquivo</th>
+                          <th>NÂº Arquivo</th>
                           <th>Status</th>
-                          <th>Ações</th>
+                          <th>AÃ§Ãµes</th>
                         </tr>
                       </thead>
                       <tbody>
                         {alunosPaginados.map((item) => (
                           <tr key={item.id}>
                             <td className="font-bold">{item.nome}</td>
-                            <td>{item.dataNascimento || 'Não informada'}</td>
+                            <td>{item.dataNascimento || 'NÃ£o informada'}</td>
                             <td>
                               <span className="badge-pasta">{item.codigoPasta}</span>
                             </td>
@@ -573,7 +573,7 @@ export default function App() {
                     }}
                   >
                     <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-                      Página {paginaAtual} de {totalPaginas} Â· {alunosFiltrados.length} registro(s)
+                      PÃ¡gina {paginaAtual} de {totalPaginas} Ã‚Â· {alunosFiltrados.length} registro(s)
                     </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
@@ -635,7 +635,7 @@ export default function App() {
           <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <FolderTree size={20} className="text-blue-600" />
-              Estrutura Física do Acervo (Visão em Ãrvore)
+              Estrutura FÃ­sica do Acervo (VisÃ£o em ÃƒÂrvore)
             </h2>
             <TreeView
               data={arvoreAcervo}
@@ -665,7 +665,7 @@ export default function App() {
               setDadosHistoricoEdicao(dados);
               setAbaAtiva('historico');
               setToast({
-                message: 'Histórico carregado no gerador. Continue editando e gere novamente quando quiser.',
+                message: 'HistÃ³rico carregado no gerador. Continue editando e gere novamente quando quiser.',
                 type: 'success'
               });
             }}
@@ -709,8 +709,8 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Guia Escolar &copy; {new Date().getFullYear()} — E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO
-          — Todos os direitos reservados.
+          Guia Escolar &copy; {new Date().getFullYear()} â€” E.M. MARIA GERALDA MIRANDA BRITO SALOMÃƒO
+          â€” Todos os direitos reservados.
         </p>
       </footer>
 
@@ -728,7 +728,7 @@ export default function App() {
         title="Excluir Aluno"
         message={
           alunoParaExcluir
-            ? `Tem certeza que deseja excluir o aluno:\n\n• ${alunoParaExcluir.nome}\n• Pasta: ${alunoParaExcluir.codigoPasta}\n• NÃºmero: ${String(alunoParaExcluir.numero).padStart(2, '0')}\n\nEssa ação Não poderÃ¡ ser desfeita.`
+            ? `Tem certeza que deseja excluir o aluno:\n\nâ€¢ ${alunoParaExcluir.nome}\nâ€¢ Pasta: ${alunoParaExcluir.codigoPasta}\nâ€¢ NÃƒÂºmero: ${String(alunoParaExcluir.numero).padStart(2, '0')}\n\nEssa aÃ§Ã£o NÃ£o poderÃƒÂ¡ ser desfeita.`
             : ''
         }
         confirmText="Excluir"
@@ -747,5 +747,6 @@ export default function App() {
     </div>
   );
 }
+
 
 
