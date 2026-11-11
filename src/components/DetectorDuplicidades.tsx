@@ -45,6 +45,7 @@ export default function DetectorDuplicidades({
   const [carregando, setCarregando] = useState(false);
   const [ignorados, setIgnorados] = useState<Set<string>>(new Set());
   const [detalheModal, setDetalheModal] = useState<ConflitoDuplicidade | null>(null);
+  const [ocultarSaiuVoltou, setOcultarSaiuVoltou] = useState(true);
 
   function executarVarredura() {
     setCarregando(true);
@@ -76,6 +77,8 @@ export default function DetectorDuplicidades({
     const q = busca.toLowerCase().trim();
     return conflitos.filter((c) => {
       if (ignorados.has(c.id)) return false;
+      // Oculta casos de transferência regular (saiu e voltou) se a opção estiver ativada
+      if (ocultarSaiuVoltou && c.ehMovimentacaoTransferencia) return false;
 
       const matchBusca =
         !q ||
@@ -90,9 +93,13 @@ export default function DetectorDuplicidades({
 
       return matchBusca && matchTipo && matchSev;
     });
-  }, [conflitos, busca, filtroTipo, filtroSeveridade, ignorados]);
+  }, [conflitos, busca, filtroTipo, filtroSeveridade, ignorados, ocultarSaiuVoltou]);
 
   // Contadores para os KPIs
+  const totalSaiuVoltou = useMemo(
+    () => conflitos.filter((c) => c.ehMovimentacaoTransferencia).length,
+    [conflitos]
+  );
   const totalCriticos = useMemo(
     () => conflitos.filter((c) => !ignorados.has(c.id) && c.severidade === 'critico').length,
     [conflitos, ignorados]
@@ -308,6 +315,15 @@ export default function DetectorDuplicidades({
               <option value="atencao">Somente Atenção</option>
             </select>
           </div>
+
+          <label className="checkbox-saiu-voltou-label">
+            <input
+              type="checkbox"
+              checked={ocultarSaiuVoltou}
+              onChange={(e) => setOcultarSaiuVoltou(e.target.checked)}
+            />
+            <span>Ocultar transferência (Saiu e Voltou: {totalSaiuVoltou})</span>
+          </label>
         </div>
       </div>
 
@@ -348,6 +364,15 @@ export default function DetectorDuplicidades({
 
               {/* Descrição do Motivo */}
               <p className="conflito-motivo">{c.motivo}</p>
+
+              {c.ehMovimentacaoTransferencia && (
+                <div className="banner-movimentacao-info">
+                  <Info size={16} />
+                  <span>
+                    <strong>Histórico de Movimentação Regular:</strong> O aluno saiu anteriormente e retornou. O registro com status <strong>TRANSFERIDO</strong> não é computado na contagem de alunos normais ativos.
+                  </span>
+                </div>
+              )}
 
               {/* Comparativo Lado a Lado dos Registros */}
               <div className="conflito-grid-comparativo">

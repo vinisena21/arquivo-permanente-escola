@@ -145,6 +145,12 @@ export const PainelGestao: React.FC = () => {
       let evadidosCount = 0;
 
       for (const row of secRows) {
+        const sit = (row.situacao || '').trim().toUpperCase();
+        // Não conta alunos transferidos nem desistentes nos totais de frequência e turnos de alunos normais
+        if (sit === 'TRANSFERIDO' || sit === 'DESISTENTE') {
+          continue;
+        }
+
         const t = (row.turno || '').trim().toUpperCase() || 'MATUTINO';
         turnosMap.set(t, (turnosMap.get(t) || 0) + 1);
 
@@ -170,12 +176,17 @@ export const PainelGestao: React.FC = () => {
       }));
 
       if (turnosArray.length === 0 && matriculasOficiais && matriculasOficiais.length > 0) {
-        // Usa estatísticas reais extraídas dos 585 registros oficiais
+        // Filtra apenas as matrículas normais ativas (exclui os 42 transferidos e desistentes que saíram)
+        const matriculasAtivas = matriculasOficiais.filter((m: any) => {
+          const sit = (m['Situação'] || '').trim().toUpperCase();
+          return sit !== 'TRANSFERIDO' && sit !== 'DESISTENTE';
+        });
+
         const contagemTurno: Record<string, number> = {};
         const contagemSexo: Record<string, number> = {};
         const contagemRaca: Record<string, number> = {};
 
-        matriculasOficiais.forEach((m: any) => {
+        matriculasAtivas.forEach((m: any) => {
           const t = m['Turno'] || 'MATUTINO';
           contagemTurno[t] = (contagemTurno[t] || 0) + 1;
 
@@ -187,13 +198,13 @@ export const PainelGestao: React.FC = () => {
         });
 
         turnosArray = [
-          { turno: 'Matutino', quantidade: contagemTurno['MATUTINO'] || 321, cor: '#1e3a8a' },
-          { turno: 'Vespertino', quantidade: contagemTurno['VESPERTINO'] || 264, cor: '#3b82f6' }
+          { turno: 'Matutino', quantidade: contagemTurno['MATUTINO'] || 307, cor: '#1e3a8a' },
+          { turno: 'Vespertino', quantidade: contagemTurno['VESPERTINO'] || 235, cor: '#3b82f6' }
         ];
 
-        const fem = contagemSexo['Feminino'] || 289;
-        const masc = contagemSexo['Masculino'] || 296;
-        const totS = fem + masc;
+        const fem = contagemSexo['Feminino'] || 265;
+        const masc = contagemSexo['Masculino'] || 277;
+        const totS = fem + masc || 542;
 
         porSexo = [
           { sexo: 'Feminino', quantidade: fem, percentual: Math.round((fem / totS) * 100), cor: '#f43f5e' },
@@ -203,7 +214,7 @@ export const PainelGestao: React.FC = () => {
         porRaca = Object.entries(contagemRaca).map(([raca, qtd]) => ({
           raca,
           quantidade: qtd,
-          percentual: Math.round((qtd / matriculasOficiais.length) * 100)
+          percentual: Math.round((qtd / matriculasAtivas.length) * 100)
         })).sort((a, b) => b.quantidade - a.quantidade);
       }
 

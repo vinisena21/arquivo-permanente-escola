@@ -5,6 +5,7 @@ export type TipoConflito =
   | 'conflito_pasta_numero'
   | 'similaridade_alta'
   | 'secretaria_multipla'
+  | 'historico_movimentacao'
   | 'documento_duplicado';
 
 export type SeveridadeConflito = 'critico' | 'alerta' | 'atencao';
@@ -17,6 +18,7 @@ export interface ConflitoDuplicidade {
   motivo: string;
   porcentagem: number;
   origem: 'arquivo' | 'secretaria' | 'cruzado';
+  ehMovimentacaoTransferencia?: boolean;
   alunoA: {
     id?: number | string;
     nome: string;
@@ -275,39 +277,87 @@ export function detectarDuplicidades(
           const b = grupo[j];
           const datasIguais = a.dataNasc && b.dataNasc && a.dataNasc === b.dataNasc;
 
-          addConflito({
-            id: `sec-${a.matricula}-${b.matricula}`,
-            tipo: 'secretaria_multipla',
-            severidade: 'alerta',
-            titulo: `Multi-Matrícula na Secretaria: ${a.nome}`,
-            motivo: `O estudante possui 2 matrículas registradas no sistema: Matrícula ${a.matricula} (${a.situacao} - ${a.turma}) e Matrícula ${b.matricula} (${b.situacao} - ${b.turma}).`,
-            porcentagem: 100,
-            origem: 'secretaria',
-            alunoA: {
-              id: a.id,
-              nome: a.nome,
-              dataNascimento: a.dataNasc,
-              codigoMatricula: a.matricula,
-              turma: a.turma,
-              turno: a.turno,
-              situacao: a.situacao,
-              filiacao: a.filiacao,
-              cpf: a.cpf
-            },
-            alunoB: {
-              id: b.id,
-              nome: b.nome,
-              dataNascimento: b.dataNasc,
-              codigoMatricula: b.matricula,
-              turma: b.turma,
-              turno: b.turno,
-              situacao: b.situacao,
-              filiacao: b.filiacao,
-              cpf: b.cpf
-            },
-            camposIguais: ['Nome', ...(datasIguais ? ['Data de Nascimento'] : [])],
-            camposDiferentes: ['Código de Matrícula', 'Turma', 'Situação']
-          });
+          const sitA = (a.situacao || '').toUpperCase();
+          const sitB = (b.situacao || '').toUpperCase();
+          const temTransferido = sitA === 'TRANSFERIDO' || sitB === 'TRANSFERIDO';
+          const ambosNormais = (sitA === 'NORMAL' || sitA === 'CLASSIFICADO') && (sitB === 'NORMAL' || sitB === 'CLASSIFICADO');
+
+          if (temTransferido && !ambosNormais) {
+            // Histórico de movimentação escolar legítimo (saiu e voltou / rematrícula)
+            const alunoAtivo = sitA !== 'TRANSFERIDO' ? a : b;
+            const alunoAntigo = sitA === 'TRANSFERIDO' ? a : b;
+
+            addConflito({
+              id: `sec-mov-${a.matricula}-${b.matricula}`,
+              tipo: 'historico_movimentacao',
+              severidade: 'atencao',
+              ehMovimentacaoTransferencia: true,
+              titulo: `Movimentação Regular (Saiu e Voltou): ${alunoAtivo.nome}`,
+              motivo: `Registro de movimentação regular (o aluno saiu e voltou): Matrícula ativa ${alunoAtivo.matricula} (${alunoAtivo.situacao} - ${alunoAtivo.turma}) e registro histórico anterior ${alunoAntigo.matricula} (${alunoAntigo.situacao}). O registro transferido NÃO é contado na quantidade de alunos normais ativos.`,
+              porcentagem: 100,
+              origem: 'secretaria',
+              alunoA: {
+                id: alunoAtivo.id,
+                nome: alunoAtivo.nome,
+                dataNascimento: alunoAtivo.dataNasc,
+                codigoMatricula: alunoAtivo.matricula,
+                turma: alunoAtivo.turma,
+                turno: alunoAtivo.turno,
+                situacao: alunoAtivo.situacao,
+                filiacao: alunoAtivo.filiacao,
+                cpf: alunoAtivo.cpf
+              },
+              alunoB: {
+                id: alunoAntigo.id,
+                nome: alunoAntigo.nome,
+                dataNascimento: alunoAntigo.dataNasc,
+                codigoMatricula: alunoAntigo.matricula,
+                turma: alunoAntigo.turma,
+                turno: alunoAntigo.turno,
+                situacao: alunoAntigo.situacao,
+                filiacao: alunoAntigo.filiacao,
+                cpf: alunoAntigo.cpf
+              },
+              camposIguais: ['Nome', ...(datasIguais ? ['Data de Nascimento'] : [])],
+              camposDiferentes: ['Matrícula', 'Turma', 'Situação']
+            });
+          } else {
+            // Conflito real de duas matrículas normais ativas
+            addConflito({
+              id: `sec-${a.matricula}-${b.matricula}`,
+              tipo: 'secretaria_multipla',
+              severidade: 'critico',
+              ehMovimentacaoTransferencia: false,
+              titulo: `Conflito Real: Duas Matrículas Normais Ativas: ${a.nome}`,
+              motivo: `ATENÇÃO: O estudante possui 2 matrículas com situação NORMAL ativas simultaneamente no ano letivo (Matrícula ${a.matricula} em ${a.turma} e Matrícula ${b.matricula} em ${b.turma}). Este caso deve ser unificado na secretaria.`,
+              porcentagem: 100,
+              origem: 'secretaria',
+              alunoA: {
+                id: a.id,
+                nome: a.nome,
+                dataNascimento: a.dataNasc,
+                codigoMatricula: a.matricula,
+                turma: a.turma,
+                turno: a.turno,
+                situacao: a.situacao,
+                filiacao: a.filiacao,
+                cpf: a.cpf
+              },
+              alunoB: {
+                id: b.id,
+                nome: b.nome,
+                dataNascimento: b.dataNasc,
+                codigoMatricula: b.matricula,
+                turma: b.turma,
+                turno: b.turno,
+                situacao: b.situacao,
+                filiacao: b.filiacao,
+                cpf: b.cpf
+              },
+              camposIguais: ['Nome', ...(datasIguais ? ['Data de Nascimento'] : [])],
+              camposDiferentes: ['Código de Matrícula', 'Turma', 'Situação']
+            });
+          }
         }
       }
     }
