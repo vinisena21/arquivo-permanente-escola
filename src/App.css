@@ -426,3 +426,112 @@ body {
     min-width: 100px;
   }
 }
+
+/* =========================================================
+   MENUS DROPDOWN & HEADER MODERNO ESTILO SIGP
+   ========================================================= */
+
+.header {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%) !important;
+}
+
+.school-tag-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a7f3d0;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  margin-top: 0.25rem;
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 16px;
+  color: rgba(255, 255, 255, 0.88);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-dropdown-btn:hover,
+.nav-dropdown-btn.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  min-width: 240px;
+  padding: 0.5rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: slide-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.nav-dropdown-item:hover {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.nav-dropdown-item.active {
+  background: #d1fae5;
+  color: #064e3b;
+  font-weight: 700;
+}
+
+.nav-dropdown-item-desc {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: normal;
+  margin-top: 1px;
+}
+
+.nav-dropdown-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0.25rem 0;
+}

@@ -1,0 +1,911 @@
+﻿/* =========================================================
+   PAINEL DE GESTÃO MODERNO — Guia Escolar
+   Inspirado no SIGP Educação com arquitetura moderna e limpa
+   ========================================================= */
+
+.painel-gestao {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+/* Hero Institucional */
+.painel-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  border-radius: 16px;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.25), 0 8px 10px -6px rgba(6, 78, 59, 0.2);
+}
+
+.painel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.painel-hero h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.painel-subtitulo {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.9rem;
+  color: #a7f3d0;
+}
+
+.painel-gestor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #ecfdf5;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+}
+
+.dot-online {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.painel-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ano-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.4rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ano-select {
+  background: #ffffff;
+  color: #065f46;
+  border: none;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-gerar-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-gerar-pdf:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.btn-recarregar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-recarregar:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Alerta de erro */
+.painel-alerta-erro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+/* Mural de Avisos */
+.mural-avisos-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.mural-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.mural-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mural-title h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.badge-sucesso {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid #a7f3d0;
+}
+
+.aviso-item-vazio {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+/* Grid de KPIs */
+.painel-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.kpi-azul .kpi-icon { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.kpi-verde .kpi-icon { background: linear-gradient(135deg, #059669, #047857); }
+.kpi-ambar .kpi-icon { background: linear-gradient(135deg, #d97706, #b45309); }
+.kpi-violeta .kpi-icon { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.kpi-ciano .kpi-icon { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.kpi-emerald .kpi-icon { background: linear-gradient(135deg, #059669, #10b981); }
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpi-valor {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 0.2rem;
+}
+
+/* Gráficos Demográficos */
+.painel-graficos-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.grafico-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.grafico-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.grafico-card-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.grafico-card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gráfico de Barras (Turno) */
+.bar-chart-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  height: 180px;
+  padding-top: 1rem;
+}
+
+.bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  height: 100%;
+}
+
+.bar-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.bar-track {
+  width: 48px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  background: #f1f5f9;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Gráfico de Barras Horizontais (Raça/Cor) */
+.raca-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.raca-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.raca-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.raca-qtd {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.progress-bg {
+  width: 100%;
+  height: 9px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+}
+
+/* Gráfico Donut (Sexo) */
+.donut-body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.donut-wrapper {
+  position: relative;
+  width: 130px;
+  height: 130px;
+}
+
+.donut-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donut-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.donut-total {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.donut-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Indicadores Educacionais */
+.painel-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.secao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.secao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.secao-titulo h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.secao-ano {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f766e;
+  background: #f0fdf4;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+}
+
+.indicadores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.indicador-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.indicador-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.indicador-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.indicador-valor-bloco {
+  margin: 0.5rem 0;
+}
+
+.taxa-principal {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.taxa-legenda {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.aprovacao-taxa {
+  display: flex;
+  flex-direction: column;
+}
+
+.aprovacao-comparativo {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.65rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.item-comp {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dot-aprovado {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #059669;
+}
+
+.dot-reprovado {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+}
+
+.barra-indicador {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.barra-progresso {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+}
+
+.indicador-rodape {
+  font-size: 0.75rem;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+/* Agenda e Calendário */
+.agenda-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.agenda-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.agenda-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.agenda-titulo h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.agenda-navegacao {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-mes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-mes:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-hoje {
+  padding: 0.4rem 0.85rem;
+  background: #065f46;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-hoje:hover {
+  background: #047857;
+}
+
+.mes-rotulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: capitalize;
+  margin-left: 0.5rem;
+}
+
+/* Calendário Grid */
+.calendario-grid {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calendario-cabecalho {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dia-semana-nome {
+  padding: 0.75rem 0.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.calendario-corpo {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #ffffff;
+}
+
+.dia-celula {
+  min-height: 65px;
+  padding: 0.4rem;
+  border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  border-style: none solid solid none;
+}
+
+.dia-celula:nth-child(7n) {
+  border-right: none;
+}
+
+.dia-celula:hover {
+  background: #f0fdf4;
+}
+
+.dia-numero {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.dia-outro-mes {
+  opacity: 0.35;
+  background: #fafafa;
+}
+
+.dia-hoje .dia-numero {
+  background-color: #059669;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.dia-selecionado {
+  background-color: #ecfdf5 !important;
+  outline: 2px solid #059669;
+  outline-offset: -2px;
+}
+
+.dia-com-evento .dia-numero {
+  border: 1px solid #059669;
+}
+
+.evento-ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #059669;
+  margin-top: 4px;
+  margin-left: 9px;
+}
+
+/* Detalhes do Dia Selecionado */
+.agenda-detalhes-dia {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.agenda-detalhes-dia h4 {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.lista-eventos-dia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.evento-item-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.evento-badge-tipo {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.evento-letivo .evento-badge-tipo { background: #d1fae5; color: #065f46; }
+.evento-feriado .evento-badge-tipo { background: #fee2e2; color: #991b1b; }
+.evento-reuniao .evento-badge-tipo { background: #dbeafe; color: #1e40af; }
+.evento-conselho .evento-badge-tipo { background: #ede9fe; color: #5b21b6; }
+
+.evento-titulo-texto {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.texto-sem-eventos {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* =========================================================
+   ESTILOS DE IMPRESSÃO (PDF Limpo Oficial)
+   ========================================================= */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print,
+  .header,
+  .main-navigation,
+  .footer {
+    display: none !important;
+  }
+
+  .painel-hero {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #059669 !important;
+    box-shadow: none !important;
+    padding: 1rem !important;
+  }
+
+  .painel-hero h1 {
+    color: #064e3b !important;
+  }
+
+  .painel-subtitulo {
+    color: #334155 !important;
+  }
+
+  .painel-kpis-grid,
+  .painel-graficos-row,
+  .indicadores-grid {
+    break-inside: avoid;
+  }
+
+  .kpi-card,
+  .grafico-card,
+  .indicador-card,
+  .agenda-card {
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .painel-hero {
+    padding: 1.25rem;
+  }
+
+  .painel-hero h1 {
+    font-size: 1.25rem;
+  }
+
+  .donut-body {
+    flex-direction: column;
+  }
+}

@@ -28,6 +28,9 @@ import GerenciarAlunos, {
 } from './components/GerenciarAlunos';
 import Login from './components/Login';
 import { DashboardMetrics } from './components/DashboardMetrics';
+import PainelGestao from './components/PainelGestao';
+import DeclaracoesModal from './components/DeclaracoesModal';
+import { ChevronDown, GraduationCap } from 'lucide-react';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
@@ -77,6 +80,18 @@ export default function App() {
   const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<Record<string, string> | null>(null);
   const [alunoSecretariaParaHistorico, setAlunoSecretariaParaHistorico] = useState<AlunoSecretariaRow | null>(null);
   const [versaoListaSecretaria, setVersaoListaSecretaria] = useState(0);
+  const [menuDropdownAberto, setMenuDropdownAberto] = useState<'cadastros' | 'arquivo' | null>(null);
+  const [modalDeclaracoesAberta, setModalDeclaracoesAberta] = useState(false);
+
+  useEffect(() => {
+    function fecharMenus(e: MouseEvent) {
+      if (!(e.target as HTMLElement).closest('.nav-dropdown')) {
+        setMenuDropdownAberto(null);
+      }
+    }
+    document.addEventListener('click', fecharMenus);
+    return () => document.removeEventListener('click', fecharMenus);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -245,61 +260,169 @@ export default function App() {
           </div>
 
           <nav className="main-navigation" aria-label="Navegação principal">
-            <button
-              type="button"
-              className={abaAtiva === 'consulta' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('consulta')}
-            >
-              <Search size={18} /> Consultar arquivos
-            </button>
+            {/* 1. Painel de Gestão (Início) */}
             <button
               type="button"
               className={abaAtiva === 'dashboard' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('dashboard')}
+              onClick={() => {
+                setAbaAtiva('dashboard');
+                setMenuDropdownAberto(null);
+              }}
             >
-              <BarChart2 size={18} /> Dashboard
+              <BarChart2 size={18} /> Início (Gestão)
             </button>
+
+            {/* 2. Consulta Rápida */}
             <button
               type="button"
-              className={abaAtiva === 'arvore' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('arvore')}
+              className={abaAtiva === 'consulta' ? 'navigation-button active' : 'navigation-button'}
+              onClick={() => {
+                setAbaAtiva('consulta');
+                setMenuDropdownAberto(null);
+              }}
             >
-              <FolderTree size={18} /> Árvore do acervo
+              <Search size={18} /> Consultar arquivos
             </button>
+
+            {/* 3. Dropdown Cadastros */}
+            <div className="nav-dropdown">
+              <button
+                type="button"
+                className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuDropdownAberto(menuDropdownAberto === 'cadastros' ? null : 'cadastros');
+                }}
+              >
+                <Settings size={18} /> Cadastros <ChevronDown size={14} />
+              </button>
+
+              {menuDropdownAberto === 'cadastros' && (
+                <div className="nav-dropdown-menu">
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'gerenciamento' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('gerenciamento');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <Settings size={16} />
+                    <div>
+                      <span>Gerenciar Alunos</span>
+                      <span className="nav-dropdown-item-desc">Cadastrar novo prontuário</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'alunos-secretaria' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('alunos-secretaria');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <FileSpreadsheet size={16} />
+                    <div>
+                      <span>Alunos da Secretaria</span>
+                      <span className="nav-dropdown-item-desc">Importar listagens SIMEC</span>
+                    </div>
+                  </button>
+
+                  <div className="nav-dropdown-divider"></div>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'arvore' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('arvore');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <FolderTree size={16} />
+                    <div>
+                      <span>Árvore do Acervo</span>
+                      <span className="nav-dropdown-item-desc">Estrutura física de pastas</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Dropdown Arquivo & Históricos */}
+            <div className="nav-dropdown">
+              <button
+                type="button"
+                className={`nav-dropdown-btn ${['historico', 'historicos-salvos', 'conferir-historico'].includes(abaAtiva) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuDropdownAberto(menuDropdownAberto === 'arquivo' ? null : 'arquivo');
+                }}
+              >
+                <Archive size={18} /> Arquivo & Históricos <ChevronDown size={14} />
+              </button>
+
+              {menuDropdownAberto === 'arquivo' && (
+                <div className="nav-dropdown-menu">
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'historico' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('historico');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <FileText size={16} />
+                    <div>
+                      <span>Gerar Histórico</span>
+                      <span className="nav-dropdown-item-desc">Preencher e emitir histórico</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'historicos-salvos' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('historicos-salvos');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <History size={16} />
+                    <div>
+                      <span>Históricos Salvos</span>
+                      <span className="nav-dropdown-item-desc">Consultar documentos emitidos</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'conferir-historico' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('conferir-historico');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <FileCheck2 size={16} />
+                    <div>
+                      <span>Conferir com IA</span>
+                      <span className="nav-dropdown-item-desc">Verificação e auditoria</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Emissor de Declarações */}
             <button
               type="button"
-              className={abaAtiva === 'gerenciamento' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('gerenciamento')}
+              className="navigation-button"
+              onClick={() => {
+                setModalDeclaracoesAberta(true);
+                setMenuDropdownAberto(null);
+              }}
+              title="Emitir Declaração de Matrícula, Escolaridade ou Comparecimento"
             >
-              <Settings size={18} /> Gerenciar alunos
-            </button>
-            <button
-              type="button"
-              className={abaAtiva === 'historico' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('historico')}
-            >
-              <FileText size={18} /> Gerar histórico
-            </button>
-            <button
-              type="button"
-              className={abaAtiva === 'historicos-salvos' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('historicos-salvos')}
-            >
-              <History size={18} /> Históricos salvos
-            </button>
-            <button
-              type="button"
-              className={abaAtiva === 'conferir-historico' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('conferir-historico')}
-            >
-              <FileCheck2 size={18} /> Conferir histórico
-            </button>
-            <button
-              type="button"
-              className={abaAtiva === 'alunos-secretaria' ? 'navigation-button active' : 'navigation-button'}
-              onClick={() => setAbaAtiva('alunos-secretaria')}
-            >
-              <FileSpreadsheet size={18} /> Alunos da secretaria
+              <GraduationCap size={18} /> Declarações
             </button>
           </nav>
         </div>
@@ -334,7 +457,7 @@ export default function App() {
                 <Search className="search-icon" size={20} />
                 <input
                   type="text"
-                  placeholder="Buscar por nome do aluno, pasta ou número..."
+                  placeholder="Buscar por nome do aluno, pasta ou nÃºmero..."
                   value={busca}
                   onChange={(evento) => alterarBusca(evento.target.value)}
                   aria-label="Buscar aluno"
@@ -450,7 +573,7 @@ export default function App() {
                     }}
                   >
                     <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-                      Página {paginaAtual} de {totalPaginas} · {alunosFiltrados.length} registro(s)
+                      Página {paginaAtual} de {totalPaginas} Â· {alunosFiltrados.length} registro(s)
                     </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
@@ -506,13 +629,13 @@ export default function App() {
           </>
         )}
 
-        {abaAtiva === 'dashboard' && <DashboardMetrics />}
+        {abaAtiva === 'dashboard' && <PainelGestao />}
 
         {abaAtiva === 'arvore' && (
           <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <FolderTree size={20} className="text-blue-600" />
-              Estrutura Física do Acervo (Visão em Árvore)
+              Estrutura Física do Acervo (Visão em Ãrvore)
             </h2>
             <TreeView
               data={arvoreAcervo}
@@ -605,7 +728,7 @@ export default function App() {
         title="Excluir Aluno"
         message={
           alunoParaExcluir
-            ? `Tem certeza que deseja excluir o aluno:\n\n• ${alunoParaExcluir.nome}\n• Pasta: ${alunoParaExcluir.codigoPasta}\n• Número: ${String(alunoParaExcluir.numero).padStart(2, '0')}\n\nEssa ação não poderá ser desfeita.`
+            ? `Tem certeza que deseja excluir o aluno:\n\n• ${alunoParaExcluir.nome}\n• Pasta: ${alunoParaExcluir.codigoPasta}\n• NÃºmero: ${String(alunoParaExcluir.numero).padStart(2, '0')}\n\nEssa ação Não poderÃ¡ ser desfeita.`
             : ''
         }
         confirmText="Excluir"
@@ -614,7 +737,15 @@ export default function App() {
         onCancel={() => setAlunoParaExcluir(null)}
       />
 
+      <DeclaracoesModal
+        isOpen={modalDeclaracoesAberta}
+        onClose={() => setModalDeclaracoesAberta(false)}
+        alunos={alunos}
+      />
+
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
+
+
