@@ -30,7 +30,7 @@ import Login from './components/Login';
 
 import PainelGestao from './components/PainelGestao';
 import DeclaracoesModal from './components/DeclaracoesModal';
-import { ChevronDown, GraduationCap } from 'lucide-react';
+import { ChevronDown, GraduationCap, ShieldAlert } from 'lucide-react';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
@@ -38,6 +38,7 @@ import GeradorHistorico from './components/GeradorHistorico';
 import HistoricosSalvos from './components/HistoricosSalvos';
 import ImportarAlunos from './components/ImportarAlunos';
 import ProfissionaisEscolares from './components/ProfissionaisEscolares';
+import DetectorDuplicidades from './components/DetectorDuplicidades';
 import ConferirHistorico from './components/ConferirHistorico';
 import { supabase } from './lib/supabase';
 import type {
@@ -55,6 +56,7 @@ type AbaAtiva =
   | 'historicos-salvos'
   | 'alunos-secretaria'
   | 'profissionais'
+  | 'duplicidades'
   | 'conferir-historico';
 
 function formatarData(data: string | null): string {
@@ -290,7 +292,7 @@ export default function App() {
             <div className="nav-dropdown">
               <button
                 type="button"
-                className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'profissionais', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
+                className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'profissionais', 'duplicidades', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuDropdownAberto(menuDropdownAberto === 'cadastros' ? null : 'cadastros');
@@ -343,6 +345,21 @@ export default function App() {
                     <div>
                       <span>Profissionais Escolares</span>
                       <span className="nav-dropdown-item-desc">86 professores e equipe docente</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'duplicidades' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('duplicidades');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <ShieldAlert size={16} />
+                    <div>
+                      <span>Detector de Duplicados</span>
+                      <span className="nav-dropdown-item-desc">Auditoria e higienização de dados</span>
                     </div>
                   </button>
 
@@ -711,6 +728,19 @@ export default function App() {
 
         {abaAtiva === 'profissionais' && (
           <ProfissionaisEscolares onToast={setToast} />
+        )}
+
+        {abaAtiva === 'duplicidades' && (
+          <DetectorDuplicidades
+            alunosArquivo={alunos}
+            onExcluirAlunoArquivo={async (id) => {
+              const { error } = await supabase.from('alunos').delete().eq('id', id);
+              if (error) throw error;
+              setAlunos((atuais) => atuais.filter((a) => a.id !== id));
+              setToast({ message: 'Registro duplicado excluído com sucesso.', type: 'success' });
+            }}
+            onToast={setToast}
+          />
         )}
 
         {abaAtiva === 'gerenciamento' && (
