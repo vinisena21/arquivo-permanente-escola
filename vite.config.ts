@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+      },
       manifest: {
         name: 'Arquivo Permanente',
         short_name: 'Arquivos',

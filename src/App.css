@@ -428,12 +428,8 @@ body {
 }
 
 /* =========================================================
-   MENUS DROPDOWN & HEADER MODERNO ESTILO SIGP
+   MENUS DROPDOWN & HEADER MODERNO
    ========================================================= */
-
-.header {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%) !important;
-}
 
 .school-tag-header {
   display: inline-flex;
@@ -443,10 +439,11 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #a7f3d0;
-  background: rgba(0, 0, 0, 0.2);
+  color: #dbeafe;
+  background: rgba(255, 255, 255, 0.15);
   padding: 0.2rem 0.6rem;
   border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   margin-top: 0.25rem;
 }
 
@@ -473,8 +470,8 @@ body {
 .nav-dropdown-btn:hover,
 .nav-dropdown-btn.active {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .nav-dropdown-menu {
@@ -512,13 +509,13 @@ body {
 }
 
 .nav-dropdown-item:hover {
-  background: #ecfdf5;
-  color: #065f46;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .nav-dropdown-item.active {
-  background: #d1fae5;
-  color: #064e3b;
+  background: #dbeafe;
+  color: #1e40af;
   font-weight: 700;
 }
 

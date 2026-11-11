@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, CheckCircle2, Download, Eye, FileSpreadsheet,
-  FileText, LoaderCircle, Pencil, RefreshCw, Search, Trash2, Upload, Users, X,
+  FileText, LoaderCircle, Pencil, RefreshCw, Search, Trash2, Upload, Users, X, Sparkles,
 } from 'lucide-react';
 import {
   compararComExistentes, isoParaDataBR, lerListagemMatricula, ordenarColunas,
@@ -16,6 +16,9 @@ import type { ToastData } from './Toast';
 import { ConfirmModal } from './ConfirmModal';
 import EditarAlunoSecretariaModal from './EditarAlunoSecretariaModal';
 import './ImportarAlunos.css';
+import matriculasOficiais from '../data/matriculas.json';
+import { dataParaISO, type RegistroSecretaria } from '../lib/importacaoSecretaria';
+
 
 interface Props {
   onToast?: (t: ToastData) => void;
@@ -178,6 +181,52 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
 
   const periodos = useMemo(() => [...new Set(alunos.map((a) => a.periodo).filter(Boolean) as string[])].sort(), [alunos]);
   const turmas = useMemo(() => [...new Set(alunos.map((a) => a.turma).filter(Boolean) as string[])].sort(), [alunos]);
+    async function sincronizarOficiais() {
+    if (!matriculasOficiais || matriculasOficiais.length === 0) return;
+    setSalvando(true);
+    setErroImportacao('');
+    try {
+      const registros: RegistroSecretaria[] = (matriculasOficiais as any[]).map((m) => ({
+        codigo_matricula: String(m['Código'] || '').trim(),
+        codigo_estudante: m['Código do estudante'] ? String(m['Código do estudante']).trim() : null,
+        ra: m['Registro do estudante (RA)'] ? String(m['Registro do estudante (RA)']).trim() : null,
+        nome: String(m['Nome'] || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR'),
+        data_nascimento: dataParaISO(m['Data de Nascimento']),
+        periodo: m['Período'] ? String(m['Período']).trim() : null,
+        turma: m['Turma'] ? String(m['Turma']).trim() : null,
+        descricao: m['Descrição'] ? String(m['Descrição']).trim() : null,
+        turno: m['Turno'] ? String(m['Turno']).trim() : null,
+        situacao: m['Situação'] ? String(m['Situação']).trim() : 'NORMAL',
+        data_matricula: dataParaISO(m['Data da matrícula']),
+        data_movimentacao: dataParaISO(m['Data da movimentação']),
+        nacionalidade: m['Nacionalidade'] ? String(m['Nacionalidade']).trim() : 'Brasileira',
+        naturalidade: m['Naturalidade'] ? String(m['Naturalidade']).trim() : null,
+        uf_naturalidade: 'MG',
+        sexo: m['Sexo'] ? String(m['Sexo']).trim() : null,
+        identidade: m['Identidade'] ? String(m['Identidade']).trim() : null,
+        filiacao_1: m['Filiação 1'] ? String(m['Filiação 1']).trim() : null,
+        filiacao_2: m['Filiação 2'] ? String(m['Filiação 2']).trim() : null,
+        escola: 'EM MARIA GERALDA MIRANDA BRITO SALOMÃO',
+        dados: m
+      })).filter((r) => r.codigo_matricula && r.nome);
+
+      await salvarAlunosSecretaria(registros, (gravados, total) => {
+        setProgresso({ gravados, total });
+      });
+
+      onToast?.({
+        message: `${registros.length} matrículas oficiais sincronizadas com o Supabase com sucesso!`,
+        type: 'success'
+      });
+      await carregar();
+    } catch (e: any) {
+      console.error(e);
+      setErroImportacao(e?.message || 'Erro ao sincronizar matrículas com o Supabase.');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   const situacoes = useMemo(() => [...new Set(alunos.map((a) => a.situacao).filter(Boolean) as string[])].sort(), [alunos]);
 
   const filtrados = useMemo(() => {
@@ -210,8 +259,18 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
           <button type="button" className="ia-btn" disabled={exportando || filtrados.length === 0} onClick={() => void exportar('xlsx')}>
             <Download size={16} /> Excel
           </button>
+          <button
+            type="button"
+            className="ia-btn"
+            style={{ background: '#1d4ed8', color: '#ffffff', border: 'none', fontWeight: 700 }}
+            onClick={() => void sincronizarOficiais()}
+            disabled={salvando || carregando}
+            title="Enviar as 585 matrículas oficiais do SIGP para o Supabase"
+          >
+            {salvando ? <><LoaderCircle className="ia-spin" size={16} /> Gravando {progresso.gravados}/{progresso.total}</> : <><Sparkles size={16} /> Enviar 585 ao Supabase</>}
+          </button>
           <button type="button" className="ia-btn ia-btn-primary" onClick={() => inputArquivo.current?.click()} disabled={lendoArquivo || salvando}>
-            <Upload size={16} /> {lendoArquivo ? 'Lendo…' : 'Importar planilha'}
+            <Upload size={16} /> Importar planilha
           </button>
           <input ref={inputArquivo} type="file" accept={EXTENSOES_ACEITAS} hidden onChange={(e) => void aoSelecionarArquivo(e)} />
         </div>

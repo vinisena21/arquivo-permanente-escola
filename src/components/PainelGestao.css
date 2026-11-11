@@ -18,10 +18,10 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.75rem 2rem;
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #1d4ed8 100%);
   border-radius: 16px;
   color: #ffffff;
-  box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.25), 0 8px 10px -6px rgba(6, 78, 59, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25), 0 8px 10px -6px rgba(37, 99, 235, 0.2);
 }
 
 .painel-badge {
@@ -50,7 +50,7 @@
 .painel-subtitulo {
   margin: 0.35rem 0 0.75rem;
   font-size: 0.9rem;
-  color: #a7f3d0;
+  color: #bfdbfe;
 }
 
 .painel-gestor-tag {
@@ -92,7 +92,7 @@
 
 .ano-select {
   background: #ffffff;
-  color: #065f46;
+  color: #1e40af;
   border: none;
   font-weight: 700;
   padding: 0.35rem 0.75rem;
@@ -189,11 +189,11 @@
 .badge-sucesso {
   font-size: 0.75rem;
   font-weight: 700;
-  background: #ecfdf5;
-  color: #047857;
+  background: #eff6ff;
+  color: #1d4ed8;
   padding: 0.25rem 0.65rem;
   border-radius: 9999px;
-  border: 1px solid #a7f3d0;
+  border: 1px solid #bfdbfe;
 }
 
 .aviso-item-vazio {
@@ -381,7 +381,7 @@
 }
 
 .raca-qtd {
-  color: #0f766e;
+  color: #1d4ed8;
   font-weight: 700;
 }
 
@@ -499,11 +499,11 @@
 .secao-ano {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #0f766e;
-  background: #f0fdf4;
+  color: #1d4ed8;
+  background: #eff6ff;
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #bfdbfe;
 }
 
 .indicadores-grid {
@@ -579,7 +579,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #059669;
+  background-color: #2563eb;
 }
 
 .dot-reprovado {
@@ -682,7 +682,7 @@
 }
 
 .btn-hoje:hover {
-  background: #047857;
+  background: #1d4ed8;
 }
 
 .mes-rotulo {
@@ -770,13 +770,13 @@
 }
 
 .dia-selecionado {
-  background-color: #ecfdf5 !important;
-  outline: 2px solid #059669;
+  background-color: #eff6ff !important;
+  outline: 2px solid #2563eb;
   outline-offset: -2px;
 }
 
 .dia-com-evento .dia-numero {
-  border: 1px solid #059669;
+  border: 1px solid #2563eb;
 }
 
 .evento-ponto {

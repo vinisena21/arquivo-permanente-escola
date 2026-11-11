@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './PainelGestao.css';
+import matriculasOficiais from '../data/matriculas.json';
+
+
 
 interface PainelMetrics {
   totalAlunos: number;
@@ -155,18 +158,52 @@ export const PainelGestao: React.FC = () => {
 
       const totalSec = secRows.length || totalRes.count || 557;
 
+      let porSexo: { sexo: string; quantidade: number; percentual: number; cor: string }[] = [];
+      let porRaca: { raca: string; quantidade: number; percentual: number }[] = [];
+
       // Monta dados por Turno (se vazio, usa proporção representativa da escola)
       let turnosArray = Array.from(turnosMap.entries()).map(([turno, qtd]) => ({
         turno: turno.charAt(0) + turno.slice(1).toLowerCase(),
         quantidade: qtd,
-        cor: turno.includes('MAT') ? '#0f4c3a' : turno.includes('VESP') ? '#0d9488' : '#2563eb'
+        cor: turno.includes('MAT') ? '#1e3a8a' : turno.includes('VESP') ? '#3b82f6' : '#2563eb'
       }));
 
-      if (turnosArray.length === 0) {
+      if (turnosArray.length === 0 && matriculasOficiais && matriculasOficiais.length > 0) {
+        // Usa estatísticas reais extraídas dos 585 registros oficiais
+        const contagemTurno: Record<string, number> = {};
+        const contagemSexo: Record<string, number> = {};
+        const contagemRaca: Record<string, number> = {};
+
+        matriculasOficiais.forEach((m: any) => {
+          const t = m['Turno'] || 'MATUTINO';
+          contagemTurno[t] = (contagemTurno[t] || 0) + 1;
+
+          const s = (m['Sexo'] || '').startsWith('F') ? 'Feminino' : 'Masculino';
+          contagemSexo[s] = (contagemSexo[s] || 0) + 1;
+
+          const r = m['Cor'] || 'Parda';
+          contagemRaca[r] = (contagemRaca[r] || 0) + 1;
+        });
+
         turnosArray = [
-          { turno: 'Matutino', quantidade: Math.round(totalSec * 0.55), cor: '#0f4c3a' },
-          { turno: 'Vespertino', quantidade: Math.round(totalSec * 0.45), cor: '#0d9488' }
+          { turno: 'Matutino', quantidade: contagemTurno['MATUTINO'] || 321, cor: '#1e3a8a' },
+          { turno: 'Vespertino', quantidade: contagemTurno['VESPERTINO'] || 264, cor: '#3b82f6' }
         ];
+
+        const fem = contagemSexo['Feminino'] || 289;
+        const masc = contagemSexo['Masculino'] || 296;
+        const totS = fem + masc;
+
+        porSexo = [
+          { sexo: 'Feminino', quantidade: fem, percentual: Math.round((fem / totS) * 100), cor: '#f43f5e' },
+          { sexo: 'Masculino', quantidade: masc, percentual: Math.round((masc / totS) * 100), cor: '#2563eb' }
+        ];
+
+        porRaca = Object.entries(contagemRaca).map(([raca, qtd]) => ({
+          raca,
+          quantidade: qtd,
+          percentual: Math.round((qtd / matriculasOficiais.length) * 100)
+        })).sort((a, b) => b.quantidade - a.quantidade);
       }
 
       // Monta dados por Sexo
@@ -174,13 +211,13 @@ export const PainelGestao: React.FC = () => {
       let mascQtd = sexosMap.get('Masculino') || (totalSec - femQtd);
       const totalSexo = femQtd + mascQtd || 1;
 
-      const porSexo = [
+      porSexo = [
         { sexo: 'Feminino', quantidade: femQtd, percentual: Math.round((femQtd / totalSexo) * 100), cor: '#f43f5e' },
         { sexo: 'Masculino', quantidade: mascQtd, percentual: Math.round((mascQtd / totalSexo) * 100), cor: '#06b6d4' }
       ];
 
       // Distribuição por Raça/Cor (dados padrão do censo escolar da escola)
-      const porRaca = [
+      porRaca = [
         { raca: 'Parda', quantidade: Math.round(totalSec * 0.85), percentual: 85 },
         { raca: 'Branca', quantidade: Math.round(totalSec * 0.08), percentual: 8 },
         { raca: 'Preta', quantidade: Math.round(totalSec * 0.05), percentual: 5 },
@@ -352,7 +389,7 @@ export const PainelGestao: React.FC = () => {
       <section className="mural-avisos-card">
         <div className="mural-header">
           <div className="mural-title">
-            <Bell size={20} className="text-emerald-700" />
+            <Bell size={20} className="text-blue-700" />
             <h3>Mural de Avisos da Direção</h3>
           </div>
           <span className="badge-sucesso">Ano Letivo {anoSelecionado} Ativo</span>
@@ -452,7 +489,7 @@ export const PainelGestao: React.FC = () => {
         {/* Gráfico 2: Alunos por Raça/Cor */}
         <div className="grafico-card">
           <div className="grafico-card-header">
-            <BarChart3 size={18} className="text-teal-700" />
+            <BarChart3 size={18} className="text-sky-700" />
             <h4>Quantidade de Alunos por Raça / Cor</h4>
           </div>
           <div className="grafico-card-body">
@@ -724,3 +761,4 @@ export const PainelGestao: React.FC = () => {
 };
 
 export default PainelGestao;
+

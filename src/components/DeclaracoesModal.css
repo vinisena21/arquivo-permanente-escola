@@ -116,13 +116,13 @@
 .decl-select-tipo:focus,
 .decl-campo-grupo input:focus,
 .decl-campo-grupo select:focus {
-  border-color: #059669;
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
 }
 
 .decl-select-tipo {
   font-weight: 700;
-  color: #065f46;
+  color: #1d4ed8;
   background-color: #f0fdf4;
 }
 
@@ -221,7 +221,7 @@
   gap: 0.5rem;
   padding: 0.65rem 1.5rem;
   border: none;
-  background: #059669;
+  background: #2563eb;
   color: #ffffff;
   border-radius: 8px;
   font-weight: 700;
@@ -232,7 +232,7 @@
 }
 
 .decl-btn-primario:hover {
-  background: #047857;
+  background: #1d4ed8;
 }
 
 /* Pré-visualização da Folha Timbrada A4 */
@@ -294,7 +294,7 @@
   margin: 0.35rem 0;
   font-size: 1.05rem;
   font-weight: 800;
-  color: #064e3b;
+  color: #1e3a8a;
   text-transform: uppercase;
 }
 
@@ -306,7 +306,7 @@
 
 .timbre-divisor {
   height: 2px;
-  background: #064e3b;
+  background: #1e3a8a;
   margin: 1.25rem 0 2rem;
 }
 
