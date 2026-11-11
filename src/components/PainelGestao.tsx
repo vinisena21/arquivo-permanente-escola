@@ -24,6 +24,7 @@ import {
 import { supabase } from '../lib/supabase';
 import './PainelGestao.css';
 import matriculasOficiais from '../data/matriculas.json';
+import profissionaisData from '../data/profissionais.json';
 
 
 
@@ -449,6 +450,14 @@ export const PainelGestao: React.FC = () => {
           <div className="kpi-info">
             <span className="kpi-label">Históricos Emitidos</span>
             <strong className="kpi-valor">{carregando ? '...' : metrics.totalHistoricos.toLocaleString('pt-BR')}</strong>
+          </div>
+        </div>
+
+        <div className="kpi-card kpi-azul">
+          <div className="kpi-icon"><GraduationCap size={22} /></div>
+          <div className="kpi-info">
+            <span className="kpi-label">Professores / Equipe</span>
+            <strong className="kpi-valor">{profissionaisData.length}</strong>
           </div>
         </div>
       </section>

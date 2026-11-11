@@ -37,6 +37,7 @@ import { Toast, type ToastData } from './components/Toast';
 import GeradorHistorico from './components/GeradorHistorico';
 import HistoricosSalvos from './components/HistoricosSalvos';
 import ImportarAlunos from './components/ImportarAlunos';
+import ProfissionaisEscolares from './components/ProfissionaisEscolares';
 import ConferirHistorico from './components/ConferirHistorico';
 import { supabase } from './lib/supabase';
 import type {
@@ -53,6 +54,7 @@ type AbaAtiva =
   | 'historico'
   | 'historicos-salvos'
   | 'alunos-secretaria'
+  | 'profissionais'
   | 'conferir-historico';
 
 function formatarData(data: string | null): string {
@@ -288,7 +290,7 @@ export default function App() {
             <div className="nav-dropdown">
               <button
                 type="button"
-                className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
+                className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'profissionais', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuDropdownAberto(menuDropdownAberto === 'cadastros' ? null : 'cadastros');
@@ -326,6 +328,21 @@ export default function App() {
                     <div>
                       <span>Alunos da Secretaria</span>
                       <span className="nav-dropdown-item-desc">Importar listagens SIMEC</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'profissionais' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('profissionais');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <GraduationCap size={16} />
+                    <div>
+                      <span>Profissionais Escolares</span>
+                      <span className="nav-dropdown-item-desc">86 professores e equipe docente</span>
                     </div>
                   </button>
 
@@ -690,6 +707,10 @@ export default function App() {
               setAbaAtiva('historico');
             }}
           />
+        )}
+
+        {abaAtiva === 'profissionais' && (
+          <ProfissionaisEscolares onToast={setToast} />
         )}
 
         {abaAtiva === 'gerenciamento' && (
