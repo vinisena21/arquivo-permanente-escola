@@ -23,9 +23,9 @@ export interface NotaDisciplina {
   disciplina: string;
   trimestre1: number | null; // Max 30
   faltas1: number;
-  trimestre2: number | null; // Max 35
+  trimestre2: number | null; // Max 30
   faltas2: number;
-  trimestre3: number | null; // Max 35
+  trimestre3: number | null; // Max 40
   faltas3: number;
   recuperacaoFinal?: number | null;
 }
@@ -67,12 +67,12 @@ function gerarNotasIniciais(codMatricula: string, situacao: string): Record<stri
     const t1 = Math.min(30, Math.max(16, Math.round(18 + (varSeed % 12))));
     const f1 = (varSeed % 4);
 
-    // Trimestre 2 (máx 35): média entre 22 e 34
-    const t2 = Math.min(35, Math.max(20, Math.round(22 + ((varSeed + 5) % 13))));
+    // Trimestre 2 (máx 30): média entre 18 e 29
+    const t2 = Math.min(30, Math.max(16, Math.round(18 + ((varSeed + 5) % 12))));
     const f2 = ((varSeed + 1) % 5);
 
-    // Trimestre 3 (máx 35): se transferido, null
-    const t3 = isTransf ? null : Math.min(35, Math.max(21, Math.round(22 + ((varSeed + 9) % 14))));
+    // Trimestre 3 (máx 40): se transferido, null. Média entre 24 e 39
+    const t3 = isTransf ? null : Math.min(40, Math.max(24, Math.round(25 + ((varSeed + 9) % 15))));
     const f3 = isTransf ? 0 : ((varSeed + 2) % 4);
 
     notas[disc] = {
@@ -216,12 +216,12 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
 
       // Limites de validação:
       // Trimestre 1: máx 30
-      // Trimestre 2: máx 35
-      // Trimestre 3: máx 35
+      // Trimestre 2: máx 30
+      // Trimestre 3: máx 40
       let valFinal = num;
       if (campo === 'trimestre1' && valFinal !== null) valFinal = Math.min(30, valFinal);
-      if (campo === 'trimestre2' && valFinal !== null) valFinal = Math.min(35, valFinal);
-      if (campo === 'trimestre3' && valFinal !== null) valFinal = Math.min(35, valFinal);
+      if (campo === 'trimestre2' && valFinal !== null) valFinal = Math.min(30, valFinal);
+      if (campo === 'trimestre3' && valFinal !== null) valFinal = Math.min(40, valFinal);
 
       // @ts-ignore
       discNota[campo] = valFinal;
@@ -332,7 +332,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
           <Award className="icon-header" size={28} />
           <div>
             <h2>Boletim Escolar & Lançamento de Notas (SIGP)</h2>
-            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Sistema Trimestral (30 + 35 + 35 = 100 pts)</p>
+            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Sistema Trimestral (30 + 30 + 40 = 100 pts)</p>
           </div>
         </div>
 
@@ -442,8 +442,8 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
                 onChange={(e) => setTrimestreFiltro(Number(e.target.value) as 1 | 2 | 3)}
               >
                 <option value={1}>1º Trimestre (Valor: 30 pts)</option>
-                <option value={2}>2º Trimestre (Valor: 35 pts)</option>
-                <option value={3}>3º Trimestre (Valor: 35 pts)</option>
+                <option value={2}>2º Trimestre (Valor: 30 pts)</option>
+                <option value={3}>3º Trimestre (Valor: 40 pts)</option>
               </select>
             </div>
           )}
@@ -548,8 +548,8 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
                 <tr>
                   <th rowSpan={2} className="th-disc">Componentes Curriculares (BNCC)</th>
                   <th colSpan={2} className="th-trimestre">1º Trimestre (30 pts)</th>
-                  <th colSpan={2} className="th-trimestre">2º Trimestre (35 pts)</th>
-                  <th colSpan={2} className="th-trimestre">3º Trimestre (35 pts)</th>
+                  <th colSpan={2} className="th-trimestre">2º Trimestre (30 pts)</th>
+                  <th colSpan={2} className="th-trimestre">3º Trimestre (40 pts)</th>
                   <th rowSpan={2} className="th-total">Total (100)</th>
                   <th rowSpan={2} className="th-rec">Recup.</th>
                   <th rowSpan={2} className="th-media">Média Final</th>
@@ -646,7 +646,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
               <div className="obs-box">
                 <h4>Observações Pedagógicas & Critérios de Avaliação:</h4>
                 <p>
-                  &bull; Sistema trimestral: 1º Trimestre (30 pontos) | 2º Trimestre (35 pontos) | 3º Trimestre (35 pontos).
+                  &bull; Sistema trimestral: 1º Trimestre (30 pontos) | 2º Trimestre (30 pontos) | 3º Trimestre (40 pontos).
                 </p>
                 <p>
                   &bull; Total Anual: 100 pontos. Mínimo para promoção direta: 60,0 pontos e 75% de frequência letiva (LDB 9.394/96).
@@ -685,7 +685,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
           <div className="mapa-info-header">
             <h3>
               Lançamento e Consulta de Notas &bull; Turma {turmaSelecionada} ({turmaObj?.Período}) &bull;{' '}
-              {trimestreFiltro}º Trimestre (Máx: {trimestreFiltro === 1 ? '30 pts' : '35 pts'})
+              {trimestreFiltro}º Trimestre (Máx: {trimestreFiltro === 3 ? '40 pts' : '30 pts'})
             </h3>
             <span className="mapa-dica no-print">
               * Clique em qualquer nota para editar. Pressione "Salvar Notas" no topo para fixar as alterações.
@@ -745,14 +745,14 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
                               type="number"
                               step="0.5"
                               min="0"
-                              max={trimestreFiltro === 1 ? 30 : 35}
+                              max={trimestreFiltro === 3 ? 40 : 30}
                               value={notaVal !== null && notaVal !== undefined ? notaVal : ''}
                               onChange={(e) =>
                                 handleNotaChange(aluno.Código, disc, campoNota, e.target.value)
                               }
                               placeholder="—"
                               disabled={isTransf && trimestreFiltro === 3}
-                              className={notaVal !== null && notaVal < (trimestreFiltro === 1 ? 18 : 21) ? 'input-baixo' : ''}
+                              className={notaVal !== null && notaVal < (trimestreFiltro === 3 ? 24 : 18) ? 'input-baixo' : ''}
                             />
                           </td>
                         );

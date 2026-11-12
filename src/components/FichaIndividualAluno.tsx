@@ -55,8 +55,8 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
     return DISCIPLINAS_BOLETIM.map((disc, idx) => {
       const varSeed = (seed * 19 + idx * 29) % 100;
       const t1 = Math.min(30, Math.max(18, Math.round(18 + (varSeed % 12))));
-      const t2 = Math.min(35, Math.max(20, Math.round(22 + ((varSeed + 4) % 13))));
-      const t3 = isTransf ? null : Math.min(35, Math.max(22, Math.round(22 + ((varSeed + 8) % 13))));
+      const t2 = Math.min(30, Math.max(18, Math.round(18 + ((varSeed + 4) % 12))));
+      const t3 = isTransf ? null : Math.min(40, Math.max(24, Math.round(25 + ((varSeed + 8) % 15))));
       const faltas = isTransf ? 6 : (varSeed % 7);
       const total = (t1) + (t2) + (t3 ?? 0);
       return {
@@ -235,8 +235,8 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
               </tr>
               <tr>
                 <th>1º Trim. (30)</th>
-                <th>2º Trim. (35)</th>
-                <th>3º Trim. (35)</th>
+                <th>2º Trim. (30)</th>
+                <th>3º Trim. (40)</th>
               </tr>
             </thead>
             <tbody>

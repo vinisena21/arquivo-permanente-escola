@@ -145,8 +145,8 @@ Como posso te ajudar hoje?`,
 
 1. **Pontuação Trimestral (Total: 100 pontos)**:
    • **1º Trimestre**: valor de **30 pontos**.
-   • **2º Trimestre**: valor de **35 pontos**.
-   • **3º Trimestre**: valor de **35 pontos**.
+   • **2º Trimestre**: valor de **30 pontos**.
+   • **3º Trimestre**: valor de **40 pontos**.
    • **Mínimo para Aprovação**: **60 pontos** na soma total.
 
 2. **Frequência Escolar Obrigatória**:
@@ -376,7 +376,7 @@ Assinatura da Gestão: _________________________________________`
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             systemInstruction: {
-              parts: [{ text: `Você é o Assistente Pedagógico e Administrativo da E.M. Maria Geralda Miranda Brito Salomão, em Ponto dos Volantes - MG. Diretor: Marcos Vinícius Sena Sousa. O sistema segue a LDB 9.394/96, trimestres (30+35+35=100), aprovação com 60 pontos e 75% de frequência. Responda em português com clareza, formatação elegante em tópicos e sempre muito solícito à equipe escolar.` }]
+              parts: [{ text: `Você é o Assistente Pedagógico e Administrativo da E.M. Maria Geralda Miranda Brito Salomão, em Ponto dos Volantes - MG. Diretor: Marcos Vinícius Sena Sousa. O sistema segue a LDB 9.394/96, trimestres (30+30+40=100), aprovação com 60 pontos e 75% de frequência. Responda em português com clareza, formatação elegante em tópicos e sempre muito solícito à equipe escolar.` }]
             },
             contents: [{ parts: [{ text: texto }] }]
           })
