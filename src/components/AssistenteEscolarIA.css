@@ -551,3 +551,334 @@
     padding: 8px 14px;
   }
 }
+
+/* ========================================================
+   PAINEL DE MEMÓRIA & SUPABASE
+   ======================================================== */
+
+.ia-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-ia-intel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.22);
+  color: #eff6ff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.badge-fatos-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0 4px;
+  border-radius: 10px;
+  line-height: 14px;
+}
+
+.ia-icon-btn {
+  position: relative;
+}
+
+.ia-icon-btn.active {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+.ia-memoria-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 60px);
+  background: #ffffff;
+  padding: 14px 16px;
+  overflow-y: auto;
+  gap: 14px;
+}
+
+.memoria-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.memoria-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memoria-header-title h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.status-conexao-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.dot-verde {
+  width: 7px;
+  height: 7px;
+  background: #16a34a;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #22c55e;
+}
+
+.btn-fechar-painel {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.btn-fechar-painel:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.supabase-status-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.supabase-status-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.supabase-status-info code {
+  display: block;
+  font-size: 0.68rem;
+  color: #2563eb;
+  font-family: monospace;
+}
+
+.btn-copiar-sql {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-copiar-sql:hover {
+  background: #1d4ed8;
+}
+
+/* Formulário de Novo Fato */
+.form-novo-fato {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-novo-fato h5 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.form-fato-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.form-fato-inputs input {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.form-fato-inputs select {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+}
+
+.form-novo-fato textarea {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.btn-salvar-fato {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-salvar-fato:hover {
+  background: #2563eb;
+}
+
+/* Lista de Fatos */
+.lista-fatos-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lista-fatos-scroll h5 {
+  margin: 0 0 4px 0;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.card-fato-memoria {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  transition: all 0.15s ease;
+}
+
+.card-fato-memoria:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+}
+
+.fato-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.tag-categoria {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tag-categoria.cat-regras {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tag-categoria.cat-escola {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.tag-categoria.cat-aluno {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.tag-categoria.cat-pedagogico {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.tag-categoria.cat-geral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-remover-fato {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.btn-remover-fato:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.card-fato-memoria h6 {
+  margin: 0 0 4px 0;
+  font-size: 0.82rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.card-fato-memoria p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+/* Bubble Especial de Aprendizado */
+.bubble-memoria {
+  border-left: 4px solid #3b82f6 !important;
+  background: #f0fdf4 !important;
+}
+
+.ia-quote {
+  margin: 6px 0 6px 8px;
+  padding-left: 8px;
+  border-left: 3px solid #2563eb;
+  font-style: italic;
+  color: #334155;
+}
