@@ -1,0 +1,643 @@
+/* HorarioTurma.css - Estilo oficial Guia Escolar (Azul Institucional) */
+
+.horario-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.horario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.horario-header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.horario-header-title .icon-header {
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 8px;
+  border-radius: 10px;
+  box-sizing: content-box;
+}
+
+.horario-header-title h2 {
+  font-size: 1.4rem;
+  color: #1e3a8a;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.horario-header-title p {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.horario-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.65rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primario:hover {
+  background: #1d4ed8;
+}
+
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 0.65rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-secundario:hover {
+  background: #e2e8f0;
+}
+
+.btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 0.65rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-print:hover {
+  background: #172554;
+}
+
+/* Card Seletor de Turma */
+.horario-selector-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  background: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.selector-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.selector-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.selector-group select {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  min-width: 260px;
+}
+
+.selector-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.turma-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge-info {
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  border: 1px solid #bfdbfe;
+}
+
+/* Grade Tabela */
+.grade-wrapper {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  overflow-x: auto;
+}
+
+.grade-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.grade-tabela th {
+  background: #f8fafc;
+  padding: 1rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e3a8a;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: center;
+}
+
+.grade-tabela th.th-horario {
+  width: 160px;
+  text-align: left;
+  padding-left: 1.25rem;
+}
+
+.grade-tabela td {
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  padding: 0.5rem;
+  vertical-align: middle;
+}
+
+.grade-tabela td:last-child {
+  border-right: none;
+}
+
+.td-horario {
+  background: #f8fafc;
+  padding: 0.75rem 1rem !important;
+  font-weight: 600;
+  border-right: 2px solid #e2e8f0 !important;
+}
+
+.aula-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.aula-hora {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.linha-intervalo {
+  background: #fef3c7 !important;
+}
+
+.td-horario.intervalo-horario {
+  background: #fef3c7 !important;
+  border-right: 2px solid #fde68a !important;
+}
+
+.td-horario.intervalo-horario .aula-label {
+  color: #92400e;
+}
+
+.td-horario.intervalo-horario .aula-hora {
+  color: #b45309;
+}
+
+.td-intervalo {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.1em;
+  padding: 0.6rem !important;
+  background: #fef3c7;
+}
+
+.td-slot {
+  cursor: pointer;
+  transition: background 0.15s ease;
+  height: 70px;
+}
+
+.td-slot:hover {
+  background: #f0f7ff;
+}
+
+.slot-card {
+  background: #f8fafc;
+  border-left: 4px solid #2563eb;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.slot-disciplina {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.slot-professor {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.slot-vazio {
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.slot-vazio:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+/* Resumo da Matriz Curricular */
+.horario-footer-resumo {
+  background: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.horario-footer-resumo h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 1rem;
+}
+
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.resumo-card {
+  background: #f8fafc;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.resumo-disc {
+  font-weight: 600;
+  color: #334155;
+}
+
+.resumo-qtd {
+  font-weight: 700;
+  color: #1e40af;
+}
+
+/* Modal Edição */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-horario-content {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: modalEnter 0.2s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  background: #1e3a8a;
+  color: white;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.modal-close-btn:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-body .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.modal-body label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.modal-body select,
+.modal-body input {
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.modal-body select:focus,
+.modal-body input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.modal-footer {
+  background: #f8fafc;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-cancelar {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-confirmar {
+  background: #2563eb;
+  border: none;
+  color: white;
+  padding: 0.5rem 1.15rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-confirmar:hover {
+  background: #1d4ed8;
+}
+
+/* IMPRESSÃO OFICIAL */
+.only-print {
+  display: none !important;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+  }
+
+  .no-print,
+  .header,
+  .footer,
+  .app-container > header,
+  .app-container > footer {
+    display: none !important;
+  }
+
+  .only-print {
+    display: block !important;
+  }
+
+  .horario-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0.5rem !important;
+  }
+
+  .cabecalho-impressao-oficial {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cabecalho-impressao-oficial h3 {
+    font-size: 10pt;
+    margin: 0;
+    letter-spacing: 1px;
+  }
+
+  .cabecalho-impressao-oficial h4 {
+    font-size: 9pt;
+    margin: 2px 0;
+  }
+
+  .cabecalho-impressao-oficial h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 4px 0;
+    color: #000;
+  }
+
+  .print-sub {
+    font-size: 8pt;
+    color: #444;
+  }
+
+  .print-dados-turma {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 6px;
+    font-size: 9pt;
+    border: 1px solid #000;
+    padding: 4px 8px;
+    background: #f8f8f8;
+  }
+
+  .grade-wrapper {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+  }
+
+  .grade-tabela {
+    width: 100% !important;
+    border: 1px solid #000 !important;
+  }
+
+  .grade-tabela th {
+    background: #eee !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    font-size: 8pt !important;
+  }
+
+  .grade-tabela td {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    height: 52px !important;
+  }
+
+  .td-horario {
+    background: #f5f5f5 !important;
+    border: 1px solid #000 !important;
+  }
+
+  .slot-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-left: none !important;
+    padding: 0 !important;
+  }
+
+  .slot-disciplina {
+    color: #000 !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+  }
+
+  .slot-professor {
+    color: #222 !important;
+    font-size: 7.5pt !important;
+  }
+
+  .print-assinaturas {
+    display: flex !important;
+    justify-content: space-around !important;
+    margin-top: 1.5rem !important;
+    padding-top: 1rem !important;
+  }
+
+  .assinatura-box {
+    text-align: center;
+    width: 250px;
+  }
+
+  .linha-assinatura {
+    border-bottom: 1px solid #000;
+    margin-bottom: 4px;
+  }
+
+  .assinatura-box p {
+    font-size: 8.5pt;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .assinatura-box span {
+    font-size: 7.5pt;
+    color: #444;
+  }
+}

@@ -17,7 +17,11 @@ import {
   FileText,
   FileSpreadsheet,
   History,
-  FileCheck2
+  FileCheck2,
+  Calendar,
+  Award,
+  BookOpen,
+  ArrowRightLeft
 } from 'lucide-react';
 import './App.css';
 import EditarAlunoModal, {
@@ -40,6 +44,11 @@ import ImportarAlunos from './components/ImportarAlunos';
 import ProfissionaisEscolares from './components/ProfissionaisEscolares';
 import DetectorDuplicidades from './components/DetectorDuplicidades';
 import ConferirHistorico from './components/ConferirHistorico';
+import HorarioTurma from './components/HorarioTurma';
+import BoletimEscolar from './components/BoletimEscolar';
+import DiarioClasse from './components/DiarioClasse';
+import AtasFichasView from './components/AtasFichasView';
+import RemanejamentoAlunos from './components/RemanejamentoAlunos';
 import { supabase } from './lib/supabase';
 import type {
   AlunoArquivo,
@@ -57,7 +66,12 @@ type AbaAtiva =
   | 'alunos-secretaria'
   | 'profissionais'
   | 'duplicidades'
-  | 'conferir-historico';
+  | 'conferir-historico'
+  | 'horarios'
+  | 'boletim'
+  | 'diario'
+  | 'atas-fichas'
+  | 'remanejamento';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -84,7 +98,7 @@ export default function App() {
   const [dadosHistoricoEdicao, setDadosHistoricoEdicao] = useState<Record<string, string> | null>(null);
   const [alunoSecretariaParaHistorico, setAlunoSecretariaParaHistorico] = useState<AlunoSecretariaRow | null>(null);
   const [versaoListaSecretaria, setVersaoListaSecretaria] = useState(0);
-  const [menuDropdownAberto, setMenuDropdownAberto] = useState<'cadastros' | 'arquivo' | null>(null);
+  const [menuDropdownAberto, setMenuDropdownAberto] = useState<'cadastros' | 'arquivo' | 'sigp' | null>(null);
   const [modalDeclaracoesAberta, setModalDeclaracoesAberta] = useState(false);
 
   useEffect(() => {
@@ -383,7 +397,100 @@ export default function App() {
               )}
             </div>
 
-            {/* 4. Dropdown Arquivo & Históricos */}
+            {/* 4. Dropdown Pedagógico (SIGP) */}
+            <div className="nav-dropdown">
+              <button
+                type="button"
+                className={`nav-dropdown-btn ${['horarios', 'boletim', 'diario', 'atas-fichas', 'remanejamento'].includes(abaAtiva) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuDropdownAberto(menuDropdownAberto === 'sigp' ? null : 'sigp');
+                }}
+              >
+                <GraduationCap size={18} /> Pedagógico (SIGP) <ChevronDown size={14} />
+              </button>
+
+              {menuDropdownAberto === 'sigp' && (
+                <div className="nav-dropdown-menu">
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'horarios' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('horarios');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <Calendar size={16} />
+                    <div>
+                      <span>Quadro de Horários</span>
+                      <span className="nav-dropdown-item-desc">Grade semanal das 30 turmas</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'boletim' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('boletim');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <Award size={16} />
+                    <div>
+                      <span>Boletim & Notas</span>
+                      <span className="nav-dropdown-item-desc">Lançamento trimestral e boletins</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'diario' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('diario');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <BookOpen size={16} />
+                    <div>
+                      <span>Diário & Frequência</span>
+                      <span className="nav-dropdown-item-desc">Chamada diária e plano de aulas</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'atas-fichas' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('atas-fichas');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <FileCheck2 size={16} />
+                    <div>
+                      <span>Ficha Individual & Ata Final</span>
+                      <span className="nav-dropdown-item-desc">Encerramento anual e arquivo</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'remanejamento' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('remanejamento');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <ArrowRightLeft size={16} />
+                    <div>
+                      <span>Remanejamento & Transferências</span>
+                      <span className="nav-dropdown-item-desc">Movimentação escolar oficial</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Dropdown Arquivo & Históricos */}
             <div className="nav-dropdown">
               <button
                 type="button"
@@ -756,6 +863,16 @@ export default function App() {
             }}
           />
         )}
+
+        {abaAtiva === 'horarios' && <HorarioTurma onToast={setToast} />}
+
+        {abaAtiva === 'boletim' && <BoletimEscolar onToast={setToast} />}
+
+        {abaAtiva === 'diario' && <DiarioClasse onToast={setToast} />}
+
+        {abaAtiva === 'atas-fichas' && <AtasFichasView onToast={setToast} />}
+
+        {abaAtiva === 'remanejamento' && <RemanejamentoAlunos onToast={setToast} />}
       </main>
 
       <footer className="footer">

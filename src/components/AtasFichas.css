@@ -1,0 +1,748 @@
+/* AtasFichas.css - Estilos oficiais para Ficha Individual e Ata de Resultados Finais */
+
+.atas-fichas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.atas-fichas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.atas-fichas-header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.atas-fichas-header-title .icon-header {
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 8px;
+  border-radius: 10px;
+  box-sizing: content-box;
+}
+
+.atas-fichas-header-title h2 {
+  font-size: 1.4rem;
+  color: #1e3a8a;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.atas-fichas-header-title p {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.sub-nav-toggle {
+  display: inline-flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid #cbd5e1;
+}
+
+.sub-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sub-nav-btn.active {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+/* ========================================================
+   FICHA INDIVIDUAL DO ALUNO
+   ======================================================== */
+.ficha-individual-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.ficha-selecao-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  background: white;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.busca-aluno-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.busca-aluno-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.select-aluno-box {
+  flex: 2;
+  min-width: 320px;
+}
+
+.select-aluno-box select {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+/* Folha da Ficha Individual */
+.ficha-folha-documento {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 2.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ficha-cabecalho-oficial {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 2px solid #1e3a8a;
+  padding-bottom: 1.25rem;
+}
+
+.ficha-brasao-mg {
+  width: 60px;
+  height: 60px;
+  background: #1e3a8a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.4rem;
+  border-radius: 50%;
+}
+
+.ficha-titulos h3 {
+  font-size: 0.8rem;
+  color: #475569;
+  letter-spacing: 0.05em;
+}
+
+.ficha-titulos h4 {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.ficha-titulos h2 {
+  font-size: 1.25rem;
+  color: #1e3a8a;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.ficha-titulos p {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.faixa-doc-nome {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-top: 4px;
+  border: 1px solid #bfdbfe;
+}
+
+/* Seções da Ficha */
+.secao-quadro {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.secao-titulo {
+  background: #f1f5f9;
+  color: #1e3a8a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.4rem 0.85rem;
+  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.04em;
+}
+
+.grid-identificacao {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.grid-item.span-2 {
+  grid-column: span 2;
+}
+
+.grid-item.span-3 {
+  grid-column: span 3;
+}
+
+.grid-item .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.grid-item .valor {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.valor-destaque {
+  font-size: 1.05rem;
+  color: #1e3a8a;
+}
+
+.grid-turma-dados {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.825rem;
+  background: white;
+}
+
+/* Tabela de Notas Ficha */
+.tabela-ficha-notas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+}
+
+.tabela-ficha-notas th {
+  background: #1e3a8a;
+  color: white;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.th-alinhado-esq {
+  text-align: left !important;
+  padding-left: 0.85rem !important;
+}
+
+.tabela-ficha-notas td {
+  border: 1px solid #e2e8f0;
+  padding: 0.45rem 0.4rem;
+  text-align: center;
+}
+
+.td-alinhado-esq {
+  text-align: left !important;
+  font-weight: 600;
+  color: #1e293b;
+  padding-left: 0.85rem !important;
+}
+
+.td-destaque-total {
+  background: #f8fafc;
+  color: #1e40af;
+  font-weight: 700;
+}
+
+.txt-aprov {
+  color: #15803d;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.txt-aviso {
+  color: #b45309;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.tr-totais-ficha {
+  background: #f1f5f9;
+  border-top: 2px solid #cbd5e1;
+}
+
+.td-frequencia-resumo {
+  text-align: left !important;
+  padding-left: 0.85rem !important;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.td-situacao-final-ficha {
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+/* Parecer */
+.parecer-area {
+  padding: 0.75rem;
+  background: white;
+}
+
+.textarea-parecer {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.65rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #334155;
+  resize: vertical;
+}
+
+/* Decisão Final */
+.quadro-resultado {
+  background: #eff6ff;
+  border: 2px solid #93c5fd;
+  padding: 0.85rem;
+  text-align: center;
+}
+
+.resultado-final-box span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e40af;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.faixa-resultado-destaque {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  letter-spacing: 0.03em;
+}
+
+/* Assinaturas Ficha */
+.ficha-assinaturas-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  gap: 1.5rem;
+}
+
+.assinatura-col {
+  text-align: center;
+  flex: 1;
+  max-width: 250px;
+}
+
+.traco-assinatura {
+  border-bottom: 1px solid #1e293b;
+  margin-bottom: 5px;
+}
+
+.assinatura-col p {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.assinatura-col span {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* ========================================================
+   ATA DE RESULTADO FINAL (TURMA)
+   ======================================================== */
+.ata-final-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.ata-topo-card {
+  background: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ata-selecao-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ata-selecao-grupo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.ata-selecao-grupo select {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  color: #1e293b;
+  min-width: 280px;
+}
+
+.ata-botoes-acao {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Folha Oficial da Ata */
+.ata-folha-documento {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ata-cabecalho-livro {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 2px solid #1e3a8a;
+  padding-bottom: 1rem;
+}
+
+.ata-brasao-box {
+  width: 55px;
+  height: 55px;
+  background: #1e3a8a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.3rem;
+  border-radius: 50%;
+}
+
+.ata-cabecalho-texto h3 {
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.ata-cabecalho-texto h4 {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.ata-cabecalho-texto h2 {
+  font-size: 1.2rem;
+  color: #1e3a8a;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.ata-cabecalho-texto p {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.ata-titulo-faixa {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  border: 1px solid #bfdbfe;
+}
+
+.ata-metadados-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}
+
+.ata-termo-abertura {
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.6;
+  text-align: justify;
+  background: #fcfcfc;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid #1e3a8a;
+}
+
+.ata-tabela-wrapper {
+  overflow-x: auto;
+}
+
+.tabela-ata-resultados {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.775rem;
+  min-width: 950px;
+}
+
+.tabela-ata-resultados th {
+  background: #1e3a8a;
+  color: white;
+  border: 1px solid #cbd5e1;
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  font-size: 0.725rem;
+  font-weight: 600;
+}
+
+.th-num {
+  width: 32px;
+}
+
+.th-matr {
+  width: 70px;
+}
+
+.th-nome {
+  text-align: left !important;
+  padding-left: 0.5rem !important;
+  width: 230px;
+}
+
+.th-disc-sigla {
+  width: 45px;
+}
+
+.th-total,
+.th-media,
+.th-faltas {
+  width: 50px;
+  background: #2563eb !important;
+}
+
+.th-resultado {
+  width: 100px;
+}
+
+.tabela-ata-resultados td {
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.3rem;
+  text-align: center;
+}
+
+.td-nome {
+  text-align: left !important;
+  font-weight: 600;
+  color: #1e293b;
+  padding-left: 0.5rem !important;
+}
+
+.linha-ata-transferido {
+  background: #fff8f8;
+  opacity: 0.8;
+}
+
+.badge-ata-res {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.badge-ata-res.res-aprovado {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-ata-res.res-reprovado {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-ata-res.res-transferido {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Estatísticas */
+.ata-estatisticas-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+}
+
+.ata-estatisticas-box h4 {
+  font-size: 0.75rem;
+  color: #1e3a8a;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.estatisticas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.stat-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.stat-aprov {
+  color: #15803d;
+}
+
+/* Termo Encerramento */
+.ata-termo-encerramento {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.ata-assinaturas-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+.assinatura-bloco {
+  text-align: center;
+}
+
+.assinatura-bloco p {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.assinatura-bloco span {
+  font-size: 0.675rem;
+  color: #64748b;
+}
+
+/* IMPRESSÃO DE ATAS E FICHAS */
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .ficha-folha-documento,
+  .ata-folha-documento {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .tabela-ficha-notas th,
+  .tabela-ata-resultados th {
+    background: #e2e8f0 !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+
+  .tabela-ficha-notas td,
+  .tabela-ata-resultados td {
+    border: 1px solid #000 !important;
+  }
+
+  .badge-ata-res {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+}
