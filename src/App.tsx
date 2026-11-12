@@ -34,7 +34,8 @@ import Login from './components/Login';
 
 import PainelGestao from './components/PainelGestao';
 import DeclaracoesModal from './components/DeclaracoesModal';
-import { ChevronDown, GraduationCap, ShieldAlert } from 'lucide-react';
+import AssistenteEscolarIA from './components/AssistenteEscolarIA';
+import { ChevronDown, GraduationCap, ShieldAlert, Sparkles } from 'lucide-react';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
@@ -100,6 +101,7 @@ export default function App() {
   const [versaoListaSecretaria, setVersaoListaSecretaria] = useState(0);
   const [menuDropdownAberto, setMenuDropdownAberto] = useState<'cadastros' | 'arquivo' | 'sigp' | null>(null);
   const [modalDeclaracoesAberta, setModalDeclaracoesAberta] = useState(false);
+  const [assistenteIaAberto, setAssistenteIaAberto] = useState(false);
 
   useEffect(() => {
     function fecharMenus(e: MouseEvent) {
@@ -565,6 +567,19 @@ export default function App() {
             >
               <GraduationCap size={18} /> Declarações
             </button>
+
+            {/* 6. Assistente IA Integrado */}
+            <button
+              type="button"
+              className="navigation-button nav-btn-ia"
+              onClick={() => {
+                setAssistenteIaAberto(true);
+                setMenuDropdownAberto(null);
+              }}
+              title="Abrir Assistente Inteligente Guia IA (Sem gastar tokens)"
+            >
+              <Sparkles size={18} color="#93c5fd" /> Assistente IA
+            </button>
           </nav>
         </div>
       </header>
@@ -909,6 +924,12 @@ export default function App() {
         isOpen={modalDeclaracoesAberta}
         onClose={() => setModalDeclaracoesAberta(false)}
         alunos={alunos}
+      />
+
+      <AssistenteEscolarIA
+        abertoExterno={assistenteIaAberto}
+        onFecharExterno={() => setAssistenteIaAberto(false)}
+        onAbrirDeclaracao={() => setModalDeclaracoesAberta(true)}
       />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
