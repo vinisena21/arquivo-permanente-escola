@@ -11,16 +11,14 @@ import {
   Copy,
   Check,
   FileText,
-  Search,
   BookOpen,
-  Calendar,
-  AlertCircle,
   Key,
   ShieldCheck,
   Brain,
   Database,
   Plus,
-  Trash2
+  Trash2,
+  Users
 } from 'lucide-react';
 import matriculasData from '../data/matriculas.json';
 import turmasData from '../data/turmas.json';
@@ -230,7 +228,213 @@ Como posso te ajudar hoje?`,
   const processarPerguntaLocalmente = (pergunta: string): { resposta: string; dadosAluno?: Mensagem['dadosAluno']; tipo?: Mensagem['tipo'] } | null => {
     const p = pergunta.toLowerCase().trim();
 
-    // 1. Dúvidas sobre Aprovação / Notas / Média / Frequência / LDB (30 + 30 + 40 = 100)
+    // 1. Passo a Passo Oficial para Gerar Histórico Escolar
+    if (
+      p.includes('como faz um historico') ||
+      p.includes('como fazer historico') ||
+      p.includes('como gerar historico') ||
+      p.includes('passo a passo do historico') ||
+      p.includes('gerar historico') ||
+      p.includes('fazer historico') ||
+      p.includes('emitir historico')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `📜 **Passo a Passo Oficial para Gerar Histórico Escolar no Sistema**:
+
+1. **Acesse o Módulo**:
+   • No menu superior, clique em **Arquivo & Históricos ▾** e selecione **"Gerar Histórico"**.
+
+2. **Identificação do Estudante**:
+   • Digite o nome ou código de matrícula do estudante.
+   • O sistema puxará automaticamente os dados pessoais (nome, filiação, nascimento, nacionalidade, certidão e número de prontuário).
+
+3. **Trajetória Acadêmica (1º ao 9º Ano)**:
+   • Selecione ou ative as séries que o aluno cursou nesta escola ou em outras instituições.
+   • Preencha o ano letivo, notas/conceitos nas disciplinas da Base Nacional Comum (BNCC) e Parte Diversificada, faltas e carga horária anual (mínimo de 800h por série).
+
+4. **Verso do Histórico & Amparo Legal**:
+   • O sistema já traz configuradas as resoluções da SEE/MG e LDB 9.394/96.
+   • Verifique os dados de encerramento, convenções de notas e assinatura da direção (**Marcos Vinícius Sena Sousa**).
+
+5. **Download & Gravação Automática no Supabase**:
+   • Clique em **"Baixar DOCX"** ou gere o arquivo para conferência.
+   • O documento é salvo automaticamente na nuvem do Supabase e fica disponível a qualquer hora no menu **"Históricos Salvos"** para reabertura, consulta ou reimpressão!`
+      };
+    }
+
+    // 2. Passo a Passo Oficial para Emitir Declarações Escolares
+    if (
+      p.includes('como faz uma declaracao') ||
+      p.includes('como fazer declaracao') ||
+      p.includes('como emitir declaracao') ||
+      p.includes('passo a passo da declaracao') ||
+      p.includes('fazer declaracao') ||
+      p.includes('emitir declaracao') ||
+      p.includes('modelo de declaracao')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `📄 **Passo a Passo Oficial para Emitir Declarações Escolares**:
+
+1. **Abra o Emissor**:
+   • Clique no botão **"Declarações"** no menu de navegação superior (ou no botão *"Abrir Declarações"* em qualquer card de aluno que eu localizar).
+
+2. **Escolha o Modelo Oficial**:
+   O sistema possui **7 modelos oficiais pré-calibrados**:
+   • **1. Matrícula e Frequência Regular** (comprovação para Bolsa Família / programas sociais).
+   • **2. Declaração de Transferência** (com prazo de 30 dias para entrega do histórico).
+   • **3. Declaração de Conclusão do Ensino Fundamental** (concluintes do 9º ano).
+   • **4. Declaração de Escolaridade** (vínculo letivo).
+   • **5. Comparecimento de Responsável** (justificativa de trabalho de pai/mãe).
+   • **6. Transporte Escolar Rural** (rotas e linhas da zona rural).
+   • **7. Declaração Personalizada / Livre** (redação sob medida).
+
+3. **Preenchimento Automático do Aluno**:
+   • Digite o nome do aluno no campo de busca: matrícula, turma, turno e filiação são preenchidos instantaneamente.
+
+4. **Edição Livre na Tela (Opcional)**:
+   • Se desejar alterar qualquer data, finalidade ou observação antes de imprimir, clique em **"Editar Texto Livre"**.
+
+5. **Impressão Calibrada em 1 Folha A4**:
+   • Clique em **"Imprimir Declaração"**. O documento foi desenhado milimetricamente para caber em **apenas 1 folha A4**, sem cortar e sem imprimir folhas vazias!`
+      };
+    }
+
+    // 3. SIGP: Como funciona o Boletim & Notas
+    if (
+      p.includes('como lancar notas') ||
+      p.includes('como lançar notas') ||
+      p.includes('como funciona o boletim') ||
+      p.includes('boletim escolar') ||
+      p.includes('mapa da turma')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `🎯 **Como Usar o Boletim Escolar & Lançamento de Notas (SIGP)**:
+
+1. **Acesse**: Menu **Pedagógico (SIGP) ▾** > **"Boletim & Notas"**.
+2. **Selecione a Turma**: Escolha qualquer uma das 30 turmas ativas.
+3. **Escolha o Modo de Visualização**:
+   • **Boletim Individual**: folha completa de notas por aluno com quadro BNCC, médias, faltas e assinaturas oficiais de Diretor, Especialista e Responsável.
+   • **Mapa da Turma**: planilha completa da turma com notas de todas as disciplinas para digitação rápida.
+4. **Regra de Pontuação**:
+   • **1º Trimestre**: até 30 pontos (mínimo 18,0).
+   • **2º Trimestre**: até 30 pontos (mínimo 18,0).
+   • **3º Trimestre**: até 40 pontos (mínimo 24,0).
+   • **Total: 100 pontos** (Média de aprovação: 60,0).
+5. **Salvar ou Exportar**:
+   • Clique em **"Salvar Notas"** para gravar no banco local.
+   • Clique em **"Exportar CSV"** para abrir a planilha no Excel!`
+      };
+    }
+
+    // 4. SIGP: Como funciona o Diário de Classe
+    if (
+      p.includes('como fazer chamada') ||
+      p.includes('diario de classe') ||
+      p.includes('diário de classe') ||
+      p.includes('chamada')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `📖 **Como Operar o Diário de Classe & Frequência (SIGP)**:
+
+1. **Acesse**: Menu **Pedagógico (SIGP) ▾** > **"Diário & Frequência"**.
+2. **Defina os Parâmetros**: Selecione a Turma, a Disciplina e o Mês de referência (fevereiro a dezembro de 2026).
+3. **Chamada Interativa com 1 Clique**:
+   • Cada clique na célula do dia alterna o status:
+     - **C** (Verde) = Compareceu / Presente
+     - **F** (Vermelho) = Falta
+     - **FJ** (Amarelo) = Falta Justificada com atestado
+4. **Registro de Conteúdo & Plano de Aula**:
+   • Clique na aba **"Registro de Conteúdo"** para lançar a data da aula, o objeto de conhecimento e o código de habilidade da BNCC (ex: *EF06LP01*).
+5. **Exportação & Impressão**:
+   • Clique em **"Imprimir Diário"** para emitir a folha de chamada oficial para arquivo ou **"Exportar CSV"** para planilha!`
+      };
+    }
+
+    // 5. SIGP: Como funciona a Ficha Individual & Ata Final
+    if (
+      p.includes('ficha individual') ||
+      p.includes('ata final') ||
+      p.includes('ata de resultado') ||
+      p.includes('encerramento letivo')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `📑 **Ficha Individual do Aluno & Ata de Resultados Finais**:
+
+1. **Acesse**: Menu **Pedagógico (SIGP) ▾** > **"Ficha Individual & Ata Final"**.
+2. **Sub-aba Ficha Individual**:
+   • Documento oficial do Estado de Minas Gerais para arquivo permanente do estudante.
+   • Contém: Dados de identificação completos, certidão, SUS, aproveitamento nos 3 trimestres (30+30+40), frequência e parecer descritivo do pedagogo.
+3. **Sub-aba Ata de Resultados Finais**:
+   • Tabela formal em folha paisagem A4 para encadernação no livro oficial de atas da escola.
+   • Traz termo formal de abertura, cômputo de todos os alunos com notas finais por componente curricular, taxa de aprovação percentual e assinaturas da comissão.`
+      };
+    }
+
+    // 6. SIGP: Remanejamento & Transferências
+    if (
+      p.includes('remanejamento') ||
+      p.includes('transferir') ||
+      p.includes('transferencia') ||
+      p.includes('transferência') ||
+      p.includes('movimentacao')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `🔄 **Remanejamento & Transferências Escolares**:
+
+1. **Acesse**: Menu **Pedagógico (SIGP) ▾** > **"Remanejamento & Transferências"**.
+2. **Controle de Alunos Transferidos**:
+   • O sistema lista todos os estudantes movimentados com data de saída, escola de destino e município.
+   • O botão **"Emitir Declaração de Transferência"** gera o documento oficial com prazo legal de 30 dias para expedição do histórico definitivo.
+   • *Regra importante*: Alunos transferidos são automaticamente removidos da chamada ativa diária para não prejudicar as estatísticas da turma.`
+      };
+    }
+
+    // 7. AUDITORIA: Detector de Duplicidades
+    if (
+      p.includes('duplicado') ||
+      p.includes('duplicidade') ||
+      p.includes('auditoria') ||
+      p.includes('higienizacao')
+    ) {
+      return {
+        tipo: 'documento',
+        resposta: `🛡️ **Detector de Duplicidades & Auditoria de Dados**:
+
+1. **Acesse**: Menu **Cadastros ▾** > **"Detector de Duplicados"**.
+2. **Cruzamento Inteligente**:
+   • O detector analisa automaticamente a base de dados cruzando CPFs repetidos, números de certidão coincidentes e nomes com grafia semelhante (comparação fonética).
+3. **Ações de Higienização**:
+   • Permite identificar duplicidades de matrículas geradas por importações anteriores e corrigir cadastros sem risco de perda de registros de notas.`
+      };
+    }
+
+    // 8. ARQUIVO: Árvore do Acervo e Pastas Físicas
+    if (
+      p.includes('arvore') ||
+      p.includes('árvore') ||
+      p.includes('pasta fisica') ||
+      p.includes('pasta física') ||
+      p.includes('onde fica a pasta') ||
+      p.includes('prontuario')
+    ) {
+      return {
+        resposta: `📁 **Árvore do Acervo & Localização de Pastas Físicas**:
+
+1. **Acesse**: Menu **Cadastros ▾** > **"Árvore do Acervo"**.
+2. **Estrutura Física do Arquivo Permanente**:
+   • O acervo físico da escola é organizado em pastas numeradas.
+   • Dentro de cada pasta, cada aluno possui um prontuário com número sequencial (ex: *Pasta 01 -> Nº 05 - Aluno*).
+   • Você pode navegar visualmente na árvore para saber exatamente em qual gaveta e pasta física encontrar os documentos originais do aluno.`
+      };
+    }
+
+    // 9. Dúvidas sobre Aprovação / Notas / Média / Frequência / LDB (30 + 30 + 40 = 100)
     if (
       p.includes('aprova') ||
       p.includes('reprova') ||
@@ -265,7 +469,7 @@ Como posso te ajudar hoje?`,
       };
     }
 
-    // 2. Horários e Turnos da Escola
+    // 10. Horários e Turnos da Escola
     if (p.includes('horario') || p.includes('horário') || p.includes('turno') || p.includes('hora de entrada') || p.includes('hora de saída')) {
       return {
         resposta: `⏰ **Horários e Turnos de Funcionamento - E.M. Maria Geralda**:
@@ -284,7 +488,7 @@ Como posso te ajudar hoje?`,
       };
     }
 
-    // 3. Informações Institucionais e Números da Escola
+    // 11. Informações Institucionais e Números da Escola
     if (
       p.includes('escola') ||
       p.includes('inep') ||
@@ -293,18 +497,22 @@ Como posso te ajudar hoje?`,
       p.includes('quantas turmas') ||
       p.includes('professores') ||
       p.includes('servidores') ||
-      p.includes('dados da escola')
+      p.includes('dados da escola') ||
+      p.includes('total de alunos') ||
+      p.includes('quantos estudantes') ||
+      p.includes('censo')
     ) {
       return {
-        resposta: `🏫 **Dados Institucionais Oficiais da Escola**:
+        resposta: `🏫 **Dados Institucionais e Censo Escolar - E.M. Maria Geralda**:
 
 • **Nome**: Escola Municipal Maria Geralda Miranda Brito Salomão
 • **Código INEP**: **31054366**
 • **Município**: Ponto dos Volantes - MG
 • **Direção**: Marcos Vinícius Sena Sousa
 • **Estudantes Matriculados**: **${totalAlunos}** alunos
-• **Turmas Ativas**: **${totalTurmas}** turmas
+• **Turmas Ativas**: **${totalTurmas}** turmas (Anos Iniciais e Finais)
 • **Profissionais / Servidores**: **${totalProfissionais}** cadastrados
+• **Dias Letivos e Carga Horária**: 200 dias de efetivo trabalho escolar e 800 horas anuais
 • **Acervo**: Sistema de Arquivo Permanente Integrado (Guia Escolar)`
       };
     }
@@ -533,15 +741,41 @@ A partir de agora, lembrarei desse fato em todas as futuras consultas e resposta
 
       // Monta a memória aprendida no prompt do sistema
       const memoriaFormatada = formatarMemoriaParaPrompt(fatosMemoria);
-      const systemInstructionCompleto = `Você é o Assistente Pedagógico e Administrativo da E.M. Maria Geralda Miranda Brito Salomão, em Ponto dos Volantes - MG.
-Diretor Oficial: Marcos Vinícius Sena Sousa.
-Código INEP: 31054366.
-Regras Oficiais: LDB 9.394/96, sistema trimestral (30 + 30 + 40 = 100 pontos), mínimo de 60 pontos para aprovação direta e 75% de frequência mínima. Alunos transferidos não contam na frequência ativa da turma.
+      const systemInstructionCompleto = `Você é o Assistente de Inteligência Artificial Oficial da Escola Municipal Maria Geralda Miranda Brito Salomão, localizada em Ponto dos Volantes - MG.
+Sua inteligência é de altíssimo nível, atuando como um especialista sênior em legislação educacional brasileira (LDB 9.394/96, CNE, SEE/MG), gestão de secretaria escolar, pedagogia contemporânea e operação do sistema "Guia Escolar".
+
+DADOS OFICIAIS DA ESCOLA:
+- Instituição: Escola Municipal Maria Geralda Miranda Brito Salomão
+- Código INEP: 31054366 | Município: Ponto dos Volantes - Minas Gerais
+- Diretor Escolar: Marcos Vinícius Sena Sousa
+- Anos Atendidos: Ensino Fundamental Regular (1º ao 9º Ano)
+- Turno Matutino: 07:00 às 11:30 (Anos Finais: 6º ao 9º Ano)
+- Turno Vespertino: 12:30 às 17:00 (Anos Iniciais: 1º ao 5º Ano)
+- Censo Escolar Atual: ${totalAlunos} estudantes matriculados, ${totalTurmas} turmas ativas e ${totalProfissionais} servidores da educação.
+- Carga Horária e Calendário: 200 dias de efetivo trabalho escolar e 800 horas anuais.
+
+REGRAS DE AVALIAÇÃO E NOTAS (OFICIAL DA ESCOLA):
+- Sistema Trimestral: 1º Trimestre (30 pontos), 2º Trimestre (30 pontos), 3º Trimestre (40 pontos) = 100 pontos anuais totais.
+- Média mínima para aprovação direta: 60,0 pontos na soma dos 3 trimestres.
+- Frequência obrigatória por lei: Mínimo de 75% das horas letivas do ano letivo (Art. 24 da LDB).
+- Regra de transferência: Alunos com status TRANSFERIDO são automaticamente desconsiderados da chamada ativa e do cômputo da frequência regular da turma.
+- Direito assegurado a estudos de recuperação paralela e periódica em todos os trimestres.
+
+GUIA DE OPERAÇÃO DO SISTEMA GUIA ESCOLAR:
+- Para Gerar Histórico: Menu "Arquivo & Históricos" > "Gerar Histórico". Localizar aluno, preencher trajetória do 1º ao 9º ano, notas, carga horária e atos legais no verso. Salva automaticamente no Supabase e pode ser consultado em "Históricos Salvos".
+- Para Emitir Declarações: Botão "Declarações" no menu superior. 7 modelos oficiais (Matrícula, Transferência, Conclusão, Escolaridade, Comparecimento, Transporte Rural, Personalizada). Calibrado para 1 folha A4 oficial.
+- Para Boletim & Notas: Menu "Pedagógico (SIGP)" > "Boletim & Notas". Visão individual e Mapa da turma. Lançamento trimestral (30+30+40). Exportação em CSV.
+- Para Chamada Diária: Menu "Pedagógico (SIGP)" > "Diário & Frequência". Alternância C (Compareceu), F (Falta), FJ (Falta Justificada). Registro de conteúdos da BNCC.
+- Para Ficha Individual e Ata Final: Menu "Pedagógico (SIGP)" > "Ficha Individual & Ata Final". Emissão anual para o livro de atas.
+- Para Transferências: Menu "Pedagógico (SIGP)" > "Remanejamento & Transferências".
+- Para Auditoria de Cadastros: Menu "Cadastros" > "Detector de Duplicados".
+
 ${memoriaFormatada}
-Instruções:
-- Responda como uma IA de ponta para a gestão escolar: clara, educada, analítica e prática.
-- Se o usuário pedir modelos de textos, ofícios, atas ou ocorrências, forneça o texto completo e pronto para uso oficial.
-- Lembre-se do histórico da conversa e dos fatos aprendidos acima.`;
+
+ESTILO DE RESPOSTA:
+- Extremamente inteligente, estruturada, clara, atenciosa e profissional.
+- Se pedirem modelos de documentos (ofícios, convocações, ocorrências, comunicados, atas, relatórios), forneça o texto completo e formal pronto para uso.
+- Se pedirem passo a passo de como fazer algo no sistema, explique com clareza sequencial.` ;
 
       // Prepara as últimas 6 mensagens para manter o contexto multi-turn da conversa
       const historicoRecente = mensagens.slice(-6).map((m) => ({
@@ -914,6 +1148,27 @@ Como estou em **modo autônomo com memória local e regras da escola**:
                 <button
                   type="button"
                   className="ia-sugestao-pill"
+                  onClick={() => handleEnviarMensagem('Como faz um histórico escolar passo a passo?')}
+                >
+                  <FileText size={13} /> Como fazer Histórico?
+                </button>
+                <button
+                  type="button"
+                  className="ia-sugestao-pill"
+                  onClick={() => handleEnviarMensagem('Como emitir declaração no sistema?')}
+                >
+                  <Check size={13} /> Como emitir Declaração?
+                </button>
+                <button
+                  type="button"
+                  className="ia-sugestao-pill"
+                  onClick={() => handleEnviarMensagem('Quantos alunos tem na escola?')}
+                >
+                  <Users size={13} /> Quantos alunos temos?
+                </button>
+                <button
+                  type="button"
+                  className="ia-sugestao-pill"
                   onClick={() => handleEnviarMensagem('Como funciona o cálculo de aprovação e notas trimestrais?')}
                 >
                   <BookOpen size={13} /> Regras 30+30+40
@@ -931,27 +1186,6 @@ Como estou em **modo autônomo com memória local e regras da escola**:
                   onClick={() => handleEnviarMensagem('Redigir modelo de comunicado aos pais sobre reunião')}
                 >
                   <FileText size={13} /> Modelo de Comunicado
-                </button>
-                <button
-                  type="button"
-                  className="ia-sugestao-pill"
-                  onClick={() => handleEnviarMensagem('Redigir modelo de ocorrência disciplinar')}
-                >
-                  <AlertCircle size={13} /> Ocorrência Escolar
-                </button>
-                <button
-                  type="button"
-                  className="ia-sugestao-pill"
-                  onClick={() => handleEnviarMensagem('Quais são os horários e turnos da escola?')}
-                >
-                  <Calendar size={13} /> Horários dos Turnos
-                </button>
-                <button
-                  type="button"
-                  className="ia-sugestao-pill"
-                  onClick={() => handleEnviarMensagem('Buscar dados do aluno')}
-                >
-                  <Search size={13} /> Consultar Aluno
                 </button>
               </div>
 

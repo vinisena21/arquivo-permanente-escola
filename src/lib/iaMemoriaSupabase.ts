@@ -65,8 +65,8 @@ const FATOS_PADRAO_INICIAIS: FatoMemoriaIA[] = [
   {
     id: 'padrao-1',
     categoria: 'regras',
-    titulo: 'Divisão Oficial de Pontos Trimestrais',
-    conteudo: 'A escola utiliza o sistema trimestral com a distribuição: 1º Trimestre (30 pontos), 2º Trimestre (30 pontos) e 3º Trimestre (40 pontos), totalizando 100 pontos. Mínimo para aprovação direta é 60 pontos.',
+    titulo: 'Divisão Oficial de Pontos Trimestrais (30+30+40)',
+    conteudo: 'A escola utiliza o sistema trimestral com a distribuição: 1º Trimestre (30 pontos), 2º Trimestre (30 pontos) e 3º Trimestre (40 pontos), totalizando 100 pontos anuais. O mínimo exigido para promoção direta é de 60,0 pontos.',
     autor: 'Diretoria Escolar',
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString()
@@ -75,7 +75,7 @@ const FATOS_PADRAO_INICIAIS: FatoMemoriaIA[] = [
     id: 'padrao-2',
     categoria: 'regras',
     titulo: 'Critério de Frequência e Alunos Transferidos',
-    conteudo: 'Frequência mínima exigida por lei é de 75% das horas letivas (LDB 9.394/96). Alunos com status TRANSFERIDO nunca são contabilizados na frequência ativa das turmas.',
+    conteudo: 'Frequência mínima exigida por lei é de 75% das horas letivas do ano escolar (Art. 24 da LDB 9.394/96). Estudantes com status TRANSFERIDO nunca são contabilizados na frequência ativa ou chamada regular das turmas.',
     autor: 'Secretaria Escolar',
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString()
@@ -84,8 +84,44 @@ const FATOS_PADRAO_INICIAIS: FatoMemoriaIA[] = [
     id: 'padrao-3',
     categoria: 'escola',
     titulo: 'Dados Oficiais da Instituição',
-    conteudo: 'E.M. Maria Geralda Miranda Brito Salomão, Código INEP 31054366, Município de Ponto dos Volantes - MG. Diretor: Marcos Vinícius Sena Sousa. Turnos: Matutino (07h às 11h30) e Vespertino (12h30 às 17h).',
+    conteudo: 'Escola Municipal Maria Geralda Miranda Brito Salomão, Código INEP 31054366, Município de Ponto dos Volantes - MG. Diretor: Marcos Vinícius Sena Sousa. Turno Matutino: 07:00 às 11:30 (Anos Finais). Turno Vespertino: 12:30 às 17:00 (Anos Iniciais).',
     autor: 'Gestão Escolar',
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  },
+  {
+    id: 'padrao-4',
+    categoria: 'pedagogico',
+    titulo: 'Passo a Passo Oficial para Gerar Histórico Escolar',
+    conteudo: '1) No menu superior, clique em "Arquivo & Históricos" e selecione "Gerar Histórico". 2) Digite o nome ou matrícula do aluno para preencher os dados cadastrais (nome, filiação, certidão, nascimento). 3) Selecione as séries cursadas do Ensino Fundamental (1º ao 9º Ano), informando ano letivo, notas/conceitos, carga horária e resultado. 4) Preencha o verso com os dados de regularidade legal, convenções e carimbos. 5) Clique em "Baixar DOCX" ou "Gerar Documento". O histórico fica gravado automaticamente no Supabase e pode ser reaberto ou reimpresso a qualquer momento na aba "Históricos Salvos".',
+    autor: 'Equipe de Documentação',
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  },
+  {
+    id: 'padrao-5',
+    categoria: 'pedagogico',
+    titulo: 'Passo a Passo Oficial para Emitir Declarações',
+    conteudo: '1) Clique no botão "Declarações" no topo ou no atalho da barra de navegação. 2) Escolha o modelo desejado entre os 7 modelos oficiais: Matrícula e Frequência, Transferência, Conclusão de Curso, Escolaridade, Comparecimento de Responsável, Transporte Escolar Rural ou Personalizada. 3) Digite o nome do aluno no campo de busca para puxar matrícula, turma, turno e filiação direto do banco. 4) Personalize finalidades, justificativas ou edite o texto livremente se necessário. 5) Clique em "Imprimir Declaração". O layout é calibrado milimetricamente para 1 única página A4 com brasão oficial e termo de autenticidade.',
+    autor: 'Secretaria Escolar',
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  },
+  {
+    id: 'padrao-6',
+    categoria: 'escola',
+    titulo: 'Quantitativo Oficial de Alunos, Turmas e Servidores',
+    conteudo: 'O acervo escolar possui 585 estudantes matriculados, distribuídos em 30 turmas ativas entre os turnos Matutino (6º ao 9º Ano) e Vespertino (1º ao 5º Ano). O corpo funcional conta com 86 profissionais da educação (professores, especialistas e apoio administrativo). A escola opera 200 dias letivos e 800 horas anuais de efetivo trabalho escolar.',
+    autor: 'Censo Escolar',
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  },
+  {
+    id: 'padrao-7',
+    categoria: 'pedagogico',
+    titulo: 'Módulos Pedagógicos do SIGP (Boletim, Diário e Atas)',
+    conteudo: 'O menu "Pedagógico (SIGP)" contém: 1) Quadro de Horários: grade semanal das 30 turmas por disciplina e professor. 2) Boletim & Notas: visualização individual e mapa da turma com lançamento trimestral (30+30+40) e exportação em CSV. 3) Diário & Frequência: chamada interativa com controle C/F/FJ e registro de conteúdos da BNCC. 4) Ficha Individual & Ata Final: encerramento letivo com ata oficial para livro de arquivo. 5) Remanejamento: registro de movimentações e transferências escolares.',
+    autor: 'Coordenação SIGP',
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString()
   }
