@@ -714,15 +714,62 @@ export default function App() {
 
               {!erro && carregando && (
                 modoVisualizacao === 'tabela' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="skeleton-table-structured">
                     {Array.from({ length: 6 }).map((_, index) => (
-                      <div key={index} className="shimmer-anim skeleton-table-row" />
+                      <div key={index} className="skeleton-table-row-item">
+                        <div className="skeleton-table-col-avatar">
+                          <div className="shimmer-anim skeleton-avatar" />
+                          <div className="skeleton-text-group">
+                            <div className="shimmer-anim skeleton-bar-title" />
+                            <div className="shimmer-anim skeleton-bar-sub" />
+                          </div>
+                        </div>
+                        <div className="shimmer-anim skeleton-table-col-info" style={{ maxWidth: '120px' }} />
+                        <div className="shimmer-anim skeleton-table-col-badge" />
+                        <div className="shimmer-anim skeleton-table-col-num" />
+                        <div className="shimmer-anim skeleton-table-col-status" />
+                        <div className="skeleton-table-col-actions">
+                          <div className="shimmer-anim skeleton-btn-pill" style={{ maxWidth: '75px' }} />
+                          <div className="shimmer-anim skeleton-btn-pill" style={{ maxWidth: '75px' }} />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
                   <div className="student-cards-grid">
                     {Array.from({ length: 6 }).map((_, index) => (
-                      <div key={index} className="shimmer-anim skeleton-card-item" />
+                      <div key={index} className="skeleton-card-structured">
+                        <div className="skeleton-card-top-row">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                            <div className="shimmer-anim skeleton-avatar" />
+                            <div className="skeleton-text-group">
+                              <div className="shimmer-anim skeleton-bar-title" />
+                              <div className="shimmer-anim skeleton-bar-sub" />
+                            </div>
+                          </div>
+                          <div className="shimmer-anim skeleton-badge-pill" />
+                        </div>
+                        <div className="skeleton-card-divider" />
+                        <div className="skeleton-rows-group">
+                          <div className="skeleton-row-line">
+                            <div className="shimmer-anim skeleton-row-label" />
+                            <div className="shimmer-anim skeleton-row-val" />
+                          </div>
+                          <div className="skeleton-row-line">
+                            <div className="shimmer-anim skeleton-row-label" />
+                            <div className="shimmer-anim skeleton-row-val" />
+                          </div>
+                          <div className="skeleton-row-line">
+                            <div className="shimmer-anim skeleton-row-label" />
+                            <div className="shimmer-anim skeleton-row-val" />
+                          </div>
+                        </div>
+                        <div className="skeleton-card-actions">
+                          <div className="shimmer-anim skeleton-btn-pill" />
+                          <div className="shimmer-anim skeleton-btn-pill" />
+                          <div className="shimmer-anim skeleton-btn-pill" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )
@@ -774,9 +821,13 @@ export default function App() {
                             <th style={{ textAlign: 'right' }}>Ações</th>
                           </tr>
                         </thead>
-                        <tbody>
-                          {alunosPaginados.map((item) => (
-                            <tr key={item.id}>
+                        <tbody key={`table-body-${busca}-${paginaAtual}`}>
+                          {alunosPaginados.map((item, index) => (
+                            <tr
+                              key={item.id}
+                              className="stagger-item"
+                              style={{ '--stagger-idx': index } as React.CSSProperties}
+                            >
                               <td>
                                 <div className="student-name-flex">
                                   <div className="student-avatar-badge">
@@ -858,9 +909,13 @@ export default function App() {
                       </table>
                     </div>
                   ) : (
-                    <div className="student-cards-grid">
-                      {alunosPaginados.map((item) => (
-                        <div key={item.id} className="student-card-item">
+                    <div key={`cards-grid-${busca}-${paginaAtual}`} className="student-cards-grid">
+                      {alunosPaginados.map((item, index) => (
+                        <div
+                          key={item.id}
+                          className="student-card-item stagger-item"
+                          style={{ '--stagger-idx': index } as React.CSSProperties}
+                        >
                           <div className="student-card-top">
                             <div className="card-student-identity">
                               <div className="student-avatar-badge">
