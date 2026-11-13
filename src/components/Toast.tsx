@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
-import { CheckCircle2, AlertCircle, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import './Toast.css';
 
 export interface ToastData {
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'info';
+  title?: string;
 }
 
 interface ToastProps {
@@ -12,39 +14,68 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
+  const [closing, setClosing] = useState(false);
+
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => {
+    if (!toast) {
+      setClosing(false);
+      return;
+    }
+
+    setClosing(false);
+
+    // Inicia fechamento suave antes de desmontar
+    const closeTimer = setTimeout(() => {
+      setClosing(true);
+    }, 3700);
+
+    const dismissTimer = setTimeout(() => {
       onClose();
     }, 4000);
-    return () => clearTimeout(timer);
+
+    return () => {
+      clearTimeout(closeTimer);
+      clearTimeout(dismissTimer);
+    };
   }, [toast, onClose]);
 
   if (!toast) return null;
 
-  const isSuccess = toast.type === 'success';
+  const tipo = toast.type || 'info';
+
+  const defaultTitle = {
+    success: 'Sucesso!',
+    error: 'Atenção / Erro',
+    info: 'Informação do Sistema'
+  }[tipo];
 
   return (
-    <div style={toastContainerStyle}>
-      {isSuccess ? <CheckCircle2 color="#059669" size={20} /> : <AlertCircle color="#dc2626" size={20} />}
-      <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>
-        {toast.message}
-      </p>
-      <button type="button" onClick={onClose} style={toastCloseBtnStyle}>
-        <X size={16} />
-      </button>
+    <div className="toast-portal-wrapper" aria-live="polite">
+      <div className={`modern-toast-card ${tipo} ${closing ? 'toast-closing' : ''}`}>
+        <div className="toast-icon-wrapper">
+          {tipo === 'success' && <CheckCircle2 size={20} />}
+          {tipo === 'error' && <AlertCircle size={20} />}
+          {tipo === 'info' && <Info size={20} />}
+        </div>
+
+        <div className="toast-content-wrapper">
+          <h4 className="toast-title">{toast.title || defaultTitle}</h4>
+          <p className="toast-message">{toast.message}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="toast-close-btn"
+          aria-label="Fechar notificação"
+        >
+          <X size={16} />
+        </button>
+
+        <div className="toast-progress-bar" />
+      </div>
     </div>
   );
 };
 
-// Estilos Nativos
-const toastContainerStyle: React.CSSProperties = {
-  position: 'fixed', bottom: '24px', right: '24px', backgroundColor: '#fff', 
-  border: '1px solid #e5e7eb', padding: '12px 16px', borderRadius: '8px', 
-  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', 
-  alignItems: 'center', gap: '12px', zIndex: 1050
-};
-const toastCloseBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', 
-  display: 'flex', alignItems: 'center', padding: 0 
-};
+export default Toast;

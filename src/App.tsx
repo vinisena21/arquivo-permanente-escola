@@ -4,6 +4,7 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Folder,
   FolderTree,
   BarChart2,
@@ -11,6 +12,7 @@ import {
   LogOut,
   Pencil,
   Search,
+  SearchX,
   Settings,
   Trash2,
   User,
@@ -21,7 +23,13 @@ import {
   Calendar,
   Award,
   BookOpen,
-  ArrowRightLeft
+  ArrowRightLeft,
+  GraduationCap,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import './App.css';
 import EditarAlunoModal, {
@@ -35,7 +43,6 @@ import Login from './components/Login';
 import PainelGestao from './components/PainelGestao';
 import DeclaracoesModal from './components/DeclaracoesModal';
 import AssistenteEscolarIA from './components/AssistenteEscolarIA';
-import { ChevronDown, GraduationCap, ShieldAlert, Sparkles } from 'lucide-react';
 import { TreeView, type TreeNodeData } from './components/TreeView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast, type ToastData } from './components/Toast';
@@ -86,6 +93,7 @@ export default function App() {
   const [sessao, setSessao] = useState<Session | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('consulta');
+  const [modoVisualizacao, setModoVisualizacao] = useState<'tabela' | 'cards'>('tabela');
   const [busca, setBusca] = useState('');
   const [alunos, setAlunos] = useState<AlunoArquivo[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -262,19 +270,34 @@ export default function App() {
         <div className="header-content">
           <div className="header-main-row">
             <div className="logo-area">
-              <Archive className="logo-icon" size={36} />
+              <div className="logo-icon-container">
+                <Archive size={26} />
+              </div>
               <div>
-                <h1>Guia Escolar</h1>
-                <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</p>
+                <div className="logo-title-row">
+                  <h1>Guia Escolar</h1>
+                  <span className="app-version-badge">v2.5 PRO</span>
+                </div>
+                <div className="school-pill-badge">
+                  <ShieldCheck size={13} />
+                  <span>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</span>
+                </div>
               </div>
             </div>
             <div className="user-area">
-              <div className="user-info">
-                <User size={18} />
-                <span>{sessao.user.email}</span>
+              <div className="user-profile-chip">
+                <div className="user-avatar-initial">
+                  {sessao.user.email ? sessao.user.email.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="user-details">
+                  <span className="user-role-label">Secretaria Escolar</span>
+                  <span className="user-email-text" title={sessao.user.email ?? ''}>
+                    {sessao.user.email}
+                  </span>
+                </div>
               </div>
               <button type="button" className="logout-button" onClick={() => void sairDoSistema()}>
-                <LogOut size={18} /> Sair
+                <LogOut size={16} /> <span>Sair</span>
               </button>
             </div>
           </div>
@@ -587,33 +610,49 @@ export default function App() {
       <main className="main-content">
         {abaAtiva === 'consulta' && (
           <>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="icon-wrapper">
-                  <Folder size={24} color="#2563eb" />
+            <div className="stats-grid-modern">
+              <div className="stat-card-modern">
+                <div className="stat-icon-wrapper blue">
+                  <Folder size={24} />
                 </div>
-                <div>
+                <div className="stat-content-box">
                   <h3>Total Registrados</h3>
                   <p className="stat-number">{carregando ? '...' : alunos.length}</p>
+                  <p className="stat-subtext">Prontuários no acervo físico</p>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="icon-wrapper">
-                  <Search size={24} color="#2563eb" />
+
+              <div className="stat-card-modern">
+                <div className="stat-icon-wrapper indigo">
+                  <Layers size={24} />
                 </div>
-                <div>
+                <div className="stat-content-box">
+                  <h3>Pastas Físicas</h3>
+                  <p className="stat-number">{carregando ? '...' : pastasDisponiveis.length}</p>
+                  <p className="stat-subtext">Classificadores no arquivo</p>
+                </div>
+              </div>
+
+              <div className="stat-card-modern">
+                <div className="stat-icon-wrapper emerald">
+                  <Search size={24} />
+                </div>
+                <div className="stat-content-box">
                   <h3>Resultados Encontrados</h3>
                   <p className="stat-number">{carregando ? '...' : alunosFiltrados.length}</p>
+                  <p className="stat-subtext">
+                    {busca ? `Filtro ativo: "${busca}"` : 'Exibindo todos os registros'}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <section className="search-section">
-              <div className="search-bar">
-                <Search className="search-icon" size={20} />
+            <section className="search-action-bar">
+              <div className="modern-search-input-wrap">
+                <Search className="search-icon" size={18} />
                 <input
                   type="text"
-                  placeholder="Buscar por nome do aluno, pasta ou número..."
+                  placeholder="Buscar por nome do aluno, pasta física ou número de prontuário..."
                   value={busca}
                   onChange={(evento) => alterarBusca(evento.target.value)}
                   aria-label="Buscar aluno"
@@ -621,165 +660,323 @@ export default function App() {
                 {busca && (
                   <button
                     type="button"
-                    className="clear-btn"
+                    className="clear-search-btn"
                     onClick={() => alterarBusca('')}
                     aria-label="Limpar pesquisa"
+                    title="Limpar pesquisa"
                   >
                     ✕
                   </button>
                 )}
               </div>
+
+              <div className="view-mode-toggle-group">
+                <button
+                  type="button"
+                  className={`view-toggle-pill ${modoVisualizacao === 'tabela' ? 'active' : ''}`}
+                  onClick={() => setModoVisualizacao('tabela')}
+                  title="Visualização em Lista/Tabela"
+                >
+                  <List size={16} /> Tabela
+                </button>
+                <button
+                  type="button"
+                  className={`view-toggle-pill ${modoVisualizacao === 'cards' ? 'active' : ''}`}
+                  onClick={() => setModoVisualizacao('cards')}
+                  title="Visualização em Cards"
+                >
+                  <LayoutGrid size={16} /> Cards
+                </button>
+              </div>
             </section>
 
-            <section className="table-section">
-              <h2>Listagem de Arquivos</h2>
+            <section className="data-panel-card">
+              <div className="panel-header-row">
+                <h2>Acervo de Alunos e Documentos</h2>
+                <span className="panel-count-badge">
+                  {alunosFiltrados.length} {alunosFiltrados.length === 1 ? 'registro' : 'registros'}
+                </span>
+              </div>
 
               {erro && (
-                <div className="empty-state">
+                <div className="modern-empty-state">
+                  <div
+                    className="empty-state-badge"
+                    style={{ color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2' }}
+                  >
+                    <ShieldAlert size={32} />
+                  </div>
+                  <h3>Erro ao carregar dados</h3>
                   <p>{erro}</p>
                 </div>
               )}
 
               {!erro && carregando && (
-                <div className="empty-state">
-                  <p>Carregando registros protegidos...</p>
+                modoVisualizacao === 'tabela' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="shimmer-anim skeleton-table-row" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="student-cards-grid">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="shimmer-anim skeleton-card-item" />
+                    ))}
+                  </div>
+                )
+              )}
+
+              {!erro && !carregando && alunosFiltrados.length === 0 && (
+                <div className="modern-empty-state">
+                  <div className="empty-state-badge">
+                    <SearchX size={32} />
+                  </div>
+                  <h3>Nenhum registro encontrado</h3>
+                  <p>
+                    {busca ? (
+                      <>
+                        Não encontramos nenhum aluno para o termo "<strong>{busca}</strong>". Verifique a grafia ou o número da pasta.
+                      </>
+                    ) : (
+                      'Nenhum documento ou prontuário cadastrado nesta visualização.'
+                    )}
+                  </p>
+                  {busca && (
+                    <button
+                      type="button"
+                      className="btn-reset-search"
+                      onClick={() => alterarBusca('')}
+                    >
+                      Limpar filtro e ver todos
+                    </button>
+                  )}
                 </div>
               )}
 
               {!erro && !carregando && alunosFiltrados.length > 0 && (
                 <>
-                  <div className="table-responsive">
-                    <table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th>
-                            <User size={16} /> Nome do Aluno
-                          </th>
-                          <th>Data Nasc.</th>
-                          <th>
-                            <Layers size={16} /> Pasta
-                          </th>
-                          <th>Nº Arquivo</th>
-                          <th>Status</th>
-                          <th>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {alunosPaginados.map((item) => (
-                          <tr key={item.id}>
-                            <td className="font-bold">{item.nome}</td>
-                            <td>{item.dataNascimento || 'Não informada'}</td>
-                            <td>
-                              <span className="badge-pasta">{item.codigoPasta}</span>
-                            </td>
-                            <td>
-                              <strong>{String(item.numero).padStart(2, '0')}</strong>
-                            </td>
-                            <td>
-                              <span className="badge-status">{item.status}</span>
-                            </td>
-                            <td>
-                              <div className="acoes-aluno">
-                                <button
-                                  type="button"
-                                  className="acao-editar"
-                                  onClick={() =>
-                                    setAlunoEditando({
-                                      id: item.id,
-                                      nome: item.nome,
-                                      dataNascimento: item.dataNascimento,
-                                      codigoPasta: item.codigoPasta,
-                                      numero: item.numero,
-                                      status: item.status
-                                    })
-                                  }
-                                  title="Editar aluno"
-                                >
-                                  <Pencil size={17} />
-                                  <span>Editar</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="acao-excluir"
-                                  onClick={() => setAlunoParaExcluir(item)}
-                                  disabled={excluindoId === item.id}
-                                  title="Excluir aluno"
-                                >
-                                  <Trash2 size={17} />
-                                  <span>Excluir</span>
-                                </button>
-                              </div>
-                            </td>
+                  {modoVisualizacao === 'tabela' ? (
+                    <div className="table-responsive-modern">
+                      <table className="modern-data-table">
+                        <thead>
+                          <tr>
+                            <th>
+                              <User size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> Nome do Aluno
+                            </th>
+                            <th>Data Nasc.</th>
+                            <th>
+                              <Layers size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> Pasta Física
+                            </th>
+                            <th>Nº Arquivo</th>
+                            <th>Status</th>
+                            <th style={{ textAlign: 'right' }}>Ações</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {alunosPaginados.map((item) => (
+                            <tr key={item.id}>
+                              <td>
+                                <div className="student-name-flex">
+                                  <div className="student-avatar-badge">
+                                    {item.nome ? item.nome.trim().charAt(0).toUpperCase() : 'A'}
+                                  </div>
+                                  <div className="student-name-info">
+                                    <span className="student-name-text">{item.nome}</span>
+                                    <span className="student-meta-sub">
+                                      Prontuário #{String(item.numero).padStart(2, '0')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>{item.dataNascimento || 'Não informada'}</td>
+                              <td>
+                                <span className="badge-pasta-modern">
+                                  <Folder size={12} /> {item.codigoPasta}
+                                </span>
+                              </td>
+                              <td>
+                                <strong>{String(item.numero).padStart(2, '0')}</strong>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge-status-modern ${
+                                    item.status && item.status.toLowerCase().includes('ativo')
+                                      ? 'ativo'
+                                      : 'transferido'
+                                  }`}
+                                >
+                                  <span className="status-live-dot" />
+                                  {item.status || 'Ativo'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="action-buttons-flex" style={{ justifyContent: 'flex-end' }}>
+                                  <button
+                                    type="button"
+                                    className="btn-action-pill edit"
+                                    onClick={() =>
+                                      setAlunoEditando({
+                                        id: item.id,
+                                        nome: item.nome,
+                                        dataNascimento: item.dataNascimento,
+                                        codigoPasta: item.codigoPasta,
+                                        numero: item.numero,
+                                        status: item.status
+                                      })
+                                    }
+                                    title="Editar dados cadastrais"
+                                  >
+                                    <Pencil size={14} />
+                                    <span>Editar</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-action-pill delete"
+                                    onClick={() => setAlunoParaExcluir(item)}
+                                    disabled={excluindoId === item.id}
+                                    title="Excluir prontuário"
+                                  >
+                                    <Trash2 size={14} />
+                                    <span>Excluir</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-action-pill decl"
+                                    onClick={() => setModalDeclaracoesAberta(true)}
+                                    title="Emitir declaração para este aluno"
+                                  >
+                                    <FileText size={14} />
+                                    <span>Declaração</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="student-cards-grid">
+                      {alunosPaginados.map((item) => (
+                        <div key={item.id} className="student-card-item">
+                          <div className="student-card-top">
+                            <div className="card-student-identity">
+                              <div className="student-avatar-badge">
+                                {item.nome ? item.nome.trim().charAt(0).toUpperCase() : 'A'}
+                              </div>
+                              <div>
+                                <h4>{item.nome}</h4>
+                                <span className="student-meta-sub">Arquivo Permanente</span>
+                              </div>
+                            </div>
+                            <span
+                              className={`badge-status-modern ${
+                                item.status && item.status.toLowerCase().includes('ativo')
+                                  ? 'ativo'
+                                  : 'transferido'
+                              }`}
+                            >
+                              <span className="status-live-dot" />
+                              {item.status || 'Ativo'}
+                            </span>
+                          </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: '1rem',
-                      padding: '0.75rem',
-                      background: '#fff',
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb'
-                    }}
-                  >
-                    <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-                      Página {paginaAtual} de {totalPaginas} · {alunosFiltrados.length} registro(s)
+                          <div className="student-card-info-rows">
+                            <div className="info-row-item">
+                              <span className="info-row-label">
+                                <Calendar size={13} /> Nascimento
+                              </span>
+                              <span className="info-row-value">
+                                {item.dataNascimento || 'Não informada'}
+                              </span>
+                            </div>
+                            <div className="info-row-item">
+                              <span className="info-row-label">
+                                <Folder size={13} /> Pasta Física
+                              </span>
+                              <span className="badge-pasta-modern">{item.codigoPasta}</span>
+                            </div>
+                            <div className="info-row-item">
+                              <span className="info-row-label">
+                                <Layers size={13} /> Nº Arquivo
+                              </span>
+                              <span className="info-row-value">
+                                {String(item.numero).padStart(2, '0')}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="student-card-bottom-actions">
+                            <button
+                              type="button"
+                              className="btn-action-pill edit"
+                              onClick={() =>
+                                setAlunoEditando({
+                                  id: item.id,
+                                  nome: item.nome,
+                                  dataNascimento: item.dataNascimento,
+                                  codigoPasta: item.codigoPasta,
+                                  numero: item.numero,
+                                  status: item.status
+                                })
+                              }
+                              title="Editar aluno"
+                            >
+                              <Pencil size={14} />
+                              <span>Editar</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-action-pill delete"
+                              onClick={() => setAlunoParaExcluir(item)}
+                              disabled={excluindoId === item.id}
+                              title="Excluir aluno"
+                            >
+                              <Trash2 size={14} />
+                              <span>Excluir</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-action-pill decl"
+                              onClick={() => setModalDeclaracoesAberta(true)}
+                              title="Emitir declaração"
+                            >
+                              <FileText size={14} />
+                              <span>Declaração</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="modern-pagination-container">
+                    <span className="pagination-info-text">
+                      Página <strong>{paginaAtual}</strong> de <strong>{totalPaginas}</strong> · {alunosFiltrados.length} registro(s)
                     </span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="pagination-buttons-wrap">
                       <button
                         type="button"
+                        className="btn-page-nav"
                         onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
                         disabled={paginaAtual <= 1}
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid #d1d5db',
-                          background: '#fff',
-                          cursor: paginaAtual <= 1 ? 'not-allowed' : 'pointer',
-                          opacity: paginaAtual <= 1 ? 0.4 : 1
-                        }}
+                        title="Página anterior"
                       >
                         <ChevronLeft size={18} />
                       </button>
                       <button
                         type="button"
+                        className="btn-page-nav"
                         onClick={() => setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))}
                         disabled={paginaAtual >= totalPaginas}
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid #d1d5db',
-                          background: '#fff',
-                          cursor: paginaAtual >= totalPaginas ? 'not-allowed' : 'pointer',
-                          opacity: paginaAtual >= totalPaginas ? 0.4 : 1
-                        }}
+                        title="Próxima página"
                       >
                         <ChevronRight size={18} />
                       </button>
                     </div>
                   </div>
                 </>
-              )}
-
-              {!erro && !carregando && alunosFiltrados.length === 0 && (
-                <div className="empty-state">
-                  <p>
-                    Nenhum registro encontrado
-                    {busca ? (
-                      <>
-                        {' '}
-                        para "<strong>{busca}</strong>"
-                      </>
-                    ) : null}
-                    .
-                  </p>
-                </div>
               )}
             </section>
           </>

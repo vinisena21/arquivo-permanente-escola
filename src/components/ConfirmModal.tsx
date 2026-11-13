@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, Loader2 } from 'lucide-react';
+import './ConfirmModal.css';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -25,26 +26,47 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div style={overlayStyle}>
-      <div style={modalStyle}>
-        <div style={headerStyle}>
-          <div style={titleContainerStyle}>
-            <AlertTriangle color="#dc2626" size={24} />
-            <h3 style={{ margin: 0, fontSize: '18px', color: '#111827' }}>{title}</h3>
+    <div className="confirm-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true">
+      <div className="confirm-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="confirm-modal-header">
+          <div className="confirm-modal-title-group">
+            <div className="confirm-modal-icon-badge">
+              <AlertTriangle size={22} />
+            </div>
+            <h3 className="confirm-modal-title">{title}</h3>
           </div>
-          <button type="button" onClick={onCancel} style={closeBtnStyle}>
-            <X size={20} />
+          <button
+            type="button"
+            onClick={onCancel}
+            className="confirm-modal-close-btn"
+            disabled={loading}
+            aria-label="Fechar modal"
+          >
+            <X size={18} />
           </button>
         </div>
-        
-        <p style={messageStyle}>{message}</p>
-        
-        <div style={actionsStyle}>
-          <button type="button" onClick={onCancel} disabled={loading} style={cancelBtnStyle}>
+
+        <div className="confirm-modal-body">
+          <p className="confirm-modal-message">{message}</p>
+        </div>
+
+        <div className="confirm-modal-footer">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="btn-confirm-cancel"
+          >
             {cancelText}
           </button>
-          <button type="button" onClick={onConfirm} disabled={loading} style={confirmBtnStyle(loading)}>
-            {loading ? 'Processando...' : confirmText}
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="btn-confirm-action"
+          >
+            {loading && <Loader2 size={16} className="spinner-icon" />}
+            <span>{loading ? 'Processando...' : confirmText}</span>
           </button>
         </div>
       </div>
@@ -52,37 +74,4 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-// Estilos Nativos
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-  backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', 
-  alignItems: 'center', justifyContent: 'center', zIndex: 1000 
-};
-const modalStyle: React.CSSProperties = {
-  backgroundColor: '#fff', padding: '24px', borderRadius: '8px', 
-  maxWidth: '400px', width: '90%', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-};
-const headerStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' 
-};
-const titleContainerStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '8px' 
-};
-const closeBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' 
-};
-const messageStyle: React.CSSProperties = {
-  fontSize: '14px', color: '#4b5563', marginBottom: '24px', whiteSpace: 'pre-line', lineHeight: '1.5' 
-};
-const actionsStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'flex-end', gap: '12px' 
-};
-const cancelBtnStyle: React.CSSProperties = {
-  padding: '8px 16px', border: '1px solid #d1d5db', background: '#fff', 
-  borderRadius: '6px', cursor: 'pointer', color: '#374151', fontWeight: 500
-};
-const confirmBtnStyle = (loading: boolean): React.CSSProperties => ({
-  padding: '8px 16px', border: 'none', background: '#dc2626', color: '#fff', 
-  borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', 
-  opacity: loading ? 0.6 : 1, fontWeight: 500
-});
+export default ConfirmModal;
