@@ -84,11 +84,14 @@ body {
   position: sticky;
   top: 0;
   z-index: 500;
+  overflow: visible;
 }
 
 .header-content {
   max-width: 1320px;
   margin: 0 auto;
+  position: relative;
+  overflow: visible;
 }
 
 .header-main-row {
@@ -243,16 +246,14 @@ body {
 .main-navigation {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.main-navigation::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  overflow: visible;
+  position: relative;
+  z-index: 600;
 }
 
 .navigation-button {
@@ -285,6 +286,11 @@ body {
 
 .nav-dropdown {
   position: relative;
+  z-index: 700;
+}
+
+.nav-dropdown.is-open {
+  z-index: 1000;
 }
 
 .nav-dropdown-btn {
@@ -292,7 +298,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -303,28 +309,32 @@ body {
   transition: var(--transition-smooth);
 }
 
-.nav-dropdown-btn:hover,
-.nav-dropdown-btn.active {
+.nav-dropdown-btn:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.14);
+}
+
+.nav-dropdown-btn.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .nav-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+  border: 1px solid var(--neutral-200);
   border-radius: var(--radius-lg);
-  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.2), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
-  min-width: 250px;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.25), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  min-width: 270px;
   padding: 8px;
-  z-index: 1000;
+  z-index: 1100;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  animation: dropdown-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  gap: 4px;
+  animation: dropdown-pop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes dropdown-pop {

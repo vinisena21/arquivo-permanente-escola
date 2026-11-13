@@ -113,7 +113,8 @@ export default function App() {
 
   useEffect(() => {
     function fecharMenus(e: MouseEvent) {
-      if (!(e.target as HTMLElement).closest('.nav-dropdown')) {
+      const target = e.target as Element | null;
+      if (!target?.closest?.('.nav-dropdown')) {
         setMenuDropdownAberto(null);
       }
     }
@@ -328,13 +329,13 @@ export default function App() {
             </button>
 
             {/* 3. Dropdown Cadastros */}
-            <div className="nav-dropdown">
+            <div className={`nav-dropdown ${menuDropdownAberto === 'cadastros' ? 'is-open' : ''}`}>
               <button
                 type="button"
                 className={`nav-dropdown-btn ${['gerenciamento', 'alunos-secretaria', 'profissionais', 'duplicidades', 'arvore'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMenuDropdownAberto(menuDropdownAberto === 'cadastros' ? null : 'cadastros');
+                  setMenuDropdownAberto((prev) => (prev === 'cadastros' ? null : 'cadastros'));
                 }}
               >
                 <Settings size={18} /> Cadastros <ChevronDown size={14} />
@@ -423,13 +424,13 @@ export default function App() {
             </div>
 
             {/* 4. Dropdown Pedagógico (SIGP) */}
-            <div className="nav-dropdown">
+            <div className={`nav-dropdown ${menuDropdownAberto === 'sigp' ? 'is-open' : ''}`}>
               <button
                 type="button"
                 className={`nav-dropdown-btn ${['horarios', 'boletim', 'diario', 'atas-fichas', 'remanejamento'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMenuDropdownAberto(menuDropdownAberto === 'sigp' ? null : 'sigp');
+                  setMenuDropdownAberto((prev) => (prev === 'sigp' ? null : 'sigp'));
                 }}
               >
                 <GraduationCap size={18} /> Pedagógico (SIGP) <ChevronDown size={14} />
@@ -516,13 +517,13 @@ export default function App() {
             </div>
 
             {/* 5. Dropdown Arquivo & Históricos */}
-            <div className="nav-dropdown">
+            <div className={`nav-dropdown ${menuDropdownAberto === 'arquivo' ? 'is-open' : ''}`}>
               <button
                 type="button"
                 className={`nav-dropdown-btn ${['historico', 'historicos-salvos', 'conferir-historico'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMenuDropdownAberto(menuDropdownAberto === 'arquivo' ? null : 'arquivo');
+                  setMenuDropdownAberto((prev) => (prev === 'arquivo' ? null : 'arquivo'));
                 }}
               >
                 <Archive size={18} /> Arquivo & Históricos <ChevronDown size={14} />
