@@ -17,7 +17,12 @@ import {
   X,
   GraduationCap,
   Sun,
-  Moon
+  Moon,
+  Database,
+  Copy,
+  Upload,
+  RotateCcw,
+  ShieldCheck
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './ControleRematricula.css';
@@ -47,6 +52,8 @@ interface RegistroRematriculaStorage {
   dataConfirmacao: string;
   turma2027?: string;
   turno2027?: 'MAT' | 'VESP';
+  nome?: string;
+  codigo?: string;
   observacoes?: string;
 }
 
@@ -55,6 +62,18 @@ interface Props {
 }
 
 const STORAGE_KEY = 'guia_escolar_rematriculas_2027';
+
+/**
+ * Normaliza textos para busca insensível a acentos e maiúsculas
+ */
+function normalizarBusca(texto: string | null | undefined): string {
+  if (!texto) return '';
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 /**
  * Calcula a progressão pedagógica da turma de 2026 para 2027 na E.M. Maria Geralda
@@ -94,15 +113,6 @@ function obterTurnoPadrao(turnoOriginal?: string | null): 'MAT' | 'VESP' {
   return 'MAT';
 }
 
-function normalizarBusca(texto: string | null | undefined): string {
-  if (!texto) return '';
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
 function formatarDataHora(dataISO: string | null): string {
   if (!dataISO) return '—';
   try {
@@ -120,6 +130,55 @@ function formatarDataHora(dataISO: string | null): string {
   }
 }
 
+/**
+ * Varre profundamente todo o localStorage buscando quaisquer dados de rematrícula salvos anteriormente
+ */
+function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage> {
+  const achados: Record<string, RegistroRematriculaStorage> = {};
+  if (typeof window === 'undefined' || !window.localStorage) return achados;
+
+  const chavesConhecidas = [
+    STORAGE_KEY,
+    'guia_escolar_rematriculas_2027',
+    'guia_rematriculas_2027',
+    'rematriculas_2027',
+    'rematriculas'
+  ];
+
+  chavesConhecidas.forEach((chave) => {
+    try {
+      const val = localStorage.getItem(chave);
+      if (val) {
+        const parsed = JSON.parse(val);
+        if (parsed && typeof parsed === 'object') {
+          Object.assign(achados, parsed);
+        }
+      }
+    } catch {}
+  });
+
+  // Varredura de segurança em todas as chaves
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || chavesConhecidas.includes(k)) continue;
+      if (k.toLowerCase().includes('rematricul')) {
+        try {
+          const val = localStorage.getItem(k);
+          if (val) {
+            const parsed = JSON.parse(val);
+            if (parsed && typeof parsed === 'object') {
+              Object.assign(achados, parsed);
+            }
+          }
+        } catch {}
+      }
+    }
+  } catch {}
+
+  return achados;
+}
+
 export default function ControleRematricula({ onToast }: Props) {
   const [alunos, setAlunos] = useState<AlunoRematriculaItem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -128,6 +187,8 @@ export default function ControleRematricula({ onToast }: Props) {
   const [statusFiltro, setStatusFiltro] = useState<'todos' | 'confirmados' | 'pendentes'>('todos');
   const [turnoFiltro, setTurnoFiltro] = useState<'todos' | 'MAT' | 'VESP'>('todos');
   const [modalRelatorioAberta, setModalRelatorioAberta] = useState(false);
+  const [modalBackupAberta, setModalBackupAberta] = useState(false);
+  const [textoBackupColado, setTextoBackupColado] = useState('');
   const [relatorioApenasRematriculados, setRelatorioApenasRematriculados] = useState(true);
   const [gerandoWord, setGerandoWord] = useState(false);
 
@@ -140,7 +201,7 @@ export default function ControleRematricula({ onToast }: Props) {
   ) => {
     try {
       // 1. Tenta gravar na tabela dedicada rematriculas_2027
-      const { error: errRematricula } = await supabase.from('rematriculas_2027').upsert({
+      await supabase.from('rematriculas_2027').upsert({
         codigo_matricula: aluno.codigo,
         nome: aluno.nome,
         turma_atual: aluno.turmaAtual,
@@ -152,12 +213,8 @@ export default function ControleRematricula({ onToast }: Props) {
         confirmado_em: agora
       } as any, { onConflict: 'codigo_matricula' });
 
-      if (errRematricula) {
-        console.warn('Tabela rematriculas_2027 indisponível no Supabase, salvando via alunos_secretaria:', errRematricula.message);
-      }
-
       // 2. Grava também no campo jsonb 'dados' da tabela alunos_secretaria
-      const { error: errSecretaria } = await supabase.from('alunos_secretaria').upsert({
+      await supabase.from('alunos_secretaria').upsert({
         codigo_matricula: aluno.codigo,
         nome: aluno.nome,
         turma: aluno.turmaAtual,
@@ -170,24 +227,46 @@ export default function ControleRematricula({ onToast }: Props) {
           confirmado_em: agora
         }
       } as any, { onConflict: 'codigo_matricula' });
-
-      if (errSecretaria) {
-        console.warn('Erro ao atualizar alunos_secretaria no Supabase:', errSecretaria.message);
-      }
     } catch (e) {
       console.warn('Supabase offline ou sem conexão no momento. Dados mantidos em segurança no armazenamento local:', e);
     }
   }, []);
 
-  // Carrega alunos e mescla dados salvos do Supabase + LocalStorage
+  // Carrega alunos e mescla dados salvos do Supabase + LocalStorage (com tolerância a falhas)
   useEffect(() => {
     async function carregar() {
       setCarregando(true);
       try {
-        const salvosStr = localStorage.getItem(STORAGE_KEY);
-        const mapRematriculas: Record<string, RegistroRematriculaStorage> = salvosStr ? JSON.parse(salvosStr) : {};
+        // Recupera tudo que existe no localStorage (chaves atuais e legadas)
+        const mapRematriculas: Record<string, RegistroRematriculaStorage> = recuperarTudoLocalStorage();
 
-        // Busca registros remotos do Supabase se existirem
+        // 1. Busca registros salvos na tabela alunos_secretaria do Supabase
+        try {
+          const { data: secRows } = await supabase
+            .from('alunos_secretaria')
+            .select('codigo_matricula, nome, turma, turno, situacao, dados');
+
+          if (secRows && secRows.length > 0) {
+            secRows.forEach((r: any) => {
+              const d = r.dados || {};
+              if (d.rematricula_2027 || r.situacao === 'REMATRICULADO_2027') {
+                const cod = String(r.codigo_matricula || r.nome);
+                mapRematriculas[cod] = {
+                  confirmado: true,
+                  dataConfirmacao: d.confirmado_em || new Date().toISOString(),
+                  turma2027: d.turma_2027,
+                  turno2027: d.turno_2027 === 'VESP' ? 'VESP' : 'MAT',
+                  nome: r.nome,
+                  codigo: cod
+                };
+              }
+            });
+          }
+        } catch (eSec) {
+          console.warn('Leitura de alunos_secretaria:', eSec);
+        }
+
+        // 2. Busca registros remotos do Supabase se existirem
         try {
           const { data: dadosSupabase } = await supabase.from('rematriculas_2027').select('*');
           if (dadosSupabase && dadosSupabase.length > 0) {
@@ -197,30 +276,44 @@ export default function ControleRematricula({ onToast }: Props) {
                   confirmado: Boolean(r.confirmado),
                   dataConfirmacao: r.confirmado_em || new Date().toISOString(),
                   turma2027: r.turma_2027,
-                  turno2027: r.turno_2027 === 'VESP' ? 'VESP' : 'MAT'
+                  turno2027: r.turno_2027 === 'VESP' ? 'VESP' : 'MAT',
+                  nome: r.nome,
+                  codigo: r.codigo_matricula
                 };
               }
             });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(mapRematriculas));
           }
         } catch {
           // Tabela rematriculas_2027 pode ainda não ter sido executada
         }
+
+        // Atualiza a chave padrão
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mapRematriculas));
 
         let listaBase: AlunoRematriculaItem[] = [];
 
         try {
           const alunosDb = await carregarAlunosSecretaria();
           if (alunosDb && alunosDb.length > 0) {
-            listaBase = alunosDb.map((a) => {
-              const codigo = a.codigo_matricula;
-              const saved = mapRematriculas[codigo];
+            listaBase = alunosDb.map((a, idx) => {
+              const codigo = String(a.codigo_matricula || a.codigo_estudante || a.ra || `aluno_${idx}`);
+              const nome = a.nome;
+
+              // Busca inteligente por código E com fallback por nome
+              let saved = mapRematriculas[codigo];
+              if (!saved) {
+                const porNome = Object.values(mapRematriculas).find(
+                  (r: any) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(nome)
+                );
+                if (porNome) saved = porNome;
+              }
+
               const turma = a.turma || a.descricao || a.periodo || 'Não informada';
               const turnoPadrao = obterTurnoPadrao(a.turno);
               return {
                 codigo,
                 codigoEstudante: a.codigo_estudante || a.ra || '—',
-                nome: a.nome,
+                nome,
                 dataNascimento: a.data_nascimento || '',
                 turmaAtual: turma,
                 periodo: a.periodo || '',
@@ -239,16 +332,33 @@ export default function ControleRematricula({ onToast }: Props) {
 
         // Se o banco estiver vazio ou offline, carrega o matriculas.json (585 alunos reais)
         if (listaBase.length === 0) {
-          listaBase = (matriculasOficiais as Array<Record<string, string>>).map((m) => {
-            const codigo = m['Código'] || m['codigo_matricula'] || String(Math.random());
-            const saved = mapRematriculas[codigo];
+          listaBase = (matriculasOficiais as Array<Record<string, string>>).map((m, idx) => {
+            const codigo = String(
+              m['Código'] ||
+              m['codigo_matricula'] ||
+              m['Código do estudante'] ||
+              m['Registro do estudante (RA)'] ||
+              m['Nome'] ||
+              `aluno_${idx}`
+            );
+            const nome = m['Nome'] || 'Sem Nome';
+
+            // Busca inteligente por código E com fallback por nome
+            let saved = mapRematriculas[codigo];
+            if (!saved) {
+              const porNome = Object.values(mapRematriculas).find(
+                (r: any) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(nome)
+              );
+              if (porNome) saved = porNome;
+            }
+
             const turma = m['Descrição'] || m['Turma'] || m['Período'] || '1º ANO';
             const turnoOriginal = m['Turno'] || 'MATUTINO';
             const turnoPadrao = obterTurnoPadrao(turnoOriginal);
             return {
               codigo,
               codigoEstudante: m['Código do estudante'] || m['Registro do estudante (RA)'] || '—',
-              nome: m['Nome'] || 'Sem Nome',
+              nome,
               dataNascimento: m['Data de Nascimento'] || '',
               turmaAtual: turma,
               periodo: m['Período'] || '',
@@ -353,10 +463,12 @@ export default function ControleRematricula({ onToast }: Props) {
           confirmado: true,
           dataConfirmacao: agora,
           turma2027: aluno.turma2027Prevista,
-          turno2027: aluno.turno2027
+          turno2027: aluno.turno2027,
+          nome: aluno.nome,
+          codigo: aluno.codigo
         };
         onToast?.({
-          message: `Rematrícula de ${aluno.nome} confirmada para 2027 (${aluno.turno2027 === 'MAT' ? 'Matutino' : 'Vespertino'})! Salvo no banco de dados.`,
+          message: `Rematrícula de ${aluno.nome} confirmada para 2027 (${aluno.turno2027 === 'MAT' ? 'Matutino' : 'Vespertino'})!`,
           type: 'success'
         });
       } else {
@@ -402,7 +514,9 @@ export default function ControleRematricula({ onToast }: Props) {
         confirmado: aluno.rematriculado,
         dataConfirmacao: aluno.dataRematricula || agora,
         turma2027: aluno.turma2027Prevista,
-        turno2027: novoTurno
+        turno2027: novoTurno,
+        nome: aluno.nome,
+        codigo: aluno.codigo
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
@@ -447,7 +561,9 @@ export default function ControleRematricula({ onToast }: Props) {
           confirmado: true,
           dataConfirmacao: map[a.codigo]?.dataConfirmacao || agora,
           turma2027: a.turma2027Prevista,
-          turno2027: a.turno2027
+          turno2027: a.turno2027,
+          nome: a.nome,
+          codigo: a.codigo
         };
         // Grava no Supabase
         void salvarNoSupabase(a, true, a.turno2027, agora);
@@ -461,6 +577,140 @@ export default function ControleRematricula({ onToast }: Props) {
     } catch (e) {
       console.error('Erro ao salvar em lote:', e);
     }
+  }
+
+  // Copia os dados de rematrícula atuais para a área de transferência (Backup)
+  function copiarDadosBackup() {
+    const salvosStr = localStorage.getItem(STORAGE_KEY) || '{}';
+    navigator.clipboard.writeText(salvosStr).then(() => {
+      onToast?.({
+        message: `Backup de rematrículas copiado! Você pode colar em qualquer outro navegador ou aba.`,
+        type: 'success'
+      });
+    }).catch(() => {
+      onToast?.({
+        message: 'Não foi possível copiar automaticamente. Selecione e copie o texto abaixo.',
+        type: 'info'
+      });
+    });
+  }
+
+  // Baixa o arquivo de backup em JSON
+  function baixarArquivoBackup() {
+    const salvosStr = localStorage.getItem(STORAGE_KEY) || '{}';
+    const blob = new Blob([salvosStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_rematriculas_2027_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    onToast?.({
+      message: 'Arquivo de backup baixado com sucesso!',
+      type: 'success'
+    });
+  }
+
+  // Restaura dados a partir de um JSON colado ou carregado
+  function restaurarDados(textoJson: string) {
+    if (!textoJson.trim()) {
+      onToast?.({ message: 'Cole o código ou JSON de backup para restaurar.', type: 'error' });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(textoJson.trim());
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Formato inválido');
+      }
+
+      const mapAtual: Record<string, RegistroRematriculaStorage> = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || '{}'
+      );
+
+      // Suporta formato de mapa ou array de alunos
+      let countRestaurados = 0;
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item: any) => {
+          if (item && item.rematriculado) {
+            const cod = item.codigo || item.nome;
+            mapAtual[cod] = {
+              confirmado: true,
+              dataConfirmacao: item.dataRematricula || new Date().toISOString(),
+              turma2027: item.turma2027Prevista,
+              turno2027: item.turno2027 || 'MAT',
+              nome: item.nome,
+              codigo: item.codigo
+            };
+            countRestaurados++;
+          }
+        });
+      } else {
+        Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+          if (v && typeof v === 'object' && v.confirmado) {
+            mapAtual[k] = v;
+            countRestaurados++;
+          }
+        });
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mapAtual));
+
+      // Atualiza o estado da lista em memória
+      setAlunos((atuais) =>
+        atuais.map((aluno) => {
+          let saved: RegistroRematriculaStorage | undefined = mapAtual[aluno.codigo];
+          if (!saved) {
+            saved = Object.values(mapAtual).find(
+              (r) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(aluno.nome)
+            );
+          }
+          if (saved && saved.confirmado) {
+            return {
+              ...aluno,
+              rematriculado: true,
+              turno2027: saved.turno2027 || aluno.turno2027,
+              dataRematricula: saved.dataConfirmacao || aluno.dataRematricula || new Date().toISOString()
+            };
+          }
+          return aluno;
+        })
+      );
+
+      setModalBackupAberta(false);
+      setTextoBackupColado('');
+      onToast?.({
+        message: `${countRestaurados} aluno(s) rematriculado(s) restaurados com sucesso!`,
+        type: 'success'
+      });
+    } catch (e) {
+      onToast?.({
+        message: 'Código de backup inválido. Verifique o texto colado.',
+        type: 'error'
+      });
+    }
+  }
+
+  // Sincroniza todos os alunos confirmados com o Supabase
+  async function sincronizarTudoComSupabase() {
+    const confirmados = alunos.filter((a) => a.rematriculado);
+    if (confirmados.length === 0) {
+      onToast?.({ message: 'Nenhum aluno rematriculado para enviar à nuvem.', type: 'info' });
+      return;
+    }
+
+    onToast?.({ message: `Sincronizando ${confirmados.length} aluno(s) com o Supabase...`, type: 'info' });
+
+    let sucessos = 0;
+    for (const a of confirmados) {
+      await salvarNoSupabase(a, true, a.turno2027, a.dataRematricula || new Date().toISOString());
+      sucessos++;
+    }
+
+    onToast?.({
+      message: `${sucessos} aluno(s) salvos permanentemente no banco de dados do Supabase!`,
+      type: 'success'
+    });
   }
 
   // Exportar Documento Microsoft Word (.docx) Oficial
@@ -621,6 +871,17 @@ export default function ControleRematricula({ onToast }: Props) {
             <Download size={18} />
             <span>Exportar Excel</span>
           </button>
+
+          {/* Botão de Backup e Recuperação */}
+          <button
+            type="button"
+            className="btn-hero-action backup-btn"
+            onClick={() => setModalBackupAberta(true)}
+            title="Fazer backup, copiar ou restaurar rematrículas salvas"
+          >
+            <Database size={17} />
+            <span>Backup & Restaurar</span>
+          </button>
         </div>
       </section>
 
@@ -692,7 +953,7 @@ export default function ControleRematricula({ onToast }: Props) {
             <Search size={18} color="#64748b" />
             <input
               type="text"
-              placeholder="Buscar aluno por nome, matrícula ou turma..."
+              placeholder="Buscar aluno por nome, matrícula ou turma (com ou sem acento)..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               aria-label="Buscar aluno na rematrícula"
@@ -771,7 +1032,7 @@ export default function ControleRematricula({ onToast }: Props) {
         {/* Linha de Ações Rápidas */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            💡 Dica: Escolha se o responsável prefere <strong>☀️ MAT</strong> ou <strong>🌙 VESP</strong> e dê 1 clique em <strong>Marcar OK para 2027</strong>. Fica salvo no Supabase automaticamente!
+            💡 Dica: Escolha se o responsável prefere <strong>☀️ MAT</strong> ou <strong>🌙 VESP</strong> e dê 1 clique em <strong>Marcar OK para 2027</strong>.
           </span>
 
           {alunosFiltrados.length > 0 && alunosFiltrados.some((a) => !a.rematriculado) && (
@@ -1103,6 +1364,111 @@ export default function ControleRematricula({ onToast }: Props) {
                     <div className="assinatura-linha" />
                     <strong>Direção Escolar</strong>
                     <span className="assinatura-cargo">E.M. Maria Geralda Miranda Brito Salomão</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL DE BACKUP E RESTAURAÇÃO / MIGRAÇÃO */}
+      {modalBackupAberta && (
+        <div className="modal-relatorio-overlay" onClick={() => setModalBackupAberta(false)}>
+          <div className="modal-relatorio-card modal-backup-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-relatorio-topbar">
+              <h3>
+                <Database size={18} color="#2563eb" />
+                Backup, Migração e Recuperação de Rematrículas
+              </h3>
+              <button
+                type="button"
+                className="btn-close-modal"
+                onClick={() => setModalBackupAberta(false)}
+                aria-label="Fechar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-relatorio-body" style={{ padding: '1.5rem' }}>
+              <div className="backup-modal-content">
+                <div className="backup-status-banner">
+                  <ShieldCheck size={28} color="#059669" />
+                  <div>
+                    <h4>Status de Rematrículas Neste Navegador</h4>
+                    <p>
+                      Existem <strong>{totalConfirmados}</strong> aluno(s) marcados como confirmados para 2027 nesta aba.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Opção 1: Copiar Dados */}
+                <div className="backup-action-box">
+                  <h5>1. Exportar Meus Dados de Rematrícula (Backup Rápido)</h5>
+                  <p>
+                    Se você fez rematrículas em outra aba ou navegador, use este botão para copiar todos os dados e transferir para cá:
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn-backup-item copy"
+                      onClick={copiarDadosBackup}
+                    >
+                      <Copy size={16} />
+                      <span>Copiar Dados (Área de Transferência)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-backup-item file"
+                      onClick={baixarArquivoBackup}
+                    >
+                      <Download size={16} />
+                      <span>Baixar Arquivo de Backup (.json)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Opção 2: Colar e Restaurar */}
+                <div className="backup-action-box">
+                  <h5>2. Restaurar / Importar Dados Salvos</h5>
+                  <p>
+                    Cole o código de backup copiado da outra aba ou cole o conteúdo do arquivo para restaurar todos os alunos de uma vez:
+                  </p>
+                  <textarea
+                    className="textarea-backup"
+                    placeholder="Cole aqui o código de backup (JSON)..."
+                    value={textoBackupColado}
+                    onChange={(e) => setTextoBackupColado(e.target.value)}
+                    rows={4}
+                  />
+                  <div style={{ marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn-backup-item restore"
+                      onClick={() => restaurarDados(textoBackupColado)}
+                    >
+                      <RotateCcw size={16} />
+                      <span>Restaurar Alunos Agora</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Opção 3: Sincronização em Massa com Supabase */}
+                <div className="backup-action-box">
+                  <h5>3. Enviar Todos os Confirmados para a Nuvem (Supabase)</h5>
+                  <p>
+                    Grave permanentemente todos os alunos confirmados no banco de dados para ficarem disponíveis em qualquer computador ou celular.
+                  </p>
+                  <div style={{ marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn-backup-item cloud"
+                      onClick={sincronizarTudoComSupabase}
+                    >
+                      <Upload size={16} />
+                      <span>Sincronizar Todos ({totalConfirmados}) com Supabase</span>
+                    </button>
                   </div>
                 </div>
               </div>

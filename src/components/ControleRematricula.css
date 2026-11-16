@@ -894,6 +894,136 @@
 }
 
 /* =========================================================
+   MODAL DE BACKUP E MIGRAÇÃO
+   ========================================================= */
+.modal-backup-card {
+  max-width: 620px !important;
+}
+
+.backup-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.backup-status-banner h4 {
+  margin: 0 0 2px;
+  color: #065f46;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.backup-status-banner p {
+  margin: 0;
+  color: #047857;
+  font-size: 0.82rem;
+}
+
+.backup-action-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.backup-action-box h5 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.backup-action-box p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.btn-backup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-backup-item.copy {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.btn-backup-item.copy:hover {
+  background: #dbeafe;
+}
+
+.btn-backup-item.file {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+.btn-backup-item.file:hover {
+  background: #e2e8f0;
+}
+
+.btn-backup-item.restore {
+  background: #1e3a8a;
+  color: #ffffff;
+}
+.btn-backup-item.restore:hover {
+  background: #1d4ed8;
+}
+
+.btn-backup-item.cloud {
+  background: #059669;
+  color: #ffffff;
+}
+.btn-backup-item.cloud:hover {
+  background: #047857;
+}
+
+.textarea-backup {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  resize: vertical;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+.textarea-backup:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.btn-hero-action.backup-btn {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.btn-hero-action.backup-btn:hover {
+  background: #1e293b;
+  border-color: #334155;
+  transform: translateY(-2px);
+}
+
+/* =========================================================
    ESTILOS DE IMPRESSÃO (A4 1-CLIQUE PERFEITO - SEM TELAS BRANCAS)
    ========================================================= */
 
