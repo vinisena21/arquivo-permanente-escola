@@ -231,11 +231,18 @@ export default function App() {
     }
   }
 
-  const textoBusca = busca.toLocaleLowerCase('pt-BR').trim();
+  const normalizarBusca = (s: string | null | undefined) =>
+    (s ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+  const textoBusca = normalizarBusca(busca);
   const alunosFiltrados = alunos.filter(
     (item) =>
-      item.nome.toLocaleLowerCase('pt-BR').includes(textoBusca) ||
-      item.codigoPasta.toLocaleLowerCase('pt-BR').includes(textoBusca) ||
+      normalizarBusca(item.nome).includes(textoBusca) ||
+      normalizarBusca(item.codigoPasta).includes(textoBusca) ||
       String(item.numero).includes(textoBusca)
   );
   const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina) || 1;

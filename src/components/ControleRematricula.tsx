@@ -94,6 +94,15 @@ function obterTurnoPadrao(turnoOriginal?: string | null): 'MAT' | 'VESP' {
   return 'MAT';
 }
 
+function normalizarBusca(texto: string | null | undefined): string {
+  if (!texto) return '';
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function formatarDataHora(dataISO: string | null): string {
   if (!dataISO) return '—';
   try {
@@ -275,16 +284,16 @@ export default function ControleRematricula({ onToast }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
   }, [alunos]);
 
-  // Alunos filtrados por busca, turma, status e turno
+  // Alunos filtrados por busca, turma, status e turno (sem distinção de acentos)
   const alunosFiltrados = useMemo(() => {
-    const termo = busca.toLowerCase().trim();
+    const termo = normalizarBusca(busca);
     return alunos.filter((a) => {
       const matchBusca =
         !termo ||
-        a.nome.toLowerCase().includes(termo) ||
-        a.codigo.toLowerCase().includes(termo) ||
-        a.turmaAtual.toLowerCase().includes(termo) ||
-        a.turma2027Prevista.toLowerCase().includes(termo);
+        normalizarBusca(a.nome).includes(termo) ||
+        normalizarBusca(a.codigo).includes(termo) ||
+        normalizarBusca(a.turmaAtual).includes(termo) ||
+        normalizarBusca(a.turma2027Prevista).includes(termo);
 
       if (!matchBusca) return false;
 

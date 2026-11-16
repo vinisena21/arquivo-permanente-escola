@@ -68,11 +68,17 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
   // Autocomplete combinando Alunos do Arquivo Permanente + Alunos Ativos do SIGP (matriculas.json)
   const sugestoesAlunos = useMemo(() => {
     if (!buscaAluno.trim()) return [];
-    const termo = buscaAluno.toLowerCase().trim();
+    const normalizarBusca = (s: string | null | undefined) =>
+      (s ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    const termo = normalizarBusca(buscaAluno);
 
     // 1. Busca nas matrículas ativas da escola
     const resultadosMatriculas = matriculasData
-      .filter(m => m.Nome.toLowerCase().includes(termo))
+      .filter(m => normalizarBusca(m.Nome).includes(termo))
       .slice(0, 6)
       .map(m => ({
         id: `matr-${m.Código}`,
@@ -90,7 +96,7 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
 
     // 2. Busca no arquivo permanente se couber
     const resultadosArquivo = alunos
-      .filter(a => a.nome.toLowerCase().includes(termo))
+      .filter(a => normalizarBusca(a.nome).includes(termo))
       .slice(0, 4)
       .map(a => ({
         id: `arq-${a.id}`,

@@ -230,13 +230,13 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
   const situacoes = useMemo(() => [...new Set(alunos.map((a) => a.situacao).filter(Boolean) as string[])].sort(), [alunos]);
 
   const filtrados = useMemo(() => {
-    const q = busca.trim().toLocaleLowerCase('pt-BR');
+    const q = busca.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('pt-BR');
     return alunos.filter((a) => {
       if (filtroPeriodo && a.periodo !== filtroPeriodo) return false;
       if (filtroTurma && a.turma !== filtroTurma) return false;
       if (filtroSituacao && a.situacao !== filtroSituacao) return false;
       if (!q) return true;
-      const blob = `${a.nome} ${a.codigo_matricula} ${a.codigo_estudante ?? ''} ${a.turma ?? ''}`.toLocaleLowerCase('pt-BR');
+      const blob = `${a.nome} ${a.codigo_matricula} ${a.codigo_estudante ?? ''} ${a.turma ?? ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
       return blob.includes(q);
     });
   }, [alunos, busca, filtroPeriodo, filtroTurma, filtroSituacao]);

@@ -65,13 +65,13 @@ export default function HistoricosSalvos({
   }, [buscarHistoricos]);
 
   const filtrados = useMemo(() => {
-    const termo = busca.trim().toLocaleLowerCase('pt-BR');
+    const termo = busca.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('pt-BR');
     if (!termo) return lista;
     return lista.filter(
       (h) =>
-        h.nomeAluno.toLocaleLowerCase('pt-BR').includes(termo) ||
-        h.tituloDocumento.toLocaleLowerCase('pt-BR').includes(termo) ||
-        (h.nomeArquivo || '').toLocaleLowerCase('pt-BR').includes(termo)
+        h.nomeAluno.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').includes(termo) ||
+        h.tituloDocumento.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').includes(termo) ||
+        (h.nomeArquivo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').includes(termo)
     );
   }, [lista, busca]);
 
