@@ -16,6 +16,7 @@ import {
   Settings,
   Trash2,
   User,
+  UserCheck,
   FileText,
   FileSpreadsheet,
   History,
@@ -57,6 +58,7 @@ import BoletimEscolar from './components/BoletimEscolar';
 import DiarioClasse from './components/DiarioClasse';
 import AtasFichasView from './components/AtasFichasView';
 import RemanejamentoAlunos from './components/RemanejamentoAlunos';
+import ControleRematricula from './components/ControleRematricula';
 import { supabase } from './lib/supabase';
 import type {
   AlunoArquivo,
@@ -79,7 +81,8 @@ type AbaAtiva =
   | 'boletim'
   | 'diario'
   | 'atas-fichas'
-  | 'remanejamento';
+  | 'remanejamento'
+  | 'rematricula';
 
 function formatarData(data: string | null): string {
   if (!data) return '';
@@ -427,7 +430,7 @@ export default function App() {
             <div className={`nav-dropdown ${menuDropdownAberto === 'sigp' ? 'is-open' : ''}`}>
               <button
                 type="button"
-                className={`nav-dropdown-btn ${['horarios', 'boletim', 'diario', 'atas-fichas', 'remanejamento'].includes(abaAtiva) ? 'active' : ''}`}
+                className={`nav-dropdown-btn ${['horarios', 'boletim', 'diario', 'atas-fichas', 'remanejamento', 'rematricula'].includes(abaAtiva) ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuDropdownAberto((prev) => (prev === 'sigp' ? null : 'sigp'));
@@ -512,6 +515,21 @@ export default function App() {
                       <span className="nav-dropdown-item-desc">Movimentação escolar oficial</span>
                     </div>
                   </button>
+
+                  <button
+                    type="button"
+                    className={`nav-dropdown-item ${abaAtiva === 'rematricula' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAbaAtiva('rematricula');
+                      setMenuDropdownAberto(null);
+                    }}
+                  >
+                    <UserCheck size={16} />
+                    <div>
+                      <span>Rematrícula 2027</span>
+                      <span className="nav-dropdown-item-desc">Controle de confirmação para 2027</span>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -579,7 +597,20 @@ export default function App() {
               )}
             </div>
 
-            {/* 5. Emissor de Declarações */}
+            {/* 6. Controle de Rematrícula 2027 */}
+            <button
+              type="button"
+              className={abaAtiva === 'rematricula' ? 'navigation-button active' : 'navigation-button'}
+              onClick={() => {
+                setAbaAtiva('rematricula');
+                setMenuDropdownAberto(null);
+              }}
+              title="Controle de Rematrícula de Alunos para 2027"
+            >
+              <UserCheck size={18} /> Rematrícula 2027
+            </button>
+
+            {/* 7. Emissor de Declarações */}
             <button
               type="button"
               className="navigation-button"
@@ -1141,6 +1172,8 @@ export default function App() {
         {abaAtiva === 'atas-fichas' && <AtasFichasView onToast={setToast} />}
 
         {abaAtiva === 'remanejamento' && <RemanejamentoAlunos onToast={setToast} />}
+
+        {abaAtiva === 'rematricula' && <ControleRematricula onToast={setToast} />}
       </main>
 
       <footer className="footer">
