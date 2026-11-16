@@ -542,13 +542,13 @@
     height: 100% !important;
   }
 
-  /* Oculta completamente toda a estrutura do site por trás */
-  .header,
-  .footer,
-  .main-content,
-  .app-container > header,
-  .app-container > main,
-  .app-container > footer,
+  /* Oculta a estrutura do site por trás apenas quando o modal de declarações estiver ativo */
+  body:has(.declaracoes-overlay) .header,
+  body:has(.declaracoes-overlay) .footer,
+  body:has(.declaracoes-overlay) .main-content,
+  body:has(.declaracoes-overlay) .app-container > header,
+  body:has(.declaracoes-overlay) .app-container > main,
+  body:has(.declaracoes-overlay) .app-container > footer,
   .no-print {
     display: none !important;
   }

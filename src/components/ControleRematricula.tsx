@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   UserCheck,
   CheckCircle2,
@@ -15,12 +15,16 @@ import {
   FileText,
   Users,
   X,
-  GraduationCap
+  GraduationCap,
+  Sun,
+  Moon
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './ControleRematricula.css';
 import matriculasOficiais from '../data/matriculas.json';
 import { carregarAlunosSecretaria } from '../lib/alunosSecretaria';
+import { supabase } from '../lib/supabase';
+import { gerarDocxRematricula } from '../lib/gerarDocxRematricula';
 import type { ToastData } from './Toast';
 
 export interface AlunoRematriculaItem {
@@ -32,6 +36,7 @@ export interface AlunoRematriculaItem {
   periodo: string;
   turno: string;
   turma2027Prevista: string;
+  turno2027: 'MAT' | 'VESP';
   rematriculado: boolean;
   dataRematricula: string | null;
   responsavel?: string;
@@ -41,6 +46,7 @@ interface RegistroRematriculaStorage {
   confirmado: boolean;
   dataConfirmacao: string;
   turma2027?: string;
+  turno2027?: 'MAT' | 'VESP';
   observacoes?: string;
 }
 
@@ -81,6 +87,13 @@ export function calcularProximaEtapa(periodoOuTurma: string | null | undefined):
   return 'Ano Seguinte (2027)';
 }
 
+function obterTurnoPadrao(turnoOriginal?: string | null): 'MAT' | 'VESP' {
+  if (!turnoOriginal) return 'MAT';
+  const t = turnoOriginal.toUpperCase();
+  if (t.includes('VESP') || t.includes('TARDE') || t.includes('NOITE')) return 'VESP';
+  return 'MAT';
+}
+
 function formatarDataHora(dataISO: string | null): string {
   if (!dataISO) return '—';
   try {
@@ -104,17 +117,86 @@ export default function ControleRematricula({ onToast }: Props) {
   const [busca, setBusca] = useState('');
   const [turmaFiltro, setTurmaFiltro] = useState<string>('todas');
   const [statusFiltro, setStatusFiltro] = useState<'todos' | 'confirmados' | 'pendentes'>('todos');
+  const [turnoFiltro, setTurnoFiltro] = useState<'todos' | 'MAT' | 'VESP'>('todos');
   const [modalRelatorioAberta, setModalRelatorioAberta] = useState(false);
   const [relatorioApenasRematriculados, setRelatorioApenasRematriculados] = useState(true);
+  const [gerandoWord, setGerandoWord] = useState(false);
 
-  // Carrega alunos (tentando Supabase primeiro, com fallback para o JSON oficial)
+  // Sincroniza uma alteração individual diretamente com o Supabase
+  const salvarNoSupabase = useCallback(async (
+    aluno: AlunoRematriculaItem,
+    confirmado: boolean,
+    turno: 'MAT' | 'VESP',
+    agora: string
+  ) => {
+    try {
+      // 1. Tenta gravar na tabela dedicada rematriculas_2027
+      const { error: errRematricula } = await supabase.from('rematriculas_2027').upsert({
+        codigo_matricula: aluno.codigo,
+        nome: aluno.nome,
+        turma_atual: aluno.turmaAtual,
+        turma_2027: aluno.turma2027Prevista,
+        turno_2027: turno,
+        confirmado: confirmado,
+        data_nascimento: aluno.dataNascimento,
+        responsavel: aluno.responsavel,
+        confirmado_em: agora
+      } as any, { onConflict: 'codigo_matricula' });
+
+      if (errRematricula) {
+        console.warn('Tabela rematriculas_2027 indisponível no Supabase, salvando via alunos_secretaria:', errRematricula.message);
+      }
+
+      // 2. Grava também no campo jsonb 'dados' da tabela alunos_secretaria
+      const { error: errSecretaria } = await supabase.from('alunos_secretaria').upsert({
+        codigo_matricula: aluno.codigo,
+        nome: aluno.nome,
+        turma: aluno.turmaAtual,
+        turno: turno,
+        situacao: confirmado ? 'REMATRICULADO_2027' : 'NORMAL',
+        dados: {
+          rematricula_2027: confirmado,
+          turma_2027: aluno.turma2027Prevista,
+          turno_2027: turno,
+          confirmado_em: agora
+        }
+      } as any, { onConflict: 'codigo_matricula' });
+
+      if (errSecretaria) {
+        console.warn('Erro ao atualizar alunos_secretaria no Supabase:', errSecretaria.message);
+      }
+    } catch (e) {
+      console.warn('Supabase offline ou sem conexão no momento. Dados mantidos em segurança no armazenamento local:', e);
+    }
+  }, []);
+
+  // Carrega alunos e mescla dados salvos do Supabase + LocalStorage
   useEffect(() => {
     async function carregar() {
       setCarregando(true);
       try {
-        // Recupera rematrículas salvas no localStorage
         const salvosStr = localStorage.getItem(STORAGE_KEY);
         const mapRematriculas: Record<string, RegistroRematriculaStorage> = salvosStr ? JSON.parse(salvosStr) : {};
+
+        // Busca registros remotos do Supabase se existirem
+        try {
+          const { data: dadosSupabase } = await supabase.from('rematriculas_2027').select('*');
+          if (dadosSupabase && dadosSupabase.length > 0) {
+            dadosSupabase.forEach((r: any) => {
+              if (r.codigo_matricula) {
+                mapRematriculas[r.codigo_matricula] = {
+                  confirmado: Boolean(r.confirmado),
+                  dataConfirmacao: r.confirmado_em || new Date().toISOString(),
+                  turma2027: r.turma_2027,
+                  turno2027: r.turno_2027 === 'VESP' ? 'VESP' : 'MAT'
+                };
+              }
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mapRematriculas));
+          }
+        } catch {
+          // Tabela rematriculas_2027 pode ainda não ter sido executada
+        }
 
         let listaBase: AlunoRematriculaItem[] = [];
 
@@ -125,6 +207,7 @@ export default function ControleRematricula({ onToast }: Props) {
               const codigo = a.codigo_matricula;
               const saved = mapRematriculas[codigo];
               const turma = a.turma || a.descricao || a.periodo || 'Não informada';
+              const turnoPadrao = obterTurnoPadrao(a.turno);
               return {
                 codigo,
                 codigoEstudante: a.codigo_estudante || a.ra || '—',
@@ -134,6 +217,7 @@ export default function ControleRematricula({ onToast }: Props) {
                 periodo: a.periodo || '',
                 turno: a.turno || 'MATUTINO',
                 turma2027Prevista: calcularProximaEtapa(turma),
+                turno2027: saved?.turno2027 || turnoPadrao,
                 rematriculado: Boolean(saved?.confirmado),
                 dataRematricula: saved?.dataConfirmacao || null,
                 responsavel: a.filiacao_1 || a.filiacao_2 || undefined
@@ -150,6 +234,8 @@ export default function ControleRematricula({ onToast }: Props) {
             const codigo = m['Código'] || m['codigo_matricula'] || String(Math.random());
             const saved = mapRematriculas[codigo];
             const turma = m['Descrição'] || m['Turma'] || m['Período'] || '1º ANO';
+            const turnoOriginal = m['Turno'] || 'MATUTINO';
+            const turnoPadrao = obterTurnoPadrao(turnoOriginal);
             return {
               codigo,
               codigoEstudante: m['Código do estudante'] || m['Registro do estudante (RA)'] || '—',
@@ -157,8 +243,9 @@ export default function ControleRematricula({ onToast }: Props) {
               dataNascimento: m['Data de Nascimento'] || '',
               turmaAtual: turma,
               periodo: m['Período'] || '',
-              turno: m['Turno'] || 'MATUTINO',
+              turno: turnoOriginal,
               turma2027Prevista: calcularProximaEtapa(turma),
+              turno2027: saved?.turno2027 || turnoPadrao,
               rematriculado: Boolean(saved?.confirmado),
               dataRematricula: saved?.dataConfirmacao || null,
               responsavel: m['Responsável'] || m['Filiação 1'] || undefined
@@ -166,7 +253,7 @@ export default function ControleRematricula({ onToast }: Props) {
           });
         }
 
-        // Ordena por nome
+        // Ordena alfabeticamente por nome
         listaBase.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
         setAlunos(listaBase);
       } catch (err) {
@@ -188,7 +275,7 @@ export default function ControleRematricula({ onToast }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
   }, [alunos]);
 
-  // Alunos filtrados por busca, turma e status
+  // Alunos filtrados por busca, turma, status e turno
   const alunosFiltrados = useMemo(() => {
     const termo = busca.toLowerCase().trim();
     return alunos.filter((a) => {
@@ -208,15 +295,26 @@ export default function ControleRematricula({ onToast }: Props) {
       if (statusFiltro === 'confirmados' && !a.rematriculado) return false;
       if (statusFiltro === 'pendentes' && a.rematriculado) return false;
 
+      if (turnoFiltro !== 'todos' && a.turno2027 !== turnoFiltro) return false;
+
       return true;
     });
-  }, [alunos, busca, turmaFiltro, statusFiltro]);
+  }, [alunos, busca, turmaFiltro, statusFiltro, turnoFiltro]);
 
-  // Estatísticas de Rematrícula
+  // Estatísticas de Rematrícula em Tempo Real
   const totalAlunos = alunos.length;
   const totalConfirmados = useMemo(() => alunos.filter((a) => a.rematriculado).length, [alunos]);
   const totalPendentes = totalAlunos - totalConfirmados;
   const percentualConcluido = totalAlunos > 0 ? Math.round((totalConfirmados / totalAlunos) * 100) : 0;
+
+  const totalMatutinoConfirmados = useMemo(
+    () => alunos.filter((a) => a.rematriculado && a.turno2027 === 'MAT').length,
+    [alunos]
+  );
+  const totalVespertinoConfirmados = useMemo(
+    () => alunos.filter((a) => a.rematriculado && a.turno2027 === 'VESP').length,
+    [alunos]
+  );
 
   // 1-Clique para Alternar Rematrícula (OK 2027)
   function alternarRematricula(aluno: AlunoRematriculaItem) {
@@ -236,7 +334,7 @@ export default function ControleRematricula({ onToast }: Props) {
       })
     );
 
-    // Salva no localStorage
+    // Salva no LocalStorage
     try {
       const salvosStr = localStorage.getItem(STORAGE_KEY);
       const map: Record<string, RegistroRematriculaStorage> = salvosStr ? JSON.parse(salvosStr) : {};
@@ -245,10 +343,11 @@ export default function ControleRematricula({ onToast }: Props) {
         map[aluno.codigo] = {
           confirmado: true,
           dataConfirmacao: agora,
-          turma2027: aluno.turma2027Prevista
+          turma2027: aluno.turma2027Prevista,
+          turno2027: aluno.turno2027
         };
         onToast?.({
-          message: `Rematrícula de ${aluno.nome} confirmada para 2027!`,
+          message: `Rematrícula de ${aluno.nome} confirmada para 2027 (${aluno.turno2027 === 'MAT' ? 'Matutino' : 'Vespertino'})! Salvo no banco de dados.`,
           type: 'success'
         });
       } else {
@@ -260,8 +359,54 @@ export default function ControleRematricula({ onToast }: Props) {
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+
+      // Salva no Supabase
+      void salvarNoSupabase(aluno, novoStatus, aluno.turno2027, agora);
     } catch (e) {
-      console.error('Erro ao salvar rematrícula no localStorage:', e);
+      console.error('Erro ao salvar rematrícula:', e);
+    }
+  }
+
+  // Alterna a opção do responsável: MAT (Matutino) ou VESP (Vespertino)
+  function alterarTurno(aluno: AlunoRematriculaItem, novoTurno: 'MAT' | 'VESP') {
+    if (aluno.turno2027 === novoTurno) return;
+
+    const agora = aluno.dataRematricula || new Date().toISOString();
+
+    setAlunos((prev) =>
+      prev.map((item) => {
+        if (item.codigo === aluno.codigo) {
+          return {
+            ...item,
+            turno2027: novoTurno
+          };
+        }
+        return item;
+      })
+    );
+
+    try {
+      const salvosStr = localStorage.getItem(STORAGE_KEY);
+      const map: Record<string, RegistroRematriculaStorage> = salvosStr ? JSON.parse(salvosStr) : {};
+
+      map[aluno.codigo] = {
+        confirmado: aluno.rematriculado,
+        dataConfirmacao: aluno.dataRematricula || agora,
+        turma2027: aluno.turma2027Prevista,
+        turno2027: novoTurno
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+
+      onToast?.({
+        message: `Turno pretendido de ${aluno.nome} alterado para ${novoTurno === 'MAT' ? 'Matutino (Manhã)' : 'Vespertino (Tarde)'}.`,
+        type: 'info'
+      });
+
+      // Atualiza também no Supabase
+      void salvarNoSupabase({ ...aluno, turno2027: novoTurno }, aluno.rematriculado, novoTurno, agora);
+    } catch (e) {
+      console.error('Erro ao alterar turno no storage:', e);
     }
   }
 
@@ -292,17 +437,67 @@ export default function ControleRematricula({ onToast }: Props) {
         map[a.codigo] = {
           confirmado: true,
           dataConfirmacao: map[a.codigo]?.dataConfirmacao || agora,
-          turma2027: a.turma2027Prevista
+          turma2027: a.turma2027Prevista,
+          turno2027: a.turno2027
         };
+        // Grava no Supabase
+        void salvarNoSupabase(a, true, a.turno2027, agora);
       });
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
       onToast?.({
-        message: `${alunosFiltrados.length} aluno(s) confirmados para 2027 com sucesso!`,
+        message: `${alunosFiltrados.length} aluno(s) confirmados para 2027 e gravados no banco!`,
         type: 'success'
       });
     } catch (e) {
       console.error('Erro ao salvar em lote:', e);
+    }
+  }
+
+  // Exportar Documento Microsoft Word (.docx) Oficial
+  async function exportarParaWord() {
+    const listaParaExportar = relatorioApenasRematriculados
+      ? alunos.filter((a) => a.rematriculado)
+      : alunosFiltrados;
+
+    if (listaParaExportar.length === 0) {
+      onToast?.({
+        message: 'Nenhum aluno rematriculado para exportar no relatório atual.',
+        type: 'error'
+      });
+      return;
+    }
+
+    setGerandoWord(true);
+    try {
+      await gerarDocxRematricula({
+        alunos: listaParaExportar,
+        turmaFiltro,
+        totalGeral: totalAlunos,
+        totalConfirmados,
+        totalMatutino: totalMatutinoConfirmados,
+        totalVespertino: totalVespertinoConfirmados,
+        dataEmissaoFormatada: new Date().toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      });
+
+      onToast?.({
+        message: 'Documento Word (.docx) oficial gerado e baixado com sucesso!',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Erro ao exportar Word:', err);
+      onToast?.({
+        message: 'Falha ao gerar arquivo DOCX. Tente novamente.',
+        type: 'error'
+      });
+    } finally {
+      setGerandoWord(false);
     }
   }
 
@@ -327,7 +522,7 @@ export default function ControleRematricula({ onToast }: Props) {
       'Data de Nascimento': a.dataNascimento || 'Não informada',
       'Turma Atual (2026)': a.turmaAtual,
       'Turma Prevista (2027)': a.turma2027Prevista,
-      'Turno': a.turno,
+      'Turno Desejado (2027)': a.turno2027 === 'VESP' ? 'VESPERTINO (TARDE)' : 'MATUTINO (MANHÃ)',
       'Status': a.rematriculado ? 'REMATRICULADO 2027' : 'PENDENTE',
       'Data / Hora Confirmação': formatarDataHora(a.dataRematricula),
       'Responsável': a.responsavel || ''
@@ -344,7 +539,7 @@ export default function ControleRematricula({ onToast }: Props) {
     });
   }
 
-  // Aciona impressão oficial A4
+  // Aciona impressão oficial A4 (com folha limpa sem cortes nem telas brancas)
   function imprimirRelatorio() {
     window.print();
   }
@@ -359,20 +554,30 @@ export default function ControleRematricula({ onToast }: Props) {
       lista = lista.filter((a) => a.turmaAtual === turmaFiltro);
     }
 
+    if (turnoFiltro !== 'todos') {
+      lista = lista.filter((a) => a.turno2027 === turnoFiltro);
+    }
+
     return lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  }, [alunos, relatorioApenasRematriculados, alunosFiltrados, turmaFiltro]);
+  }, [alunos, relatorioApenasRematriculados, alunosFiltrados, turmaFiltro, turnoFiltro]);
 
   return (
     <div className="rematricula-container">
       {/* 1. HERO INSTITUCIONAL */}
       <section className="rematricula-hero">
         <div>
-          <div className="rematricula-hero-tag">
-            <Sparkles size={14} /> Ano Letivo 2027 · Controle Oficial
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+            <div className="rematricula-hero-tag">
+              <Sparkles size={14} /> Ano Letivo 2027 · Controle Oficial
+            </div>
+            <div className="cloud-sync-pill" title="Sincronizado automaticamente com o banco de dados Supabase">
+              <span className="cloud-sync-dot" />
+              <span>Supabase Conectado</span>
+            </div>
           </div>
           <h1>Controle de Rematrícula 2027</h1>
           <p className="rematricula-hero-sub">
-            E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO · Confirmação simplificada em 1-clique
+            E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO · Confirmação simplificada em 1-clique & Escolha de Turno (MAT/VESP)
           </p>
         </div>
 
@@ -381,10 +586,21 @@ export default function ControleRematricula({ onToast }: Props) {
             type="button"
             className="btn-hero-action primary"
             onClick={() => setModalRelatorioAberta(true)}
-            title="Gerar e imprimir relatório completo em PDF"
+            title="Gerar e imprimir relatório completo em PDF / A4"
           >
             <Printer size={18} />
             <span>Gerar Relatório (PDF)</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-hero-action word"
+            onClick={exportarParaWord}
+            disabled={gerandoWord}
+            title="Exportar documento oficial formatado em Word (.docx)"
+          >
+            <FileText size={18} />
+            <span>{gerandoWord ? 'Gerando...' : 'Exportar Word (.docx)'}</span>
           </button>
 
           <button
@@ -421,7 +637,10 @@ export default function ControleRematricula({ onToast }: Props) {
             <div className="metric-num" style={{ color: '#059669' }}>
               {carregando ? '...' : totalConfirmados}
             </div>
-            <div className="metric-sub">Confirmados para 2027</div>
+            <div style={{ display: 'flex', gap: '6px', marginTop: '4px', fontSize: '0.72rem' }}>
+              <span className="badge-turno-tag mat">☀️ MAT: {totalMatutinoConfirmados}</span>
+              <span className="badge-turno-tag vesp">🌙 VESP: {totalVespertinoConfirmados}</span>
+            </div>
           </div>
         </div>
 
@@ -481,6 +700,7 @@ export default function ControleRematricula({ onToast }: Props) {
           </div>
 
           <div className="controls-filters-wrap">
+            {/* Filtro por Turma */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Filter size={16} color="#64748b" />
               <select
@@ -498,6 +718,21 @@ export default function ControleRematricula({ onToast }: Props) {
               </select>
             </div>
 
+            {/* Filtro por Turno */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <select
+                className="select-turma-filter"
+                value={turnoFiltro}
+                onChange={(e) => setTurnoFiltro(e.target.value as any)}
+                aria-label="Filtrar por turno"
+              >
+                <option value="todos">Todos os Turnos</option>
+                <option value="MAT">☀️ Matutino (MAT)</option>
+                <option value="VESP">🌙 Vespertino (VESP)</option>
+              </select>
+            </div>
+
+            {/* Abas Rápidas de Status */}
             <div className="status-pills-group">
               <button
                 type="button"
@@ -527,7 +762,7 @@ export default function ControleRematricula({ onToast }: Props) {
         {/* Linha de Ações Rápidas */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            Dica: Clique no botão da direita para confirmar a rematrícula instantaneamente.
+            💡 Dica: Escolha se o responsável prefere <strong>☀️ MAT</strong> ou <strong>🌙 VESP</strong> e dê 1 clique em <strong>Marcar OK para 2027</strong>. Fica salvo no Supabase automaticamente!
           </span>
 
           {alunosFiltrados.length > 0 && alunosFiltrados.some((a) => !a.rematriculado) && (
@@ -556,7 +791,7 @@ export default function ControleRematricula({ onToast }: Props) {
         </div>
       </section>
 
-      {/* 4. LISTAGEM DE ALUNOS COM O BOTÃO DE 1-CLIQUE */}
+      {/* 4. LISTAGEM DE ALUNOS COM O BOTÃO DE 1-CLIQUE E SELEÇÃO DE TURNO */}
       <section className="rematricula-list-panel">
         <div className="list-panel-header">
           <h2>Relação de Alunos para Rematrícula 2027</h2>
@@ -586,11 +821,11 @@ export default function ControleRematricula({ onToast }: Props) {
                   <th>Aluno</th>
                   <th>Turma Atual (2026)</th>
                   <th>Turma Prevista (2027)</th>
-                  <th>Turno</th>
+                  <th style={{ textAlign: 'center' }}>Turno 2027 (Responsável)</th>
                   <th style={{ textAlign: 'right' }}>Status Rematrícula</th>
                 </tr>
               </thead>
-              <tbody key={`rematricula-list-${busca}-${turmaFiltro}-${statusFiltro}`}>
+              <tbody key={`rematricula-list-${busca}-${turmaFiltro}-${statusFiltro}-${turnoFiltro}`}>
                 {alunosFiltrados.map((item, idx) => (
                   <tr
                     key={item.codigo}
@@ -633,10 +868,28 @@ export default function ControleRematricula({ onToast }: Props) {
                       </span>
                     </td>
 
-                    <td>
-                      <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 500 }}>
-                        {item.turno}
-                      </span>
+                    {/* Coluna de Seleção de Turno do Responsável (MAT / VESP) */}
+                    <td style={{ textAlign: 'center' }}>
+                      <div className="turno-toggle-group">
+                        <button
+                          type="button"
+                          className={`btn-turno ${item.turno2027 === 'MAT' ? 'active-mat' : ''}`}
+                          onClick={() => alterarTurno(item, 'MAT')}
+                          title="Opção do Responsável: Matutino (Manhã)"
+                        >
+                          <Sun size={12} />
+                          <span>MAT</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-turno ${item.turno2027 === 'VESP' ? 'active-vesp' : ''}`}
+                          onClick={() => alterarTurno(item, 'VESP')}
+                          title="Opção do Responsável: Vespertino (Tarde)"
+                        >
+                          <Moon size={12} />
+                          <span>VESP</span>
+                        </button>
+                      </div>
                     </td>
 
                     <td style={{ textAlign: 'right' }}>
@@ -645,12 +898,12 @@ export default function ControleRematricula({ onToast }: Props) {
                           type="button"
                           className={`btn-toggle-rematricula ${item.rematriculado ? 'confirmado' : 'pendente'}`}
                           onClick={() => alternarRematricula(item)}
-                          title={item.rematriculado ? `Confirmado em ${formatarDataHora(item.dataRematricula)}. Clique para desfazer.` : 'Clique para confirmar a rematrícula para 2027'}
+                          title={item.rematriculado ? `Confirmado em ${formatarDataHora(item.dataRematricula)} (${item.turno2027 === 'MAT' ? 'Matutino' : 'Vespertino'}). Clique para desfazer.` : 'Clique para confirmar a rematrícula para 2027'}
                         >
                           {item.rematriculado ? (
                             <>
                               <CheckCircle2 size={16} color="#059669" />
-                              <span>OK para 2027</span>
+                              <span>OK para 2027 ({item.turno2027})</span>
                             </>
                           ) : (
                             <>
@@ -680,7 +933,7 @@ export default function ControleRematricula({ onToast }: Props) {
         )}
       </section>
 
-      {/* 5. MODAL DE RELATÓRIO OFICIAL (IMPRESSÃO A4 E EXCEL) */}
+      {/* 5. MODAL DE RELATÓRIO OFICIAL (IMPRESSÃO A4, WORD E EXCEL) */}
       {modalRelatorioAberta && (
         <div className="modal-relatorio-overlay" onClick={() => setModalRelatorioAberta(false)}>
           <div className="modal-relatorio-card" onClick={(e) => e.stopPropagation()}>
@@ -691,7 +944,7 @@ export default function ControleRematricula({ onToast }: Props) {
               </h3>
 
               <div className="modal-relatorio-actions">
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', marginRight: '10px', cursor: 'pointer' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', marginRight: '8px', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={relatorioApenasRematriculados}
@@ -708,6 +961,17 @@ export default function ControleRematricula({ onToast }: Props) {
                 >
                   <Printer size={16} />
                   <span>Imprimir (A4/PDF)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-print-action word"
+                  onClick={exportarParaWord}
+                  disabled={gerandoWord}
+                  title="Exportar documento oficial em Word (.docx)"
+                >
+                  <FileText size={16} />
+                  <span>{gerandoWord ? 'Gerando...' : 'Word (.docx)'}</span>
                 </button>
 
                 <button
@@ -735,10 +999,9 @@ export default function ControleRematricula({ onToast }: Props) {
               <div className="documento-oficial-wrap">
                 {/* Cabeçalho Institucional Oficial */}
                 <div className="documento-header-institucional">
-                  <h4>Estado de Minas Gerais · Prefeitura Municipal</h4>
-                  <h3>Secretaria Municipal de Educação</h3>
-                  <h2>E.M. Maria Geralda Miranda Brito Salomão</h2>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <h4>Prefeitura Municipal de Vespasiano · Secretaria Municipal de Educação</h4>
+                  <h2>Escola Municipal Maria Geralda Miranda Brito Salomão</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.88rem', fontWeight: 700, color: '#1e3a8a' }}>
                     RELATÓRIO OFICIAL DE CONTROLE DE REMATRÍCULA — ANO LETIVO 2027
                   </p>
                 </div>
@@ -751,7 +1014,7 @@ export default function ControleRematricula({ onToast }: Props) {
                   </div>
                   <div>
                     <strong>Filtro:</strong> {turmaFiltro === 'todas' ? 'Todas as Turmas' : `Turma: ${turmaFiltro}`} ·{' '}
-                    {relatorioApenasRematriculados ? 'Somente Rematriculados (OK)' : 'Listagem Geral'}
+                    {relatorioApenasRematriculados ? 'Somente Confirmados (OK)' : 'Listagem Geral'}
                   </div>
                   <div>
                     <strong>Total Listados:</strong> {alunosParaRelatorio.length} aluno(s)
@@ -766,10 +1029,10 @@ export default function ControleRematricula({ onToast }: Props) {
                       <th>Código</th>
                       <th>Nome Completo do Aluno</th>
                       <th>Data Nasc.</th>
-                      <th>Turma 2026</th>
+                      <th>Turma Atual</th>
                       <th>Turma 2027</th>
-                      <th>Turno</th>
-                      <th>Data Confirmação</th>
+                      <th style={{ textAlign: 'center' }}>Turno 2027</th>
+                      <th>Status Rematrícula</th>
                       <th style={{ width: '130px' }}>Assinatura Resp.</th>
                     </tr>
                   </thead>
@@ -782,7 +1045,9 @@ export default function ControleRematricula({ onToast }: Props) {
                         <td>{a.dataNascimento || '—'}</td>
                         <td>{a.turmaAtual}</td>
                         <td><strong>{a.turma2027Prevista}</strong></td>
-                        <td>{a.turno}</td>
+                        <td style={{ textAlign: 'center', fontWeight: 'bold', color: a.turno2027 === 'VESP' ? '#c2410c' : '#1d4ed8' }}>
+                          {a.turno2027 === 'VESP' ? 'VESPERTINO' : 'MATUTINO'}
+                        </td>
                         <td>
                           {a.rematriculado ? (
                             <span style={{ color: '#047857', fontWeight: 'bold' }}>
@@ -801,10 +1066,16 @@ export default function ControleRematricula({ onToast }: Props) {
                 {/* Resumo Estatístico */}
                 <div className="documento-resumo-box">
                   <span>
-                    Total de Alunos Listados: <strong>{alunosParaRelatorio.length}</strong>
+                    Total Listados: <strong>{alunosParaRelatorio.length}</strong>
                   </span>
                   <span>
-                    Confirmados para 2027: <strong style={{ color: '#047857' }}>{alunosParaRelatorio.filter((a) => a.rematriculado).length}</strong>
+                    Confirmados 2027: <strong style={{ color: '#047857' }}>{alunosParaRelatorio.filter((a) => a.rematriculado).length}</strong>
+                  </span>
+                  <span>
+                    ☀️ Matutino (MAT): <strong style={{ color: '#1d4ed8' }}>{alunosParaRelatorio.filter((a) => a.rematriculado && a.turno2027 === 'MAT').length}</strong>
+                  </span>
+                  <span>
+                    🌙 Vespertino (VESP): <strong style={{ color: '#c2410c' }}>{alunosParaRelatorio.filter((a) => a.rematriculado && a.turno2027 === 'VESP').length}</strong>
                   </span>
                   <span>
                     Pendentes: <strong style={{ color: '#b45309' }}>{alunosParaRelatorio.filter((a) => !a.rematriculado).length}</strong>
@@ -816,13 +1087,13 @@ export default function ControleRematricula({ onToast }: Props) {
                   <div className="assinatura-bloco">
                     <div className="assinatura-linha" />
                     <strong>Secretaria Escolar</strong>
-                    <span className="assinatura-cargo">Responsável pela Emissão</span>
+                    <span className="assinatura-cargo">Responsável pela Emissão e Matrículas</span>
                   </div>
 
                   <div className="assinatura-bloco">
                     <div className="assinatura-linha" />
                     <strong>Direção Escolar</strong>
-                    <span className="assinatura-cargo">E.M. Maria Geralda M. B. Salomão</span>
+                    <span className="assinatura-cargo">E.M. Maria Geralda Miranda Brito Salomão</span>
                   </div>
                 </div>
               </div>

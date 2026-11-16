@@ -645,6 +645,122 @@
   transform: translateY(-1px);
 }
 
+.btn-print-action.word {
+  background: #2b579a;
+  color: #ffffff;
+}
+
+.btn-print-action.word:hover {
+  background: #1e3f73;
+  transform: translateY(-1px);
+}
+
+.btn-hero-action.word {
+  background: #2b579a;
+  color: #ffffff;
+}
+
+.btn-hero-action.word:hover {
+  background: #1e3f73;
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   CONTROLE DE TURNO DESEJADO 2027 (MAT / VESP)
+   ========================================================= */
+
+.turno-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  gap: 2px;
+}
+
+.btn-turno {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn-turno:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.btn-turno.active-mat {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);
+}
+
+.btn-turno.active-vesp {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.12);
+}
+
+.badge-turno-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-turno-tag.mat {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-turno-tag.vesp {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.cloud-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.cloud-sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse-sync 2s infinite ease-in-out;
+}
+
+@keyframes pulse-sync {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
 .btn-close-modal {
   background: transparent;
   border: none;
@@ -778,64 +894,141 @@
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESSÃO (A4 1-CLIQUE PERFEITO)
+   ESTILOS DE IMPRESSÃO (A4 1-CLIQUE PERFEITO - SEM TELAS BRANCAS)
    ========================================================= */
 
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm 15mm;
+    margin: 8mm 10mm;
   }
 
-  /* Oculta tudo que não faz parte do relatório */
-  body * {
-    visibility: hidden;
-  }
-
-  .modal-relatorio-overlay,
-  .modal-relatorio-card,
-  .modal-relatorio-body,
-  .documento-oficial-wrap,
-  .documento-oficial-wrap * {
-    visibility: visible;
-  }
-
-  .modal-relatorio-overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: auto;
-    background: transparent !important;
-    backdrop-filter: none !important;
+  /* Garante fundo branco e remove elementos fora da impressão */
+  html, body {
+    margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
     overflow: visible !important;
   }
 
+  /* Exibe o container da aplicação e conteúdo principal */
+  .app-container,
+  .app-container > main,
+  .main-content,
+  .rematricula-container {
+    display: block !important;
+    visibility: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: visible !important;
+    height: auto !important;
+    box-shadow: none !important;
+  }
+
+  /* Oculta tudo que não pertence ao relatório oficial */
+  .header,
+  .footer,
+  .app-container > header,
+  .app-container > footer,
+  .rematricula-hero,
+  .rematricula-metrics-grid,
+  .rematricula-toolbar-panel,
+  .rematricula-table-wrapper,
+  .rematricula-table-container,
+  .rematricula-pagination,
+  .ia-floating-btn,
+  .ia-floating-btn-mini,
+  .ia-floating-container,
+  .ia-chat-window,
+  .modal-relatorio-topbar,
+  .btn-print-action,
+  .btn-close-modal,
+  .no-print {
+    display: none !important;
+  }
+
+  /* O modal de relatório passa a ser o documento impresso em fluxo natural */
+  .modal-relatorio-overlay {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
   .modal-relatorio-card {
+    position: static !important;
+    display: block !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
     max-width: 100% !important;
+    width: 100% !important;
     max-height: none !important;
-  }
-
-  .modal-relatorio-topbar {
-    display: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
   }
 
   .modal-relatorio-body {
     padding: 0 !important;
+    margin: 0 !important;
     overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .documento-oficial-wrap {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .documento-header-institucional h2 {
     color: #000000 !important;
   }
 
+  .documento-tabela-relatorio {
+    width: 100% !important;
+    page-break-inside: auto;
+    border-collapse: collapse !important;
+  }
+
+  .documento-tabela-relatorio tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
   .documento-tabela-relatorio th {
     background: #e2e8f0 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    font-weight: bold;
+    border: 1px solid #475569 !important;
+    padding: 4px 6px !important;
+    font-size: 7.5pt !important;
+  }
+
+  .documento-tabela-relatorio td {
+    border: 1px solid #64748b !important;
+    padding: 4px 6px !important;
+    font-size: 7.5pt !important;
+  }
+
+  .documento-assinaturas-row {
+    page-break-inside: avoid !important;
+    margin-top: 35px !important;
   }
 }

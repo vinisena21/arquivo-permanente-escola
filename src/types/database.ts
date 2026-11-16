@@ -219,6 +219,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      rematriculas_2027: {
+        Row: {
+          id: number;
+          codigo_matricula: string;
+          nome: string;
+          turma_atual: string | null;
+          turma_2027: string | null;
+          turno_2027: string;
+          confirmado: boolean;
+          data_nascimento: string | null;
+          responsavel: string | null;
+          observacoes: string | null;
+          confirmado_em: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          codigo_matricula: string;
+          nome: string;
+          turma_atual?: string | null;
+          turma_2027?: string | null;
+          turno_2027?: string;
+          confirmado?: boolean;
+          data_nascimento?: string | null;
+          responsavel?: string | null;
+          observacoes?: string | null;
+          confirmado_em?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          codigo_matricula?: string;
+          nome?: string;
+          turma_atual?: string | null;
+          turma_2027?: string | null;
+          turno_2027?: string;
+          confirmado?: boolean;
+          data_nascimento?: string | null;
+          responsavel?: string | null;
+          observacoes?: string | null;
+          confirmado_em?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

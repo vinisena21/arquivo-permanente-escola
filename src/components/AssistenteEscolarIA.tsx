@@ -18,7 +18,9 @@ import {
   Database,
   Plus,
   Trash2,
-  Users
+  Users,
+  Minus,
+  ChevronUp
 } from 'lucide-react';
 import matriculasData from '../data/matriculas.json';
 import turmasData from '../data/turmas.json';
@@ -69,6 +71,9 @@ export const AssistenteEscolarIA: React.FC<AssistenteEscolarIAProps> = ({
   const [inputTexto, setInputTexto] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [copiadoId, setCopiadoId] = useState<string | null>(null);
+  const [botaoMinimizado, setBotaoMinimizado] = useState(() => {
+    return localStorage.getItem('guia_ia_btn_minimized') === 'true';
+  });
   
   // Painéis auxiliares
   const [configAberta, setConfigAberta] = useState(false);
@@ -894,26 +899,74 @@ Como estou em **modo autônomo com memória local e regras da escola**:
 
   return (
     <>
-      {/* Botão Flutuante (Floating Trigger) */}
+      {/* Botão Flutuante (Floating Trigger) com suporte a Minimizar */}
       {!aberto && (
-        <button
-          type="button"
-          className="ia-floating-btn"
-          onClick={() => {
-            setAberto(true);
-            setMinimizado(false);
-          }}
-          title="Abrir Assistente IA da Escola (Memória Supabase Ativa)"
-          aria-label="Abrir Assistente Inteligente da Escola"
-        >
-          <div className="ia-floating-icon">
-            <Sparkles size={24} className="sparkle-anim" />
-          </div>
-          <div className="ia-floating-label">
-            <span className="ia-title">Assistente Guia IA</span>
-            <span className="ia-status">Supabase • Memória Ativa</span>
-          </div>
-        </button>
+        <div className={`ia-floating-wrapper ${botaoMinimizado ? 'is-minimized' : ''}`}>
+          {botaoMinimizado ? (
+            <div className="ia-mini-pill-wrap">
+              <button
+                type="button"
+                className="ia-floating-btn-mini"
+                onClick={() => {
+                  setAberto(true);
+                  setMinimizado(false);
+                }}
+                title="Assistente Guia IA (Clique para abrir)"
+                aria-label="Abrir Assistente IA"
+              >
+                <Sparkles size={20} className="sparkle-anim" />
+                <span className="ia-mini-text">IA</span>
+              </button>
+              <button
+                type="button"
+                className="ia-mini-expand-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBotaoMinimizado(false);
+                  localStorage.setItem('guia_ia_btn_minimized', 'false');
+                }}
+                title="Expandir card da IA"
+                aria-label="Expandir card da IA"
+              >
+                <ChevronUp size={13} />
+              </button>
+            </div>
+          ) : (
+            <div className="ia-floating-full-wrap">
+              <button
+                type="button"
+                className="ia-floating-btn"
+                onClick={() => {
+                  setAberto(true);
+                  setMinimizado(false);
+                }}
+                title="Abrir Assistente IA da Escola (Memória Supabase Ativa)"
+                aria-label="Abrir Assistente Inteligente da Escola"
+              >
+                <div className="ia-floating-icon">
+                  <Sparkles size={22} className="sparkle-anim" />
+                </div>
+                <div className="ia-floating-label">
+                  <span className="ia-title">Assistente Guia IA</span>
+                  <span className="ia-status">Supabase • Memória Ativa</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                className="ia-floating-minimize-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBotaoMinimizado(true);
+                  localStorage.setItem('guia_ia_btn_minimized', 'true');
+                }}
+                title="Minimizar botão da IA"
+                aria-label="Minimizar botão da IA"
+              >
+                <Minus size={15} />
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Janela de Chat do Assistente */}

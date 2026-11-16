@@ -3,19 +3,34 @@
    Paleta Institucional: Azul Cobalto (#1e3a8a / #2563eb)
    ======================================================== */
 
-/* Botão Flutuante (Trigger) */
-.ia-floating-btn {
+/* Container Flutuante do Assistente IA (com suporte a minimizar) */
+.ia-floating-wrapper {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 9999;
   display: flex;
   align-items: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ia-floating-full-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  animation: mini-pill-enter 0.25s ease-out;
+}
+
+/* Botão Flutuante (Trigger Normal) */
+.ia-floating-btn {
+  display: flex;
+  align-items: center;
   gap: 12px;
   padding: 10px 18px 10px 12px;
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50px;
   box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4), 0 8px 10px -6px rgba(37, 99, 235, 0.2);
   cursor: pointer;
@@ -23,9 +38,92 @@
 }
 
 .ia-floating-btn:hover {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-2px) scale(1.02);
   box-shadow: 0 14px 28px -4px rgba(37, 99, 235, 0.5), 0 10px 12px -5px rgba(37, 99, 235, 0.3);
   background: linear-gradient(135deg, #172554 0%, #1d4ed8 100%);
+}
+
+.ia-floating-minimize-btn {
+  background: rgba(15, 23, 42, 0.7);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.ia-floating-minimize-btn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+/* Versão Minimizada (Discreta, Compacta) */
+.ia-mini-pill-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(30, 58, 138, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 30px;
+  padding: 4px 8px;
+  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.35);
+  backdrop-filter: blur(10px);
+  gap: 4px;
+  animation: mini-pill-enter 0.25s ease-out;
+}
+
+@keyframes mini-pill-enter {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.ia-floating-btn-mini {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.ia-floating-btn-mini:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ia-mini-text {
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: #93c5fd;
+}
+
+.ia-mini-expand-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ia-mini-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 .ia-floating-icon {
@@ -881,4 +979,15 @@
   border-left: 3px solid #2563eb;
   font-style: italic;
   color: #334155;
+}
+
+/* Oculta o widget flutuante e a janela de chat da IA durante qualquer impressão */
+@media print {
+  .ia-floating-wrapper,
+  .ia-floating-btn,
+  .ia-floating-btn-mini,
+  .ia-floating-container,
+  .ia-chat-window {
+    display: none !important;
+  }
 }
