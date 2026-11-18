@@ -11,8 +11,7 @@ import {
   FileText,
   Calendar
 } from 'lucide-react';
-import turmasData from '../data/turmas.json';
-import matriculasData from '../data/matriculas.json';
+import { useSchool } from '../context/SchoolContext';
 import './BoletimEscolar.css';
 
 interface BoletimEscolarProps {
@@ -91,22 +90,31 @@ function gerarNotasIniciais(codMatricula: string, situacao: string): Record<stri
 }
 
 export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
-  // Lista de turmas oficiais válidas
+  const { escolaAtiva, turmasEscola, matriculasEscola } = useSchool();
+
+  // Lista de turmas oficiais válidas da escola ativa
   const turmasValidas = useMemo(() => {
-    return turmasData.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
-  }, []);
+    return turmasEscola.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
+  }, [turmasEscola]);
 
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>(() => {
     return turmasValidas[0]?.Turma || '1º  1';
   });
+
+  // Atualiza turma selecionada se a turma atual não existir na nova escola
+  useEffect(() => {
+    if (turmasValidas.length > 0 && !turmasValidas.some(t => t.Turma === turmaSelecionada)) {
+      setTurmaSelecionada(turmasValidas[0].Turma);
+    }
+  }, [turmasValidas, turmaSelecionada]);
 
   const [modoVisao, setModoVisao] = useState<'individual' | 'turma'>('individual');
   const [trimestreFiltro, setTrimestreFiltro] = useState<1 | 2 | 3>(1);
 
   // Alunos da turma atual
   const todosAlunosTurma = useMemo(() => {
-    return matriculasData.filter(m => (m.Turma || '').trim() === turmaSelecionada.trim());
-  }, [turmaSelecionada]);
+    return matriculasEscola.filter(m => (m.Turma || '').trim() === turmaSelecionada.trim());
+  }, [matriculasEscola, turmaSelecionada]);
 
   // Alunos ativos (respeitando que TRANSFERIDO não conta como aluno normal ativo)
   const alunosAtivosTurma = useMemo(() => {
@@ -180,8 +188,8 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
 
   // Turma info
   const turmaObj = useMemo(() => {
-    return turmasData.find(t => t.Turma === turmaSelecionada) || turmasValidas[0];
-  }, [turmaSelecionada, turmasValidas]);
+    return turmasEscola.find(t => t.Turma === turmaSelecionada) || turmasValidas[0];
+  }, [turmaSelecionada, turmasValidas, turmasEscola]);
 
   // Função para salvar alterações no localStorage
   function salvarAlteracoes() {
@@ -332,7 +340,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
           <Award className="icon-header" size={28} />
           <div>
             <h2>Boletim Escolar & Lançamento de Notas (SIGP)</h2>
-            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Sistema Trimestral (30 + 30 + 40 = 100 pts)</p>
+            <p>{escolaAtiva} &bull; Sistema Trimestral (30 + 30 + 40 = 100 pts)</p>
           </div>
         </div>
 
@@ -494,7 +502,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
               <div className="doc-header-text">
                 <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
                 <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO &bull; SIGP EDUCAÇÃO</h4>
-                <h2>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h2>
+                <h2>{escolaAtiva}</h2>
                 <p>ENSINO FUNDAMENTAL &bull; CÓDIGO INEP: 31054366 &bull; RECONHECIMENTO LEGAL</p>
                 <div className="doc-titulo-faixa">
                   BOLETIM ESCOLAR OFICIAL &bull; ANO LETIVO 2026
@@ -662,7 +670,7 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
               <div className="assinatura-item">
                 <div className="linha-assinatura"></div>
                 <p>Diretor(a) Escolar</p>
-                <span>E.M. Maria Geralda M. B. Salomão</span>
+                <span>{escolaAtiva}</span>
               </div>
               <div className="assinatura-item">
                 <div className="linha-assinatura"></div>

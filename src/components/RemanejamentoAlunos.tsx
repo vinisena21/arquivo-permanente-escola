@@ -10,9 +10,7 @@ import {
   FileText,
   MapPin
 } from 'lucide-react';
-import movimentacoesData from '../data/movimentacoes.json';
-import matriculasData from '../data/matriculas.json';
-import turmasData from '../data/turmas.json';
+import { useSchool } from '../context/SchoolContext';
 import escolasData from '../data/escolas.json';
 import './RemanejamentoAlunos.css';
 
@@ -34,31 +32,31 @@ export interface MovimentacaoRegistro {
   Responsável: string;
   Situação: string;
   tipoMovimentacao?: 'TRANSFERENCIA' | 'REMANEJAMENTO';
+  escola?: string;
 }
 
 export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToast }) => {
+  const { movimentacoesEscola, matriculasEscola, turmasEscola, escolaAtiva } = useSchool();
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'transferencia' | 'remanejamento'>('todos');
   const [modalNovo, setModalNovo] = useState(false);
   const [guiaSelecionada, setGuiaSelecionada] = useState<MovimentacaoRegistro | null>(null);
 
-  // Carrega movimentações (iniciando com o JSON oficial + localStorage)
-  const [movimentacoes, setMovimentacoes] = useState<MovimentacaoRegistro[]>(() => {
+  // Carrega movimentações customizadas do localStorage
+  const [customMovimentacoes, setCustomMovimentacoes] = useState<MovimentacaoRegistro[]>(() => {
     const salvo = localStorage.getItem('guia_escolar_movimentacoes_custom');
-    const custom: MovimentacaoRegistro[] = salvo ? JSON.parse(salvo) : [];
-    // Mapeia os dados existentes
-    const base: MovimentacaoRegistro[] = movimentacoesData.map(m => ({
+    return salvo ? JSON.parse(salvo) : [];
+  });
+
+  // Movimentações combinadas da escola ativa
+  const movimentacoes = useMemo(() => {
+    const base: MovimentacaoRegistro[] = movimentacoesEscola.map(m => ({
       ...m,
       tipoMovimentacao: m['Turma destino'] ? 'REMANEJAMENTO' : 'TRANSFERENCIA'
     }));
+    const custom = customMovimentacoes.filter(c => !c.escola || c.escola === escolaAtiva);
     return [...custom, ...base];
-  });
-
-  // Salvar no localStorage quando novas movimentações forem criadas
-  function salvarCustom(lista: MovimentacaoRegistro[]) {
-    const apenasNovos = lista.filter(item => !movimentacoesData.some(orig => orig.Código === item.Código));
-    localStorage.setItem('guia_escolar_movimentacoes_custom', JSON.stringify(apenasNovos));
-  }
+  }, [movimentacoesEscola, customMovimentacoes, escolaAtiva]);
 
   // Filtragem
   const movimentacoesFiltradas = useMemo(() => {
@@ -117,7 +115,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
 
   // Atualiza campos do formulário ao selecionar o aluno
   function handleSelectAluno(cod: string) {
-    const aluno = matriculasData.find(m => m.Código === cod);
+    const aluno = matriculasEscola.find(m => m.Código === cod);
     if (aluno) {
       setNovoForm(prev => ({
         ...prev,
@@ -141,7 +139,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
       Estudante: novoForm.alunoNome,
       'Período de Origem': novoForm.periodoOrigem,
       'Turma origem': novoForm.turmaOrigem,
-      'Escola destino': novoForm.tipo === 'TRANSFERENCIA' ? (novoForm.escolaDestino || 'OUTRA UNIDADE DE ENSINO') : 'E.M. MARIA GERALDA M. B. SALOMÃO',
+      'Escola destino': novoForm.tipo === 'TRANSFERENCIA' ? (novoForm.escolaDestino || 'OUTRA UNIDADE DE ENSINO') : escolaAtiva,
       'Período destino': novoForm.tipo === 'REMANEJAMENTO' ? novoForm.periodoOrigem : '',
       'Turma destino': novoForm.tipo === 'REMANEJAMENTO' ? novoForm.turmaDestino : '',
       'Município destino': novoForm.tipo === 'TRANSFERENCIA' ? (novoForm.municipioDestino || 'PONTO DOS VOLANTES') : 'PONTO DOS VOLANTES',
@@ -149,12 +147,13 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
       Motivo: novoForm.motivo,
       Responsável: novoForm.responsavel || 'Responsável Legal',
       Situação: novoForm.tipo === 'TRANSFERENCIA' ? 'TRANSFERIDO' : 'REMANEJADO',
-      tipoMovimentacao: novoForm.tipo
+      tipoMovimentacao: novoForm.tipo,
+      escola: escolaAtiva
     };
 
-    const atualizada = [novoRegistro, ...movimentacoes];
-    setMovimentacoes(atualizada);
-    salvarCustom(atualizada);
+    const atualizada = [novoRegistro, ...customMovimentacoes];
+    setCustomMovimentacoes(atualizada);
+    localStorage.setItem('guia_escolar_movimentacoes_custom', JSON.stringify(atualizada));
     setModalNovo(false);
 
     if (onToast) {
@@ -176,7 +175,8 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Movimentacoes_Escolares_${new Date().getFullYear()}.csv`);
+    const nomeLimpo = escolaAtiva.replace(/[^a-zA-Z0-9]/g, '_');
+    link.setAttribute('download', `Movimentacoes_${nomeLimpo}_${new Date().getFullYear()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -194,7 +194,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
           <ArrowRightLeft className="icon-header" size={28} />
           <div>
             <h2>Remanejamento & Transferência de Alunos (SIGP)</h2>
-            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Controle Oficial de Movimentações Escolares</p>
+            <p>{escolaAtiva} &bull; Controle Oficial de Movimentações Escolares</p>
           </div>
         </div>
 
@@ -397,8 +397,8 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
                 <div className="guia-header-texto">
                   <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
                   <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO</h4>
-                  <h2>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h2>
-                  <p>ENSINO FUNDAMENTAL &bull; CÓDIGO INEP: 31054366 &bull; AUTORIZAÇÃO DE FUNCIONAMENTO</p>
+                  <h2>{escolaAtiva.toUpperCase()}</h2>
+                  <p>ENSINO FUNDAMENTAL &bull; REDE MUNICIPAL DE ENSINO &bull; AUTORIZAÇÃO DE FUNCIONAMENTO</p>
                   <div className="guia-faixa-titulo">
                     DECLARAÇÃO DE TRANSFERÊNCIA ESCOLAR &bull; GUIA OFICIAL Nº {guiaSelecionada.Código}/2026
                   </div>
@@ -407,7 +407,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
 
               <div className="guia-corpo-declaracao">
                 <p>
-                  A Direção e a Secretaria da <strong>Escola Municipal Maria Geralda Miranda Brito Salomão</strong>,
+                  A Direção e a Secretaria da <strong>{escolaAtiva}</strong>,
                   no uso de suas atribuições legais e em cumprimento à Lei de Diretrizes e Bases da Educação Nacional
                   (Lei Federal nº 9.394/1996), declara, para os devidos fins de matrícula e comprovação de escolaridade,
                   que o(a) estudante:
@@ -465,7 +465,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
                 <div className="guia-assinatura-bloco">
                   <div className="linha-assinatura"></div>
                   <p>Diretor(a) Escolar</p>
-                  <span>E.M. Maria Geralda M. B. Salomão</span>
+                  <span>{escolaAtiva}</span>
                 </div>
               </div>
             </div>
@@ -491,14 +491,14 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
             <div className="modal-body">
               {/* Seleção do Aluno */}
               <div className="form-group">
-                <label htmlFor="select-aluno-mov">Selecionar Estudante Matriculado:</label>
+                <label htmlFor="select-aluno-mov">Selecionar Estudante Matriculado ({escolaAtiva}):</label>
                 <select
                   id="select-aluno-mov"
                   value={novoForm.alunoCodigo}
                   onChange={(e) => handleSelectAluno(e.target.value)}
                 >
                   <option value="">-- Selecione o aluno da lista --</option>
-                  {matriculasData.map((m) => (
+                  {matriculasEscola.map((m) => (
                     <option key={m.Código} value={m.Código}>
                       {m.Nome} &bull; Matr. {m.Código} &bull; Turma {m.Turma} ({m.Situação})
                     </option>
@@ -551,7 +551,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
                       onChange={(e) => setNovoForm(prev => ({ ...prev, turmaDestino: e.target.value }))}
                     >
                       <option value="">-- Selecione a nova turma --</option>
-                      {turmasData
+                      {turmasEscola
                         .filter(t => t.Turma && t.Turma !== novoForm.turmaOrigem)
                         .map(t => (
                           <option key={t.Turma} value={t.Turma}>

@@ -25,11 +25,13 @@ interface GerarDocxOptions {
   totalMatutino: number;
   totalVespertino: number;
   dataEmissaoFormatada: string;
+  nomeEscola?: string;
+  municipio?: string;
 }
 
 /**
  * Gera um documento Microsoft Word (.docx) oficial, elegante e completo
- * para o Relatório de Rematrículas 2027 da E.M. Maria Geralda Miranda Brito Salomão
+ * para o Relatório de Rematrículas 2027
  */
 export async function gerarDocxRematricula({
   alunos,
@@ -38,7 +40,9 @@ export async function gerarDocxRematricula({
   totalConfirmados,
   totalMatutino,
   totalVespertino,
-  dataEmissaoFormatada
+  dataEmissaoFormatada,
+  nomeEscola = 'E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO',
+  municipio = 'PONTO DOS VOLANTES'
 }: GerarDocxOptions): Promise<void> {
   const tableRows: TableRow[] = [];
 
@@ -176,7 +180,7 @@ export async function gerarDocxRematricula({
                 alignment: AlignmentType.CENTER,
                 children: [
                   new TextRun({
-                    text: 'E.M. Maria Geralda Miranda Brito Salomão',
+                    text: nomeEscola,
                     size: 16,
                     color: '64748B'
                   })
@@ -210,7 +214,7 @@ export async function gerarDocxRematricula({
                 alignment: AlignmentType.RIGHT,
                 children: [
                   new TextRun({
-                    text: 'E.M. Maria Geralda Miranda Brito Salomão · Sistema Guia Escolar',
+                    text: `${nomeEscola} · Sistema Guia Escolar`,
                     size: 15,
                     color: '94A3B8'
                   })
@@ -258,7 +262,7 @@ export async function gerarDocxRematricula({
             alignment: AlignmentType.CENTER,
             children: [
               new TextRun({
-                text: 'PREFEITURA MUNICIPAL DE VESPASIANO',
+                text: `PREFEITURA MUNICIPAL DE ${municipio.toUpperCase()}`,
                 bold: true,
                 size: 19,
                 color: '1E293B'
@@ -281,7 +285,7 @@ export async function gerarDocxRematricula({
             spacing: { after: 120 },
             children: [
               new TextRun({
-                text: 'ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO',
+                text: nomeEscola.toUpperCase(),
                 bold: true,
                 size: 22,
                 color: '1E3A8A'

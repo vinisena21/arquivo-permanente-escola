@@ -16,7 +16,7 @@ import type { ToastData } from './Toast';
 import { ConfirmModal } from './ConfirmModal';
 import EditarAlunoSecretariaModal from './EditarAlunoSecretariaModal';
 import './ImportarAlunos.css';
-import matriculasOficiais from '../data/matriculas.json';
+import { useSchool } from '../context/SchoolContext';
 import { dataParaISO, type RegistroSecretaria } from '../lib/importacaoSecretaria';
 
 
@@ -48,6 +48,7 @@ function BadgeSituacao({ situacao }: { situacao: string | null }) {
 }
 
 export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey = 0 }: Props) {
+  const { matriculasEscola, escolaAtiva } = useSchool();
   const [alunos, setAlunos] = useState<AlunoSecretariaRow[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erroCarregamento, setErroCarregamento] = useState('');
@@ -147,7 +148,8 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
     try {
       const linhas = filtrados.map(dadosDoRegistro);
       const colunas = ordenarColunas(linhas.flatMap((l) => Object.keys(l)));
-      await baixarPlanilha(linhas, colunas, `alunos_secretaria_${new Date().toISOString().slice(0, 10)}`, formato);
+      const nomeArquivoExportar = `alunos_secretaria_${escolaAtiva.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}`;
+      await baixarPlanilha(linhas, colunas, nomeArquivoExportar, formato);
     } catch (erro) {
       console.error(erro);
       onToast?.({ message: 'Não foi possível exportar a lista.', type: 'error' });
@@ -182,11 +184,11 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
   const periodos = useMemo(() => [...new Set(alunos.map((a) => a.periodo).filter(Boolean) as string[])].sort(), [alunos]);
   const turmas = useMemo(() => [...new Set(alunos.map((a) => a.turma).filter(Boolean) as string[])].sort(), [alunos]);
     async function sincronizarOficiais() {
-    if (!matriculasOficiais || matriculasOficiais.length === 0) return;
+    if (!matriculasEscola || matriculasEscola.length === 0) return;
     setSalvando(true);
     setErroImportacao('');
     try {
-      const registros: RegistroSecretaria[] = (matriculasOficiais as any[]).map((m) => ({
+      const registros: RegistroSecretaria[] = (matriculasEscola as any[]).map((m) => ({
         codigo_matricula: String(m['Código'] || '').trim(),
         codigo_estudante: m['Código do estudante'] ? String(m['Código do estudante']).trim() : null,
         ra: m['Registro do estudante (RA)'] ? String(m['Registro do estudante (RA)']).trim() : null,
@@ -206,7 +208,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
         identidade: m['Identidade'] ? String(m['Identidade']).trim() : null,
         filiacao_1: m['Filiação 1'] ? String(m['Filiação 1']).trim() : null,
         filiacao_2: m['Filiação 2'] ? String(m['Filiação 2']).trim() : null,
-        escola: 'EM MARIA GERALDA MIRANDA BRITO SALOMÃO',
+        escola: escolaAtiva,
         dados: m
       })).filter((r) => r.codigo_matricula && r.nome);
 
@@ -232,6 +234,8 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
   const filtrados = useMemo(() => {
     const q = busca.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('pt-BR');
     return alunos.filter((a) => {
+      const matchEscola = a.escola ? a.escola.toLowerCase().trim() === escolaAtiva.toLowerCase().trim() : escolaAtiva.includes('MARIA GERALDA');
+      if (!matchEscola) return false;
       if (filtroPeriodo && a.periodo !== filtroPeriodo) return false;
       if (filtroTurma && a.turma !== filtroTurma) return false;
       if (filtroSituacao && a.situacao !== filtroSituacao) return false;
@@ -249,7 +253,7 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
     <section className="ia-container">
       <header className="ia-header">
         <div>
-          <h2><Users size={24} /> Alunos da secretaria</h2>
+          <h2><Users size={24} /> Alunos da Secretaria &bull; {escolaAtiva}</h2>
           <p>Importação da listagem municipal e consulta por matrícula.</p>
         </div>
         <div className="ia-header-actions">
@@ -265,9 +269,9 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
             style={{ background: '#1d4ed8', color: '#ffffff', border: 'none', fontWeight: 700 }}
             onClick={() => void sincronizarOficiais()}
             disabled={salvando || carregando}
-            title="Enviar as 585 matrículas oficiais do SIGP para o Supabase"
+            title={`Enviar as ${matriculasEscola.length} matrículas de ${escolaAtiva} para o Supabase`}
           >
-            {salvando ? <><LoaderCircle className="ia-spin" size={16} /> Gravando {progresso.gravados}/{progresso.total}</> : <><Sparkles size={16} /> Enviar 585 ao Supabase</>}
+            {salvando ? <><LoaderCircle className="ia-spin" size={16} /> Gravando {progresso.gravados}/{progresso.total}</> : <><Sparkles size={16} /> Sincronizar ({matriculasEscola.length}) Supabase</>}
           </button>
           <button type="button" className="ia-btn ia-btn-primary" onClick={() => inputArquivo.current?.click()} disabled={lendoArquivo || salvando}>
             <Upload size={16} /> Importar planilha

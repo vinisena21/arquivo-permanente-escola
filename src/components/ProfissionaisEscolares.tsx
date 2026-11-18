@@ -13,7 +13,7 @@ import {
   LoaderCircle,
   Filter
 } from 'lucide-react';
-import profissionaisData from '../data/profissionais.json';
+import { useSchool } from '../context/SchoolContext';
 import * as XLSX from 'xlsx';
 import './ProfissionaisEscolares.css';
 import { supabase } from '../lib/supabase';
@@ -24,6 +24,7 @@ interface Props {
 }
 
 export default function ProfissionaisEscolares({ onToast }: Props) {
+  const { profissionaisEscola, escolaAtiva } = useSchool();
   const [busca, setBusca] = useState('');
   const [filtroFormacao, setFiltroFormacao] = useState('todos');
   const [filtroStatus, setFiltroStatus] = useState('todos');
@@ -32,7 +33,7 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
 
   const formacoesDisponiveis = useMemo(() => {
     const set = new Set<string>();
-    profissionaisData.forEach((p: any) => {
+    profissionaisEscola.forEach((p: any) => {
       const c = (p['Curso superior'] || '').trim();
       if (c) {
         c.split('\n').forEach((linha: string) => {
@@ -42,11 +43,11 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
       }
     });
     return Array.from(set).sort();
-  }, []);
+  }, [profissionaisEscola]);
 
   const profissionaisFiltrados = useMemo(() => {
     const b = busca.toLowerCase().trim();
-    return profissionaisData.filter((p: any) => {
+    return profissionaisEscola.filter((p: any) => {
       const matchBusca =
         !b ||
         (p['Nome'] || '').toLowerCase().includes(b) ||
@@ -66,12 +67,12 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
 
       return matchBusca && matchFormacao && matchStatus;
     });
-  }, [busca, filtroFormacao, filtroStatus]);
+  }, [profissionaisEscola, busca, filtroFormacao, filtroStatus]);
 
   async function sincronizarComSupabase() {
     setSincronizando(true);
     try {
-      const registros = profissionaisData.map((p: any) => ({
+      const registros = profissionaisEscola.map((p: any) => ({
         codigo: String(p['Código'] || '').trim(),
         nome: String(p['Nome'] || '').trim().toUpperCase(),
         cpf: p['CPF'] || null,
@@ -125,7 +126,8 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
     const ws = XLSX.utils.json_to_sheet(profissionaisFiltrados);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Profissionais');
-    XLSX.writeFile(wb, 'Profissionais_Escolares_2026.xlsx');
+    const nomeLimpo = escolaAtiva.replace(/[^a-zA-Z0-9]/g, '_');
+    XLSX.writeFile(wb, `Profissionais_${nomeLimpo}_2026.xlsx`);
     onToast?.({
       message: 'Planilha de profissionais exportada com sucesso!',
       type: 'success'
@@ -142,17 +144,17 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
           </div>
           <h2>Profissionais Escolares</h2>
           <p>
-            E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Ponto dos Volantes - MG
+            {escolaAtiva} &bull; Ponto dos Volantes - MG
           </p>
         </div>
         <div className="profissionais-hero-stats">
           <div className="stat-pill">
-            <span className="stat-num">{profissionaisData.length}</span>
+            <span className="stat-num">{profissionaisEscola.length}</span>
             <span className="stat-desc">Profissionais</span>
           </div>
           <div className="stat-pill">
             <span className="stat-num">
-              {profissionaisData.filter((p: any) => (p['Ativo'] || '').toLowerCase().includes('sim')).length}
+              {profissionaisEscola.filter((p: any) => (p['Ativo'] || '').toLowerCase().includes('sim')).length}
             </span>
             <span className="stat-desc">Ativos</span>
           </div>
@@ -246,7 +248,7 @@ export default function ProfissionaisEscolares({ onToast }: Props) {
         <div className="table-header-info">
           <h3>Listagem de Professores & Equipe</h3>
           <span>
-            Mostrando {profissionaisFiltrados.length} de {profissionaisData.length} registros
+            Mostrando {profissionaisFiltrados.length} de {profissionaisEscola.length} registros
           </span>
         </div>
 

@@ -3,19 +3,49 @@ import {
   GraduationCap,
   LoaderCircle,
   LockKeyhole,
-  Mail
+  Mail,
+  Building2,
+  MapPin,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { validarEmail, validarSenha } from '../lib/validacao';
+import escolasData from '../data/escolas.json';
 import './Login.css';
 
+const STORAGE_KEY = 'guia_escolar_escola_ativa';
+const ESCOLA_PADRAO = 'EM MARIA GERALDA MIRANDA BRITO SALOMÃO';
+
 export default function Login() {
+  const [escolaSelecionada, setEscolaSelecionada] = useState<string>(() => {
+    try {
+      const salva = localStorage.getItem(STORAGE_KEY);
+      if (salva && (escolasData as any[]).some((e) => e.Escola === salva)) {
+        return salva;
+      }
+    } catch {
+      // Ignora erro
+    }
+    return ESCOLA_PADRAO;
+  });
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [erroEmail, setErroEmail] = useState('');
   const [erroSenha, setErroSenha] = useState('');
+
+  const dadosEscola = (escolasData as any[]).find((e) => e.Escola === escolaSelecionada);
+
+  const trocarEscola = (novaEscola: string) => {
+    setEscolaSelecionada(novaEscola);
+    try {
+      localStorage.setItem(STORAGE_KEY, novaEscola);
+    } catch {
+      // Ignora erro
+    }
+  };
 
   async function entrar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -32,6 +62,13 @@ export default function Login() {
     }
 
     setCarregando(true);
+
+    // Garante que a escola selecionada está salva no localStorage antes de logar
+    try {
+      localStorage.setItem(STORAGE_KEY, escolaSelecionada);
+    } catch {
+      // Ignora erro
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -57,7 +94,41 @@ export default function Login() {
           </div>
 
           <h1>Guia Escolar</h1>
-          <p>Entre para consultar e gerenciar os registros.</p>
+          <p>Selecione a sua escola e entre para gerenciar os registros.</p>
+        </div>
+
+        {/* Seletor de Escola */}
+        <div className="login-school-selector">
+          <label htmlFor="login-escola" className="login-school-label">
+            <Building2 size={17} className="text-blue-600" />
+            <span>Unidade Escolar</span>
+          </label>
+
+          <div className="login-school-dropdown-wrap">
+            <select
+              id="login-escola"
+              className="login-school-select"
+              value={escolaSelecionada}
+              onChange={(e) => trocarEscola(e.target.value)}
+            >
+              {escolasData.map((e: any) => (
+                <option key={e.Código} value={e.Escola}>
+                  {e.Escola}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="login-school-meta">
+            <span className="login-school-badge">
+              <CheckCircle2 size={13} />
+              CENSO: {dadosEscola?.['Identificação CENSO'] || '31353426'}
+            </span>
+            <span className="login-school-zone">
+              <MapPin size={13} />
+              {dadosEscola?.['Localização/Zona da Escola (CENSO)'] || 'Zona Urbana'}
+            </span>
+          </div>
         </div>
 
         <form className="login-form" onSubmit={entrar} noValidate>
@@ -126,13 +197,13 @@ export default function Login() {
                 Entrando...
               </>
             ) : (
-              'Entrar'
+              'Acessar Escola Selecionada'
             )}
           </button>
         </form>
 
         <p className="login-security">
-          Acesso restrito aos usuários autorizados.
+          Acesso seguro e restrito à rede municipal de ensino.
         </p>
       </section>
     </main>

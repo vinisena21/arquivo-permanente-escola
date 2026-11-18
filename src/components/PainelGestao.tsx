@@ -23,8 +23,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './PainelGestao.css';
-import matriculasOficiais from '../data/matriculas.json';
-import profissionaisData from '../data/profissionais.json';
+import { useSchool } from '../context/SchoolContext';
 
 
 
@@ -70,6 +69,7 @@ const EVENTOS_PADRAO: EventoEscolar[] = [
 ];
 
 export const PainelGestao: React.FC = () => {
+  const { metricasEscola, matriculasEscola, profissionaisEscola, escolaAtiva } = useSchool();
   const [anoSelecionado, setAnoSelecionado] = useState('2026');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -103,161 +103,134 @@ export const PainelGestao: React.FC = () => {
     setCarregando(true);
     setErro('');
     try {
+      const isMariaGeralda = escolaAtiva.includes('MARIA GERALDA');
+
       const [
         totalRes,
         arquivadosRes,
         pendentesRes,
         transferidosRes,
         secretariaRes,
-        historicosRes,
-        alunosSecretariaData
+        historicosRes
       ] = await Promise.all([
         supabase.from('alunos').select('*', { count: 'exact', head: true }),
         supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Arquivado'),
         supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Pendente'),
         supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Transferido'),
         supabase.from('alunos_secretaria').select('*', { count: 'exact', head: true }),
-        supabase.from('historicos_gerados').select('*', { count: 'exact', head: true }),
-        supabase.from('alunos_secretaria').select('turno, sexo, situacao')
+        supabase.from('historicos_gerados').select('*', { count: 'exact', head: true })
       ]);
 
       // Pastas únicas
       const pastasUnicas = new Set<string>();
-      const lote = 1000;
-      let inicio = 0;
-      while (true) {
-        const { data } = await supabase
-          .from('alunos')
-          .select('codigo_pasta')
-          .range(inicio, inicio + lote - 1);
-        const rows = data ?? [];
-        for (const r of rows) {
-          if (r.codigo_pasta) pastasUnicas.add(String(r.codigo_pasta));
-        }
-        if (rows.length < lote) break;
-        inicio += lote;
-      }
-
-      // Distribuição por Turno
-      const secRows = alunosSecretariaData.data ?? [];
-      const turnosMap = new Map<string, number>();
-      const sexosMap = new Map<string, number>();
-      let evadidosCount = 0;
-
-      for (const row of secRows) {
-        const sit = (row.situacao || '').trim().toUpperCase();
-        // Não conta alunos transferidos nem desistentes nos totais de frequência e turnos de alunos normais
-        if (sit === 'TRANSFERIDO' || sit === 'DESISTENTE') {
-          continue;
-        }
-
-        const t = (row.turno || '').trim().toUpperCase() || 'MATUTINO';
-        turnosMap.set(t, (turnosMap.get(t) || 0) + 1);
-
-        const s = (row.sexo || '').trim().toUpperCase();
-        const sexoKey = s.startsWith('F') ? 'Feminino' : s.startsWith('M') ? 'Masculino' : 'Não informado';
-        sexosMap.set(sexoKey, (sexosMap.get(sexoKey) || 0) + 1);
-
-        if ((row.situacao || '').toLowerCase().includes('evad')) {
-          evadidosCount++;
+      if (isMariaGeralda) {
+        const lote = 1000;
+        let inicio = 0;
+        while (true) {
+          const { data } = await supabase
+            .from('alunos')
+            .select('codigo_pasta')
+            .range(inicio, inicio + lote - 1);
+          const rows = data ?? [];
+          for (const r of rows) {
+            if (r.codigo_pasta) pastasUnicas.add(String(r.codigo_pasta));
+          }
+          if (rows.length < lote) break;
+          inicio += lote;
         }
       }
 
-      const totalSec = secRows.length || totalRes.count || 557;
+      // Distribuição por Turno, Sexo e Raça/Cor a partir de matriculasEscola
+      const matriculasAtivas = matriculasEscola.filter((m: any) => {
+        const sit = (m['Situação'] || '').trim().toUpperCase();
+        return sit !== 'TRANSFERIDO' && sit !== 'DESISTENTE';
+      });
 
-      let porSexo: { sexo: string; quantidade: number; percentual: number; cor: string }[] = [];
-      let porRaca: { raca: string; quantidade: number; percentual: number }[] = [];
+      const contagemTurno: Record<string, number> = {};
+      const contagemSexo: Record<string, number> = {};
+      const contagemRaca: Record<string, number> = {};
 
-      // Monta dados por Turno (se vazio, usa proporção representativa da escola)
-      let turnosArray = Array.from(turnosMap.entries()).map(([turno, qtd]) => ({
-        turno: turno.charAt(0) + turno.slice(1).toLowerCase(),
+      matriculasAtivas.forEach((m: any) => {
+        const t = (m['Turno'] || 'MATUTINO').toUpperCase();
+        contagemTurno[t] = (contagemTurno[t] || 0) + 1;
+
+        const s = (m['Sexo'] || '').toUpperCase().startsWith('F') ? 'Feminino' : 'Masculino';
+        contagemSexo[s] = (contagemSexo[s] || 0) + 1;
+
+        const r = m['Cor'] || 'Parda';
+        contagemRaca[r] = (contagemRaca[r] || 0) + 1;
+      });
+
+      const turnosArray = [
+        { turno: 'Matutino', quantidade: contagemTurno['MATUTINO'] || 0, cor: '#1e3a8a' },
+        { turno: 'Vespertino', quantidade: contagemTurno['VESPERTINO'] || 0, cor: '#3b82f6' }
+      ];
+
+      const fem = contagemSexo['Feminino'] || 0;
+      const masc = contagemSexo['Masculino'] || 0;
+      const totS = fem + masc || 1;
+
+      const porSexo = [
+        { sexo: 'Feminino', quantidade: fem, percentual: Math.round((fem / totS) * 100), cor: '#f43f5e' },
+        { sexo: 'Masculino', quantidade: masc, percentual: Math.round((masc / totS) * 100), cor: '#2563eb' }
+      ];
+
+      const totalAmostraRaca = matriculasAtivas.length || 1;
+      let porRaca = Object.entries(contagemRaca).map(([raca, qtd]) => ({
+        raca,
         quantidade: qtd,
-        cor: turno.includes('MAT') ? '#1e3a8a' : turno.includes('VESP') ? '#3b82f6' : '#2563eb'
-      }));
+        percentual: Math.round((qtd / totalAmostraRaca) * 100)
+      })).sort((a, b) => b.quantidade - a.quantidade);
 
-      if (turnosArray.length === 0 && matriculasOficiais && matriculasOficiais.length > 0) {
-        // Filtra apenas as matrículas normais ativas (exclui os 42 transferidos e desistentes que saíram)
-        const matriculasAtivas = matriculasOficiais.filter((m: any) => {
-          const sit = (m['Situação'] || '').trim().toUpperCase();
-          return sit !== 'TRANSFERIDO' && sit !== 'DESISTENTE';
-        });
-
-        const contagemTurno: Record<string, number> = {};
-        const contagemSexo: Record<string, number> = {};
-        const contagemRaca: Record<string, number> = {};
-
-        matriculasAtivas.forEach((m: any) => {
-          const t = m['Turno'] || 'MATUTINO';
-          contagemTurno[t] = (contagemTurno[t] || 0) + 1;
-
-          const s = (m['Sexo'] || '').startsWith('F') ? 'Feminino' : 'Masculino';
-          contagemSexo[s] = (contagemSexo[s] || 0) + 1;
-
-          const r = m['Cor'] || 'Parda';
-          contagemRaca[r] = (contagemRaca[r] || 0) + 1;
-        });
-
-        turnosArray = [
-          { turno: 'Matutino', quantidade: contagemTurno['MATUTINO'] || 307, cor: '#1e3a8a' },
-          { turno: 'Vespertino', quantidade: contagemTurno['VESPERTINO'] || 235, cor: '#3b82f6' }
+      if (porRaca.length === 0) {
+        porRaca = [
+          { raca: 'Parda', quantidade: Math.round(totalAmostraRaca * 0.85), percentual: 85 },
+          { raca: 'Branca', quantidade: Math.round(totalAmostraRaca * 0.08), percentual: 8 },
+          { raca: 'Preta', quantidade: Math.round(totalAmostraRaca * 0.05), percentual: 5 }
         ];
-
-        const fem = contagemSexo['Feminino'] || 265;
-        const masc = contagemSexo['Masculino'] || 277;
-        const totS = fem + masc || 542;
-
-        porSexo = [
-          { sexo: 'Feminino', quantidade: fem, percentual: Math.round((fem / totS) * 100), cor: '#f43f5e' },
-          { sexo: 'Masculino', quantidade: masc, percentual: Math.round((masc / totS) * 100), cor: '#2563eb' }
-        ];
-
-        porRaca = Object.entries(contagemRaca).map(([raca, qtd]) => ({
-          raca,
-          quantidade: qtd,
-          percentual: Math.round((qtd / matriculasAtivas.length) * 100)
-        })).sort((a, b) => b.quantidade - a.quantidade);
       }
 
-      // Monta dados por Sexo
-      let femQtd = sexosMap.get('Feminino') || Math.round(totalSec * 0.51);
-      let mascQtd = sexosMap.get('Masculino') || (totalSec - femQtd);
-      const totalSexo = femQtd + mascQtd || 1;
+      const totalAlunosExibir = isMariaGeralda
+        ? (totalRes.count ?? matriculasEscola.length)
+        : matriculasEscola.length;
 
-      porSexo = [
-        { sexo: 'Feminino', quantidade: femQtd, percentual: Math.round((femQtd / totalSexo) * 100), cor: '#f43f5e' },
-        { sexo: 'Masculino', quantidade: mascQtd, percentual: Math.round((mascQtd / totalSexo) * 100), cor: '#06b6d4' }
-      ];
+      const totalArquivadosExibir = isMariaGeralda
+        ? (arquivadosRes.count ?? metricasEscola.totalAtivos)
+        : metricasEscola.totalAtivos;
 
-      // Distribuição por Raça/Cor (dados padrão do censo escolar da escola)
-      porRaca = [
-        { raca: 'Parda', quantidade: Math.round(totalSec * 0.85), percentual: 85 },
-        { raca: 'Branca', quantidade: Math.round(totalSec * 0.08), percentual: 8 },
-        { raca: 'Preta', quantidade: Math.round(totalSec * 0.05), percentual: 5 },
-        { raca: 'Amarela', quantidade: Math.round(totalSec * 0.01), percentual: 1 },
-        { raca: 'Indígena', quantidade: Math.round(totalSec * 0.01), percentual: 1 }
-      ];
+      const totalPendentesExibir = isMariaGeralda
+        ? (pendentesRes.count ?? 0)
+        : 0;
+
+      const totalTransferidosExibir = isMariaGeralda
+        ? (transferidosRes.count ?? metricasEscola.totalTransferidos)
+        : metricasEscola.totalTransferidos;
+
+      const totalSecretariaExibir = isMariaGeralda
+        ? (secretariaRes.count ?? matriculasEscola.length)
+        : matriculasEscola.length;
 
       setMetrics({
-        totalAlunos: totalRes.count ?? 0,
-        totalArquivados: arquivadosRes.count ?? 0,
-        totalPendentes: pendentesRes.count ?? 0,
-        totalTransferidos: transferidosRes.count ?? 0,
-        totalPastas: pastasUnicas.size,
-        totalSecretaria: secretariaRes.count ?? 0,
-        totalHistoricos: historicosRes.count ?? 0,
+        totalAlunos: totalAlunosExibir,
+        totalArquivados: totalArquivadosExibir,
+        totalPendentes: totalPendentesExibir,
+        totalTransferidos: totalTransferidosExibir,
+        totalPastas: isMariaGeralda ? pastasUnicas.size : metricasEscola.totalTurmas,
+        totalSecretaria: totalSecretariaExibir,
+        totalHistoricos: isMariaGeralda ? (historicosRes.count ?? 0) : 0,
         porTurno: turnosArray,
         porSexo,
         porRaca,
         aprovacao: {
-          aprovados: Math.round(totalSec * 0.96),
-          reprovados: Math.round(totalSec * 0.04),
-          totalAvaliados: totalSec,
+          aprovados: Math.round(totalAlunosExibir * 0.96),
+          reprovados: Math.round(totalAlunosExibir * 0.04),
+          totalAvaliados: totalAlunosExibir,
           taxa: 96.0
         },
         evasao: {
-          evadidos: evadidosCount,
-          totalMatriculas: totalSec,
-          taxa: totalSec > 0 ? Number(((evadidosCount / totalSec) * 100).toFixed(1)) : 0.0
+          evadidos: metricasEscola.totalDesistentes,
+          totalMatriculas: totalAlunosExibir,
+          taxa: totalAlunosExibir > 0 ? Number(((metricasEscola.totalDesistentes / totalAlunosExibir) * 100).toFixed(1)) : 0.0
         },
         frequenciaGeral: 88.96,
         distorcaoIdadeSerie: 0.0
@@ -268,7 +241,7 @@ export const PainelGestao: React.FC = () => {
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [matriculasEscola, metricasEscola, escolaAtiva]);
 
   useEffect(() => {
     void carregarDados();
@@ -343,7 +316,7 @@ export const PainelGestao: React.FC = () => {
             <GraduationCap size={16} />
             <span>Sistema Integrado de Gestão Escolar</span>
           </div>
-          <h1>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</h1>
+          <h1>{escolaAtiva.toUpperCase()}</h1>
           <p className="painel-subtitulo">
             Município de Ponto dos Volantes — MG &bull; Arquivo Permanente & Gestão Educacional
           </p>
@@ -468,7 +441,7 @@ export const PainelGestao: React.FC = () => {
           <div className="kpi-icon"><GraduationCap size={22} /></div>
           <div className="kpi-info">
             <span className="kpi-label">Professores / Equipe</span>
-            <strong className="kpi-valor">{profissionaisData.length}</strong>
+            <strong className="kpi-valor">{profissionaisEscola.length}</strong>
           </div>
         </div>
       </section>

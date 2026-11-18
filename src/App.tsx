@@ -30,9 +30,12 @@ import {
   ShieldCheck,
   Sparkles,
   LayoutGrid,
-  List
+  List,
+  Building
 } from 'lucide-react';
 import './App.css';
+import { useSchool } from './context/SchoolContext';
+import SeletorEscolaModal from './components/SeletorEscolaModal';
 import EditarAlunoModal, {
   type AlunoEditavel
 } from './components/EditarAlunoModal';
@@ -93,6 +96,8 @@ function formatarData(data: string | null): string {
 }
 
 export default function App() {
+  const { escolaAtiva } = useSchool();
+  const [modalSeletorEscolaAberta, setModalSeletorEscolaAberta] = useState(false);
   const [sessao, setSessao] = useState<Session | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('consulta');
@@ -289,13 +294,27 @@ export default function App() {
                   <h1>Guia Escolar</h1>
                   <span className="app-version-badge">v2.5 PRO</span>
                 </div>
-                <div className="school-pill-badge">
+                <div
+                  className="school-pill-badge clickable"
+                  onClick={() => setModalSeletorEscolaAberta(true)}
+                  title="Clique para alternar a escola municipal ativa"
+                >
                   <ShieldCheck size={13} />
-                  <span>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO</span>
+                  <span>{escolaAtiva}</span>
+                  <ChevronDown size={13} style={{ marginLeft: 4, opacity: 0.8 }} />
                 </div>
               </div>
             </div>
             <div className="user-area">
+              <button
+                type="button"
+                className="school-change-btn"
+                onClick={() => setModalSeletorEscolaAberta(true)}
+                title="Trocar unidade escolar municipal ativa"
+              >
+                <Building size={15} />
+                <span>Trocar Escola</span>
+              </button>
               <div className="user-profile-chip">
                 <div className="user-avatar-initial">
                   {sessao.user.email ? sessao.user.email.charAt(0).toUpperCase() : 'U'}
@@ -1185,7 +1204,7 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Guia Escolar &copy; {new Date().getFullYear()} — E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO
+          Guia Escolar &copy; {new Date().getFullYear()} — {escolaAtiva}
           — Todos os direitos reservados.
         </p>
       </footer>
@@ -1223,6 +1242,11 @@ export default function App() {
         abertoExterno={assistenteIaAberto}
         onFecharExterno={() => setAssistenteIaAberto(false)}
         onAbrirDeclaracao={() => setModalDeclaracoesAberta(true)}
+      />
+
+      <SeletorEscolaModal
+        isOpen={modalSeletorEscolaAberta}
+        onClose={() => setModalSeletorEscolaAberta(false)}
       />
 
       <Toast toast={toast} onClose={() => setToast(null)} />

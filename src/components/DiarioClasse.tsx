@@ -12,8 +12,7 @@ import {
   Clock,
   Download
 } from 'lucide-react';
-import turmasData from '../data/turmas.json';
-import matriculasData from '../data/matriculas.json';
+import { useSchool } from '../context/SchoolContext';
 import './DiarioClasse.css';
 
 interface DiarioClasseProps {
@@ -122,13 +121,22 @@ const CONTEUDOS_EXEMPLO: Record<string, RegistroConteudo[]> = {
 };
 
 export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
+  const { escolaAtiva, turmasEscola, matriculasEscola } = useSchool();
+
   const turmasValidas = useMemo(() => {
-    return turmasData.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
-  }, []);
+    return turmasEscola.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
+  }, [turmasEscola]);
 
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>(() => {
     return turmasValidas[0]?.Turma || '1º  1';
   });
+
+  // Atualiza turma selecionada se a turma atual não existir na nova escola
+  useEffect(() => {
+    if (turmasValidas.length > 0 && !turmasValidas.some(t => t.Turma === turmaSelecionada)) {
+      setTurmaSelecionada(turmasValidas[0].Turma);
+    }
+  }, [turmasValidas, turmaSelecionada]);
 
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<string>('Língua Portuguesa');
   const [mesSelecionado, setMesSelecionado] = useState<number>(11); // Novembro por padrão
@@ -136,8 +144,8 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
 
   // Alunos da turma
   const todosAlunosTurma = useMemo(() => {
-    return matriculasData.filter(m => (m.Turma || '').trim() === turmaSelecionada.trim());
-  }, [turmaSelecionada]);
+    return matriculasEscola.filter(m => (m.Turma || '').trim() === turmaSelecionada.trim());
+  }, [matriculasEscola, turmaSelecionada]);
 
   // Alunos ativos na chamada regular
   const alunosAtivos = useMemo(() => {
@@ -150,8 +158,8 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
   }, [todosAlunosTurma]);
 
   const turmaObj = useMemo(() => {
-    return turmasData.find(t => t.Turma === turmaSelecionada) || turmasValidas[0];
-  }, [turmaSelecionada, turmasValidas]);
+    return turmasEscola.find((t: any) => t.Turma === turmaSelecionada) || turmasValidas[0];
+  }, [turmaSelecionada, turmasValidas, turmasEscola]);
 
   // Dias letivos úteis do mês
   const diasDoMes = useMemo(() => {
@@ -437,7 +445,7 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
           <BookOpen className="icon-header" size={28} />
           <div>
             <h2>Diário de Classe Eletrônico (SIGP Educação)</h2>
-            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Frequência Escolar & Plano de Conteúdos</p>
+            <p>{escolaAtiva} &bull; Frequência Escolar & Plano de Conteúdos</p>
           </div>
         </div>
 
@@ -574,7 +582,7 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
         <div className="diario-print-top">
           <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
           <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO &bull; SIGP EDUCAÇÃO</h4>
-          <h2>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h2>
+          <h2>{escolaAtiva}</h2>
           <p>DIÁRIO DE CLASSE &bull; ANO LETIVO 2026 &bull; {abaAtiva === 'frequencia' ? 'FOLHA DE FREQUÊNCIA' : 'REGISTRO DE CONTEÚDOS'}</p>
         </div>
         <div className="diario-print-meta">

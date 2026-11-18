@@ -8,8 +8,7 @@ import {
   Users,
   BookOpen
 } from 'lucide-react';
-import turmasData from '../data/turmas.json';
-import profissionaisData from '../data/profissionais.json';
+import { useSchool } from '../context/SchoolContext';
 import './HorarioTurma.css';
 
 interface HorarioTurmaProps {
@@ -66,12 +65,12 @@ const HORARIOS_VESPERTINO = [
 ];
 
 // Grade padrão inteligente para preenchimento rápido
-function gerarGradePadrao(isAnosIniciais: boolean, turmaNome: string): GradeHoraria {
+function gerarGradePadrao(isAnosIniciais: boolean, turmaNome: string, profsLista: any[] = []): GradeHoraria {
   const grade: GradeHoraria = {
     0: {}, 1: {}, 2: {}, 3: {}, 4: {}
   };
 
-  const profs = profissionaisData;
+  const profs = profsLista && profsLista.length > 0 ? profsLista : [];
   const profRegente = profs.find(p => p['Curso superior']?.toLowerCase().includes('pedagogia'))?.Nome || 'Prof. Regente';
   const profMat = profs.find(p => p['Curso superior']?.toLowerCase().includes('matemática'))?.Nome || 'Prof. de Matemática';
   const profPort = profs.find(p => p['Curso superior']?.toLowerCase().includes('letras'))?.Nome || 'Prof. de Língua Portuguesa';
@@ -195,18 +194,27 @@ function gerarGradePadrao(isAnosIniciais: boolean, turmaNome: string): GradeHora
 }
 
 export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
-  // Lista de turmas oficiais ordenadas
+  const { escolaAtiva, turmasEscola, profissionaisEscola } = useSchool();
+
+  // Lista de turmas oficiais ordenadas da escola ativa
   const turmasValidas = useMemo(() => {
-    return turmasData.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
-  }, []);
+    return turmasEscola.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
+  }, [turmasEscola]);
 
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>(() => {
     return turmasValidas[0]?.Turma || '1º  1';
   });
 
+  // Atualiza turma selecionada se a turma atual não existir na nova escola
+  useEffect(() => {
+    if (turmasValidas.length > 0 && !turmasValidas.some(t => t.Turma === turmaSelecionada)) {
+      setTurmaSelecionada(turmasValidas[0].Turma);
+    }
+  }, [turmasValidas, turmaSelecionada]);
+
   const turmaObj = useMemo(() => {
-    return turmasData.find(t => t.Turma === turmaSelecionada) || turmasValidas[0];
-  }, [turmaSelecionada, turmasValidas]);
+    return turmasEscola.find(t => t.Turma === turmaSelecionada) || turmasValidas[0];
+  }, [turmaSelecionada, turmasValidas, turmasEscola]);
 
   const isAnosIniciais = useMemo(() => {
     const p = turmaObj?.Período?.toUpperCase() || '';
@@ -226,7 +234,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
         // fallback
       }
     }
-    return gerarGradePadrao(isAnosIniciais, turmaSelecionada);
+    return gerarGradePadrao(isAnosIniciais, turmaSelecionada, profissionaisEscola);
   });
 
   // Modal para editar um slot
@@ -247,8 +255,8 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
         // fallback
       }
     }
-    setGrade(gerarGradePadrao(isAnosIniciais, turmaSelecionada));
-  }, [turmaSelecionada, isAnosIniciais]);
+    setGrade(gerarGradePadrao(isAnosIniciais, turmaSelecionada, profissionaisEscola));
+  }, [turmaSelecionada, isAnosIniciais, profissionaisEscola]);
 
   function salvarGrade() {
     localStorage.setItem(`guia_escolar_grade_${turmaSelecionada}`, JSON.stringify(grade));
@@ -261,7 +269,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
   }
 
   function restaurarPadrao() {
-    const padrao = gerarGradePadrao(isAnosIniciais, turmaSelecionada);
+    const padrao = gerarGradePadrao(isAnosIniciais, turmaSelecionada, profissionaisEscola);
     setGrade(padrao);
     localStorage.setItem(`guia_escolar_grade_${turmaSelecionada}`, JSON.stringify(padrao));
     if (onToast) {
@@ -318,7 +326,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
           <Calendar className="icon-header" size={28} />
           <div>
             <h2>Quadro de Horários das Turmas (SIGP Educação)</h2>
-            <p>E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO &bull; Ano Letivo 2026 &bull; 200 Dias Letivos</p>
+            <p>{escolaAtiva} &bull; Ano Letivo 2026 &bull; 200 Dias Letivos</p>
           </div>
         </div>
 
@@ -390,7 +398,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
         <div className="print-topo">
           <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
           <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO</h4>
-          <h2>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h2>
+          <h2>{escolaAtiva}</h2>
           <p className="print-sub">CÓDIGO INEP: 31054366 &bull; RECONHECIMENTO: PORTARIA SEE/MG</p>
         </div>
         <div className="print-dados-turma">
@@ -505,7 +513,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
         <div className="assinatura-box">
           <div className="linha-assinatura"></div>
           <p>Direção Escolar</p>
-          <span>E.M. Maria Geralda M. B. Salomão</span>
+          <span>{escolaAtiva}</span>
         </div>
       </div>
 
@@ -515,6 +523,7 @@ export const HorarioTurma: React.FC<HorarioTurmaProps> = ({ onToast }) => {
           slot={slotEditando.slot}
           diaNome={DIAS_SEMANA_NOMES[slotEditando.dia]}
           aulaNumero={slotEditando.aulaIdx + 1}
+          profissionais={profissionaisEscola}
           aoSalvar={handleSalvarSlot}
           aoFechar={() => setSlotEditando(null)}
         />
@@ -556,6 +565,7 @@ interface ModalEdicaoSlotProps {
   slot: AulaSlot;
   diaNome: string;
   aulaNumero: number;
+  profissionais?: any[];
   aoSalvar: (disciplina: string, professor: string) => void;
   aoFechar: () => void;
 }
@@ -564,6 +574,7 @@ const ModalEdicaoSlot: React.FC<ModalEdicaoSlotProps> = ({
   slot,
   diaNome,
   aulaNumero,
+  profissionais = [],
   aoSalvar,
   aoFechar
 }) => {
@@ -609,7 +620,7 @@ const ModalEdicaoSlot: React.FC<ModalEdicaoSlotProps> = ({
               placeholder="Selecione ou digite o nome do professor"
             />
             <datalist id="lista-professores-datalist">
-              {profissionaisData.map((p) => (
+              {profissionais.map((p) => (
                 <option key={p.Código} value={p.Nome}>
                   {p.Nome} - {p['Curso superior'] || 'Docente'}
                 </option>

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './ControleRematricula.css';
-import matriculasOficiais from '../data/matriculas.json';
+import { useSchool } from '../context/SchoolContext';
 import { carregarAlunosSecretaria } from '../lib/alunosSecretaria';
 import { supabase } from '../lib/supabase';
 import { gerarDocxRematricula } from '../lib/gerarDocxRematricula';
@@ -180,6 +180,7 @@ function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage>
 }
 
 export default function ControleRematricula({ onToast }: Props) {
+  const { matriculasEscola, escolaAtiva } = useSchool();
   const [alunos, setAlunos] = useState<AlunoRematriculaItem[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState('');
@@ -295,44 +296,52 @@ export default function ControleRematricula({ onToast }: Props) {
         try {
           const alunosDb = await carregarAlunosSecretaria();
           if (alunosDb && alunosDb.length > 0) {
-            listaBase = alunosDb.map((a, idx) => {
-              const codigo = String(a.codigo_matricula || a.codigo_estudante || a.ra || `aluno_${idx}`);
-              const nome = a.nome;
-
-              // Busca inteligente por código E com fallback por nome
-              let saved = mapRematriculas[codigo];
-              if (!saved) {
-                const porNome = Object.values(mapRematriculas).find(
-                  (r: any) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(nome)
-                );
-                if (porNome) saved = porNome;
-              }
-
-              const turma = a.turma || a.descricao || a.periodo || 'Não informada';
-              const turnoPadrao = obterTurnoPadrao(a.turno);
-              return {
-                codigo,
-                codigoEstudante: a.codigo_estudante || a.ra || '—',
-                nome,
-                dataNascimento: a.data_nascimento || '',
-                turmaAtual: turma,
-                periodo: a.periodo || '',
-                turno: a.turno || 'MATUTINO',
-                turma2027Prevista: calcularProximaEtapa(turma),
-                turno2027: saved?.turno2027 || turnoPadrao,
-                rematriculado: Boolean(saved?.confirmado),
-                dataRematricula: saved?.dataConfirmacao || null,
-                responsavel: a.filiacao_1 || a.filiacao_2 || undefined
-              };
+            // Filtra pela escola ativa se a coluna existir
+            const alunosFiltradosDb = alunosDb.filter((a: any) => {
+              if (!a.escola) return escolaAtiva.includes('MARIA GERALDA');
+              return a.escola.toLowerCase().trim() === escolaAtiva.toLowerCase().trim();
             });
+
+            if (alunosFiltradosDb.length > 0) {
+              listaBase = alunosFiltradosDb.map((a, idx) => {
+                const codigo = String(a.codigo_matricula || a.codigo_estudante || a.ra || `aluno_${idx}`);
+                const nome = a.nome;
+
+                // Busca inteligente por código E com fallback por nome
+                let saved = mapRematriculas[codigo];
+                if (!saved) {
+                  const porNome = Object.values(mapRematriculas).find(
+                    (r: any) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(nome)
+                  );
+                  if (porNome) saved = porNome;
+                }
+
+                const turma = a.turma || a.descricao || a.periodo || 'Não informada';
+                const turnoPadrao = obterTurnoPadrao(a.turno);
+                return {
+                  codigo,
+                  codigoEstudante: a.codigo_estudante || a.ra || '—',
+                  nome,
+                  dataNascimento: a.data_nascimento || '',
+                  turmaAtual: turma,
+                  periodo: a.periodo || '',
+                  turno: a.turno || 'MATUTINO',
+                  turma2027Prevista: calcularProximaEtapa(turma),
+                  turno2027: saved?.turno2027 || turnoPadrao,
+                  rematriculado: Boolean(saved?.confirmado),
+                  dataRematricula: saved?.dataConfirmacao || null,
+                  responsavel: a.filiacao_1 || a.filiacao_2 || undefined
+                };
+              });
+            }
           }
         } catch (erroDb) {
           console.warn('Banco alunos_secretaria não disponível, usando matriculas oficiais locais:', erroDb);
         }
 
-        // Se o banco estiver vazio ou offline, carrega o matriculas.json (585 alunos reais)
+        // Se o banco estiver vazio ou offline para esta escola, carrega as matrículas da escola ativa
         if (listaBase.length === 0) {
-          listaBase = (matriculasOficiais as Array<Record<string, string>>).map((m, idx) => {
+          listaBase = (matriculasEscola as Array<Record<string, string>>).map((m, idx) => {
             const codigo = String(
               m['Código'] ||
               m['codigo_matricula'] ||
@@ -383,7 +392,7 @@ export default function ControleRematricula({ onToast }: Props) {
     }
 
     void carregar();
-  }, []);
+  }, [matriculasEscola, escolaAtiva]);
 
   // Lista única de turmas para o filtro
   const turmasDisponiveis = useMemo(() => {
@@ -742,7 +751,9 @@ export default function ControleRematricula({ onToast }: Props) {
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
-        })
+        }),
+        nomeEscola: escolaAtiva,
+        municipio: 'PONTO DOS VOLANTES'
       });
 
       onToast?.({
@@ -790,7 +801,8 @@ export default function ControleRematricula({ onToast }: Props) {
     const ws = XLSX.utils.json_to_sheet(linhas);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Rematriculas_2027');
-    XLSX.writeFile(wb, `Relatorio_Rematriculas_2027_EM_Maria_Geralda.xlsx`);
+    const nomeLimpo = escolaAtiva.replace(/[^a-zA-Z0-9]/g, '_');
+    XLSX.writeFile(wb, `Relatorio_Rematriculas_2027_${nomeLimpo}.xlsx`);
 
     onToast?.({
       message: 'Planilha de rematrículas exportada com sucesso!',
@@ -836,7 +848,7 @@ export default function ControleRematricula({ onToast }: Props) {
           </div>
           <h1>Controle de Rematrícula 2027</h1>
           <p className="rematricula-hero-sub">
-            E.M. MARIA GERALDA MIRANDA BRITO SALOMÃO · Confirmação simplificada em 1-clique & Escolha de Turno (MAT/VESP)
+            {escolaAtiva} · Confirmação simplificada em 1-clique & Escolha de Turno (MAT/VESP)
           </p>
         </div>
 
@@ -1269,8 +1281,8 @@ export default function ControleRematricula({ onToast }: Props) {
               <div className="documento-oficial-wrap">
                 {/* Cabeçalho Institucional Oficial */}
                 <div className="documento-header-institucional">
-                  <h4>Prefeitura Municipal de Vespasiano · Secretaria Municipal de Educação</h4>
-                  <h2>Escola Municipal Maria Geralda Miranda Brito Salomão</h2>
+                  <h4>Prefeitura Municipal de Ponto dos Volantes · Secretaria Municipal de Educação</h4>
+                  <h2>{escolaAtiva}</h2>
                   <p style={{ margin: '4px 0 0', fontSize: '0.88rem', fontWeight: 700, color: '#1e3a8a' }}>
                     RELATÓRIO OFICIAL DE CONTROLE DE REMATRÍCULA — ANO LETIVO 2027
                   </p>
@@ -1363,7 +1375,7 @@ export default function ControleRematricula({ onToast }: Props) {
                   <div className="assinatura-bloco">
                     <div className="assinatura-linha" />
                     <strong>Direção Escolar</strong>
-                    <span className="assinatura-cargo">E.M. Maria Geralda Miranda Brito Salomão</span>
+                    <span className="assinatura-cargo">{escolaAtiva}</span>
                   </div>
                 </div>
               </div>
