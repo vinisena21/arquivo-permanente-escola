@@ -1,9 +1,3 @@
-/**
- * Tipos gerados manualmente com base na estrutura das tabelas no Supabase.
- * Quando possível, gere automaticamente com:
- *   npx supabase gen types typescript --project-id SEU_PROJECT_ID > src/types/database.ts
- */
-
 export type Json =
   | string
   | number
@@ -52,6 +46,8 @@ export interface Database {
           data_geracao: string;
           dados: Json;
           created_at: string;
+          deleted_at?: string | null;
+          ano_letivo?: number | null;
         };
         Insert: {
           id?: number;
@@ -62,6 +58,8 @@ export interface Database {
           data_geracao?: string;
           dados?: Json;
           created_at?: string;
+          deleted_at?: string | null;
+          ano_letivo?: number | null;
         };
         Update: {
           id?: number;
@@ -72,6 +70,8 @@ export interface Database {
           data_geracao?: string;
           dados?: Json;
           created_at?: string;
+          deleted_at?: string | null;
+          ano_letivo?: number | null;
         };
         Relationships: [];
       };
@@ -101,6 +101,9 @@ export interface Database {
           dados: Json;
           importado_em: string;
           updated_at: string;
+          deleted_at: string | null;
+          deleted_by: string | null;
+          ano_letivo: number | null;
         };
         Insert: {
           id?: number;
@@ -127,6 +130,9 @@ export interface Database {
           dados?: Json;
           importado_em?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          ano_letivo?: number | null;
         };
         Update: {
           id?: number;
@@ -153,6 +159,9 @@ export interface Database {
           dados?: Json;
           importado_em?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          ano_letivo?: number | null;
         };
         Relationships: [];
       };
@@ -176,6 +185,9 @@ export interface Database {
           dados: Json | null;
           created_at: string;
           updated_at: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          ano_letivo?: number | null;
         };
         Insert: {
           id?: number;
@@ -196,6 +208,9 @@ export interface Database {
           dados?: Json | null;
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          ano_letivo?: number | null;
         };
         Update: {
           id?: number;
@@ -216,6 +231,9 @@ export interface Database {
           dados?: Json | null;
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          ano_letivo?: number | null;
         };
         Relationships: [];
       };
@@ -234,6 +252,8 @@ export interface Database {
           confirmado_em: string;
           created_at: string;
           updated_at: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
         };
         Insert: {
           id?: number;
@@ -249,6 +269,8 @@ export interface Database {
           confirmado_em?: string;
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
         };
         Update: {
           id?: number;
@@ -264,6 +286,86 @@ export interface Database {
           confirmado_em?: string;
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+        };
+        Relationships: [];
+      };
+      fechamento_periodos: {
+        Row: {
+          id: number;
+          escola: string;
+          ano_letivo: number;
+          trimestre: number;
+          turma: string | null;
+          fechado: boolean;
+          fechado_em: string | null;
+          fechado_por: string | null;
+          reaberto_em: string | null;
+          reaberto_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          escola: string;
+          ano_letivo?: number;
+          trimestre: number;
+          turma?: string | null;
+          fechado?: boolean;
+          fechado_em?: string | null;
+          fechado_por?: string | null;
+          reaberto_em?: string | null;
+          reaberto_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          escola?: string;
+          ano_letivo?: number;
+          trimestre?: number;
+          turma?: string | null;
+          fechado?: boolean;
+          fechado_em?: string | null;
+          fechado_por?: string | null;
+          reaberto_em?: string | null;
+          reaberto_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      audit_log: {
+        Row: {
+          id: number;
+          tabela: string;
+          registro_id: number | null;
+          acao: string;
+          dados_anteriores: Json | null;
+          dados_novos: Json | null;
+          usuario: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          tabela: string;
+          registro_id?: number | null;
+          acao: string;
+          dados_anteriores?: Json | null;
+          dados_novos?: Json | null;
+          usuario?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          tabela?: string;
+          registro_id?: number | null;
+          acao?: string;
+          dados_anteriores?: Json | null;
+          dados_novos?: Json | null;
+          usuario?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };

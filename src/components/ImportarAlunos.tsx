@@ -212,12 +212,27 @@ export default function ImportarAlunos({ onToast, onUsarNoHistorico, refreshKey 
         dados: m
       })).filter((r) => r.codigo_matricula && r.nome);
 
-      await salvarAlunosSecretaria(registros, (gravados, total) => {
+      // Prevenção contra dupla matrícula do mesmo estudante na mesma turma
+      const estudantesNaTurma = new Set<string>();
+      const registrosValidos: RegistroSecretaria[] = [];
+
+      for (const reg of registros) {
+        const idEstudante = (reg.codigo_estudante || reg.codigo_matricula).trim().toUpperCase();
+        const turma = (reg.turma || '').trim().toUpperCase();
+        const chave = `${idEstudante}__${turma}`;
+
+        if (!turma || !estudantesNaTurma.has(chave)) {
+          if (turma) estudantesNaTurma.add(chave);
+          registrosValidos.push(reg);
+        }
+      }
+
+      await salvarAlunosSecretaria(registrosValidos, (gravados, total) => {
         setProgresso({ gravados, total });
       });
 
       onToast?.({
-        message: `${registros.length} matrículas oficiais sincronizadas com o Supabase com sucesso!`,
+        message: `${registrosValidos.length} matrículas oficiais sincronizadas com o Supabase com sucesso!`,
         type: 'success'
       });
       await carregar();

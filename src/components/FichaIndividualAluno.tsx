@@ -1,74 +1,98 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Printer,
   AlertTriangle
 } from 'lucide-react';
-import matriculasData from '../data/matriculas.json';
-import turmasData from '../data/turmas.json';
+import { useSchool } from '../context/SchoolContext';
+import { useAnoLetivo } from '../context/AnoLetivoContext';
 import { DISCIPLINAS_BOLETIM } from './BoletimEscolar';
 
 interface FichaIndividualAlunoProps {
   onToast?: (toast: { message: string; type: 'success' | 'error' }) => void;
 }
 
+// Cálculo consistente de notas e faltas (mesma semente do BoletimEscolar)
+function calcularNotasFicha(codMatricula: string, situacao: string) {
+  const seed = parseInt(codMatricula, 10) || 12345;
+  const isTransf = situacao === 'TRANSFERIDO';
+
+  return DISCIPLINAS_BOLETIM.map((disc, idx) => {
+    const varSeed = (seed * 17 + idx * 31) % 100;
+    const t1 = Math.min(30, Math.max(16, Math.round(18 + (varSeed % 12))));
+    const f1 = (varSeed % 4);
+    const t2 = Math.min(30, Math.max(16, Math.round(18 + ((varSeed + 5) % 12))));
+    const f2 = ((varSeed + 1) % 5);
+    const t3 = isTransf ? null : Math.min(40, Math.max(24, Math.round(25 + ((varSeed + 9) % 15))));
+    const f3 = isTransf ? 0 : ((varSeed + 2) % 4);
+    const total = t1 + t2 + (t3 ?? 0);
+    const faltas = f1 + f2 + f3;
+
+    return {
+      disciplina: disc,
+      trimestre1: t1,
+      trimestre2: t2,
+      trimestre3: t3,
+      total: total,
+      faltas: faltas,
+      resultado: isTransf ? 'TRANSF.' : (total >= 60 ? 'APROVADO' : 'RECUPERAÇÃO')
+    };
+  });
+}
+
 export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onToast: _onToast }) => {
+  const { matriculasEscola, turmasEscola, escolaAtiva, dadosEscolaAtiva } = useSchool();
+  const { anoLetivo } = useAnoLetivo();
+
   const [busca, setBusca] = useState('');
   const [alunoSelecionadoCod, setAlunoSelecionadoCod] = useState<string>(() => {
-    return matriculasData[0]?.Código || '';
+    return (matriculasEscola[0] as any)?.Código || '';
   });
+
+  // Atualiza seleção ao trocar de escola ou ano
+  useEffect(() => {
+    if (matriculasEscola.length > 0 && !matriculasEscola.some((a: any) => a.Código === alunoSelecionadoCod)) {
+      setAlunoSelecionadoCod((matriculasEscola[0] as any)?.Código || '');
+    }
+  }, [matriculasEscola, alunoSelecionadoCod]);
 
   const [parecerDescritivo, setParecerDescritivo] = useState(
     'O(A) estudante demonstrou pleno desenvolvimento das competências e habilidades propostas pela Base Nacional Comum Curricular (BNCC) para o respectivo ano de escolaridade, mantendo postura participativa, colaborativa e assídua nas atividades individuais e em equipe ao longo dos três trimestres letivos.'
   );
 
+  // 100% dos alunos da escola ativa filtrados
   const alunosFiltrados = useMemo(() => {
-    if (!busca.trim()) return matriculasData.slice(0, 100);
-    const termo = busca.toLowerCase();
-    return matriculasData
-      .filter(
-        a =>
-          a.Nome.toLowerCase().includes(termo) ||
-          a.Código.includes(termo) ||
-          (a.Turma || '').toLowerCase().includes(termo)
-      )
-      .slice(0, 100);
-  }, [busca]);
+    if (!busca.trim()) return matriculasEscola;
+    const termo = busca.toLowerCase().trim();
+    return matriculasEscola.filter((a: any) =>
+      (a.Nome || '').toLowerCase().includes(termo) ||
+      (a.Código || '').includes(termo) ||
+      (a.Turma || '').toLowerCase().includes(termo)
+    );
+  }, [busca, matriculasEscola]);
 
   const aluno = useMemo(() => {
-    return matriculasData.find(a => a.Código === alunoSelecionadoCod) || matriculasData[0];
-  }, [alunoSelecionadoCod]);
+    return (matriculasEscola as any[]).find((a) => a.Código === alunoSelecionadoCod) ||
+      (matriculasEscola[0] as any) || {
+        Nome: 'NENHUM ALUNO ENCONTRADO',
+        Código: '',
+        Turma: '',
+        Turno: 'MATUTINO',
+        Situação: 'NORMAL'
+      };
+  }, [alunoSelecionadoCod, matriculasEscola]);
 
   const turmaObj = useMemo(() => {
-    return turmasData.find(t => t.Turma === aluno?.Turma) || {
+    return (turmasEscola as any[]).find((t) => t.Turma === aluno?.Turma) || {
       Período: aluno?.Período || 'Ensino Fundamental',
       Turno: aluno?.Turno || 'MATUTINO',
       'Carga horária': '0800:00'
     };
-  }, [aluno]);
+  }, [aluno, turmasEscola]);
 
-  // Cálculo de notas e faltas determinísticas para a ficha
+  // Cálculo de notas e faltas determinísticas com mesma semente do BoletimEscolar
   const notasFicha = useMemo(() => {
-    const seed = parseInt(aluno?.Código || '12345', 10);
-    const isTransf = aluno?.Situação === 'TRANSFERIDO';
-
-    return DISCIPLINAS_BOLETIM.map((disc, idx) => {
-      const varSeed = (seed * 19 + idx * 29) % 100;
-      const t1 = Math.min(30, Math.max(18, Math.round(18 + (varSeed % 12))));
-      const t2 = Math.min(30, Math.max(18, Math.round(18 + ((varSeed + 4) % 12))));
-      const t3 = isTransf ? null : Math.min(40, Math.max(24, Math.round(25 + ((varSeed + 8) % 15))));
-      const faltas = isTransf ? 6 : (varSeed % 7);
-      const total = (t1) + (t2) + (t3 ?? 0);
-      return {
-        disciplina: disc,
-        trimestre1: t1,
-        trimestre2: t2,
-        trimestre3: t3,
-        total: total,
-        faltas: faltas,
-        resultado: isTransf ? 'TRANSF.' : (total >= 60 ? 'APROVADO' : 'RECUPERAÇÃO')
-      };
-    });
+    return calcularNotasFicha(aluno?.Código || '12345', aluno?.Situação || 'NORMAL');
   }, [aluno]);
 
   const totalPontosGlobal = useMemo(() => {
@@ -88,6 +112,8 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
     : (parseFloat(mediaGlobal) >= 60 && parseFloat(frequenciaGeral) >= 75
         ? 'APROVADO PARA O ANO SUBSEQUENTE'
         : 'EM RECUPERAÇÃO / CONSELHO DE CLASSE');
+
+  const codigoCenso = dadosEscolaAtiva?.['Identificação CENSO'] || '31054366';
 
   function imprimir() {
     window.print();
@@ -112,7 +138,7 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
             value={alunoSelecionadoCod}
             onChange={(e) => setAlunoSelecionadoCod(e.target.value)}
           >
-            {alunosFiltrados.map((a) => (
+            {alunosFiltrados.map((a: any) => (
               <option key={a.Código} value={a.Código}>
                 {a.Nome} &bull; Matr. {a.Código} &bull; Turma {a.Turma} ({a.Situação})
               </option>
@@ -140,16 +166,16 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
 
       {/* FOLHA DA FICHA INDIVIDUAL (Padrão Oficial Secretaria de Estado de Educação de MG) */}
       <div className="ficha-folha-documento">
-        {/* Cabeçalho */}
+        {/* Cabeçalho Oficial Dinâmico */}
         <div className="ficha-cabecalho-oficial">
           <div className="ficha-brasao-mg">MG</div>
           <div className="ficha-titulos">
             <h3>GOVERNO DO ESTADO DE MINAS GERAIS &bull; PREFEITURA DE PONTO DOS VOLANTES</h3>
             <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO</h4>
-            <h2>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h2>
-            <p>ENSINO FUNDAMENTAL REGULAR DE 9 ANOS &bull; CÓDIGO INEP: 31054366</p>
+            <h2>{escolaAtiva}</h2>
+            <p>ENSINO FUNDAMENTAL REGULAR DE 9 ANOS &bull; CÓDIGO INEP: {codigoCenso}</p>
             <div className="faixa-doc-nome">
-              FICHA INDIVIDUAL DO ESTUDANTE &bull; ANO LETIVO 2026
+              FICHA INDIVIDUAL DO ESTUDANTE &bull; ANO LETIVO {anoLetivo}
             </div>
           </div>
         </div>
@@ -217,7 +243,7 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
             <div><strong>Turno:</strong> {aluno.Turno}</div>
             <div><strong>Dias Letivos:</strong> 200 Dias</div>
             <div><strong>Carga Horária Curricular:</strong> {turmaObj?.['Carga horária'] || '0800:00'} Horas</div>
-            <div><strong>Situação Cadastral:</strong> <span className={`badge-sit-${aluno.Situação.toLowerCase()}`}>{aluno.Situação}</span></div>
+            <div><strong>Situação Cadastral:</strong> <span className={`badge-sit-${(aluno.Situação || 'NORMAL').toLowerCase()}`}>{aluno.Situação}</span></div>
           </div>
         </div>
 
@@ -294,7 +320,7 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
         {/* Quadro V: Decisão Final e Autenticação */}
         <div className="secao-quadro quadro-resultado">
           <div className="resultado-final-box">
-            <span>RESULTADO FINAL DO ANO LETIVO DE 2026:</span>
+            <span>RESULTADO FINAL DO ANO LETIVO DE {anoLetivo}:</span>
             <div className="faixa-resultado-destaque">
               {resultadoFinal}
             </div>
@@ -316,7 +342,7 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
           <div className="assinatura-col">
             <div className="traco-assinatura"></div>
             <p>Diretor(a) Escolar</p>
-            <span>E.M. Maria Geralda M. B. Salomão</span>
+            <span>{escolaAtiva}</span>
           </div>
         </div>
       </div>

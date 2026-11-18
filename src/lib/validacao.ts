@@ -183,3 +183,51 @@ export function validarObrigatorio(valor: string, rotulo = 'Este campo'): string
   }
   return null;
 }
+
+/**
+ * Verifica se um estudante já possui matrícula ativa na turma especificada da escola.
+ * REGRA INVIOLÁVEL: Não modifica nem corrompe registros de Rematrícula existentes.
+ * Retorna mensagem de erro se houver duplicidade ou null se estiver livre.
+ */
+export function validarDuplicidadeTurma(
+  codigoEstudanteOuMatricula: string,
+  turma: string,
+  escola?: string | null,
+  registrosExistentes: Array<{
+    codigo_estudante?: string | null;
+    codigo_matricula?: string;
+    turma?: string | null;
+    escola?: string | null;
+    deleted_at?: string | null;
+  }> = []
+): string | null {
+  if (!codigoEstudanteOuMatricula || !turma) return null;
+
+  const idAlvo = codigoEstudanteOuMatricula.trim().toUpperCase();
+  const turmaAlvo = turma.trim().toUpperCase();
+  const escolaAlvo = escola ? escola.trim().toUpperCase() : null;
+
+  const duplicata = registrosExistentes.find((r) => {
+    if (r.deleted_at) return false; // Ignora inativos / soft-deleted
+
+    const rEstudante = (r.codigo_estudante || '').trim().toUpperCase();
+    const rMatricula = (r.codigo_matricula || '').trim().toUpperCase();
+    const mesmoAluno = rEstudante === idAlvo || rMatricula === idAlvo;
+
+    if (!mesmoAluno) return false;
+
+    const mesmaTurma = (r.turma || '').trim().toUpperCase() === turmaAlvo;
+    if (!mesmaTurma) return false;
+
+    if (escolaAlvo && r.escola) {
+      return (r.escola || '').trim().toUpperCase() === escolaAlvo;
+    }
+    return true;
+  });
+
+  if (duplicata) {
+    return `O estudante (ID/Matrícula: ${codigoEstudanteOuMatricula}) já está cadastrado nesta turma "${turma}". Dupla matrícula não é permitida.`;
+  }
+
+  return null;
+}

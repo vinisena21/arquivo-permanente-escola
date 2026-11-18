@@ -6,18 +6,24 @@ const TABELA = 'alunos_secretaria';
 const TAMANHO_PAGINA = 1000;
 export const TAMANHO_LOTE_UPSERT = 200;
 
-/** Carrega todos os registros da tabela (paginando de 1000 em 1000). */
-export async function carregarAlunosSecretaria(): Promise<AlunoSecretariaRow[]> {
+/** Carrega todos os registros ativos da tabela (filtrando soft-deleted e opcionalmente ano_letivo). */
+export async function carregarAlunosSecretaria(anoLetivo?: number): Promise<AlunoSecretariaRow[]> {
   const todos: AlunoSecretariaRow[] = [];
   let inicio = 0;
 
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from(TABELA)
       .select('*')
+      .is('deleted_at', null)
       .order('nome', { ascending: true })
-      .order('codigo_matricula', { ascending: true })
-      .range(inicio, inicio + TAMANHO_PAGINA - 1);
+      .order('codigo_matricula', { ascending: true });
+
+    if (anoLetivo) {
+      query = query.eq('ano_letivo', anoLetivo);
+    }
+
+    const { data, error } = await query.range(inicio, inicio + TAMANHO_PAGINA - 1);
 
     if (error) throw error;
     const lote = data ?? [];
@@ -179,9 +185,63 @@ export async function inserirAlunoSecretaria(
   return data as AlunoSecretariaRow;
 }
 
-/** Exclui um registro de aluno da secretaria pelo id. */
-export async function excluirAlunoSecretaria(id: number): Promise<void> {
-  const { error } = await supabase.from(TABELA).delete().eq('id', id);
+/**
+ * Soft Delete: Marca o aluno como excluído (deleted_at preenchido),
+ * protegendo o histórico permanente da instituição e registrando no audit_log.
+ */
+export async function excluirAlunoSecretaria(id: number, usuario = 'secretaria'): Promise<void> {
+  const agora = new Date().toISOString();
+
+  // Busca dados anteriores para o log de auditoria
+  try {
+    const { data: anterior } = await supabase
+      .from(TABELA)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (anterior) {
+      await supabase.from('audit_log').insert({
+        tabela: TABELA,
+        registro_id: id,
+        acao: 'SOFT_DELETE',
+        dados_anteriores: anterior as any,
+        dados_novos: null,
+        usuario,
+      });
+    }
+  } catch {
+    // Audit log é complementar
+  }
+
+  const { error } = await supabase
+    .from(TABELA)
+    .update({ deleted_at: agora, deleted_by: usuario })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+/** Restaura um aluno que foi previamente soft-deleted. */
+export async function restaurarAlunoSecretaria(id: number, usuario = 'secretaria'): Promise<void> {
+  try {
+    await supabase.from('audit_log').insert({
+      tabela: TABELA,
+      registro_id: id,
+      acao: 'RESTORE',
+      dados_anteriores: null,
+      dados_novos: null,
+      usuario,
+    });
+  } catch {
+    // Audit log é complementar
+  }
+
+  const { error } = await supabase
+    .from(TABELA)
+    .update({ deleted_at: null, deleted_by: null })
+    .eq('id', id);
+
   if (error) throw error;
 }
 

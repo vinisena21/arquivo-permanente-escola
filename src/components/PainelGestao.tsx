@@ -24,6 +24,8 @@ import {
 import { supabase } from '../lib/supabase';
 import './PainelGestao.css';
 import { useSchool } from '../context/SchoolContext';
+import { useAnoLetivo } from '../context/AnoLetivoContext';
+import FechamentoTrimestre from './FechamentoTrimestre';
 
 
 
@@ -70,7 +72,7 @@ const EVENTOS_PADRAO: EventoEscolar[] = [
 
 export const PainelGestao: React.FC = () => {
   const { metricasEscola, matriculasEscola, profissionaisEscola, escolaAtiva } = useSchool();
-  const [anoSelecionado, setAnoSelecionado] = useState('2026');
+  const { anoLetivo, setAnoLetivo, anosDisponiveis } = useAnoLetivo();
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   
@@ -331,13 +333,15 @@ export const PainelGestao: React.FC = () => {
             <label htmlFor="ano-letivo">Ano Letivo:</label>
             <select
               id="ano-letivo"
-              value={anoSelecionado}
-              onChange={(e) => setAnoSelecionado(e.target.value)}
+              value={String(anoLetivo)}
+              onChange={(e) => setAnoLetivo(Number(e.target.value))}
               className="ano-select"
             >
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
+              {anosDisponiveis.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -363,6 +367,11 @@ export const PainelGestao: React.FC = () => {
         </div>
       </section>
 
+      {/* Módulo de Trancamento e Fechamento de Bimestres / Trimestres */}
+      <div className="no-print" style={{ marginTop: '20px' }}>
+        <FechamentoTrimestre />
+      </div>
+
       {erro && (
         <div className="painel-alerta-erro">
           <AlertTriangle size={18} />
@@ -377,7 +386,7 @@ export const PainelGestao: React.FC = () => {
             <Bell size={20} className="text-blue-700" />
             <h3>Mural de Avisos da Direção</h3>
           </div>
-          <span className="badge-sucesso">Ano Letivo {anoSelecionado} Ativo</span>
+          <span className="badge-sucesso">Ano Letivo {anoLetivo} Ativo</span>
         </div>
         <div className="mural-body">
           <div className="aviso-item-vazio">
@@ -574,7 +583,7 @@ export const PainelGestao: React.FC = () => {
             <TrendingUp size={22} className="text-emerald-700" />
             <h2>Indicadores Educacionais da Unidade</h2>
           </div>
-          <span className="secao-ano">Referência: Ano Letivo {anoSelecionado}</span>
+          <span className="secao-ano">Referência: Ano Letivo {anoLetivo}</span>
         </div>
 
         <div className="indicadores-grid">

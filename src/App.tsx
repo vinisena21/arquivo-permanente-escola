@@ -36,6 +36,7 @@ import {
 import './App.css';
 import { useSchool } from './context/SchoolContext';
 import SeletorEscolaModal from './components/SeletorEscolaModal';
+import SeletorAnoLetivo from './components/SeletorAnoLetivo';
 import EditarAlunoModal, {
   type AlunoEditavel
 } from './components/EditarAlunoModal';
@@ -96,7 +97,7 @@ function formatarData(data: string | null): string {
 }
 
 export default function App() {
-  const { escolaAtiva } = useSchool();
+  const { escolaAtiva, profissionaisEscola } = useSchool();
   const [modalSeletorEscolaAberta, setModalSeletorEscolaAberta] = useState(false);
   const [sessao, setSessao] = useState<Session | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
@@ -306,6 +307,7 @@ export default function App() {
               </div>
             </div>
             <div className="user-area">
+              <SeletorAnoLetivo />
               <button
                 type="button"
                 className="school-change-btn"
@@ -413,7 +415,7 @@ export default function App() {
                     <GraduationCap size={16} />
                     <div>
                       <span>Profissionais Escolares</span>
-                      <span className="nav-dropdown-item-desc">86 professores e equipe docente</span>
+                      <span className="nav-dropdown-item-desc">{profissionaisEscola.length} profissionais da unidade</span>
                     </div>
                   </button>
 

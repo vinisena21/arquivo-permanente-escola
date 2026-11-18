@@ -13,6 +13,7 @@ import {
   Download
 } from 'lucide-react';
 import { useSchool } from '../context/SchoolContext';
+import { useAnoLetivo } from '../context/AnoLetivoContext';
 import './DiarioClasse.css';
 
 interface DiarioClasseProps {
@@ -122,6 +123,7 @@ const CONTEUDOS_EXEMPLO: Record<string, RegistroConteudo[]> = {
 
 export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
   const { escolaAtiva, turmasEscola, matriculasEscola } = useSchool();
+  const { anoLetivo, isTrimFechado } = useAnoLetivo();
 
   const turmasValidas = useMemo(() => {
     return turmasEscola.filter(t => t.Turma && t.Turma !== 'TURMA VALIDAÇÃO RELATÓRIOS TRIMESTRE');
@@ -141,6 +143,10 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<string>('Língua Portuguesa');
   const [mesSelecionado, setMesSelecionado] = useState<number>(11); // Novembro por padrão
   const [abaAtiva, setAbaAtiva] = useState<'frequencia' | 'conteudo'>('frequencia');
+
+  // Controle de trimestre ativo e bloqueio
+  const trimAtual = mesSelecionado <= 5 ? 1 : mesSelecionado <= 8 ? 2 : 3;
+  const isFechado = isTrimFechado(trimAtual);
 
   // Alunos da turma
   const todosAlunosTurma = useMemo(() => {
@@ -288,6 +294,15 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
 
   // Alterna status de presença ao clicar na célula
   function alternarPresenca(codAluno: string, dia: number) {
+    if (isFechado) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimAtual}º Trimestre de ${anoLetivo} está TRANCADO. Edição de chamada bloqueada.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     setPresencas(prev => {
       const alunoMap = { ...(prev[codAluno] || {}) };
       const atual = alunoMap[dia] || 'C';
@@ -306,6 +321,15 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
 
   // Marcar todos os alunos como presentes num determinado dia
   function marcarTodosPresentesNoDia(dia: number) {
+    if (isFechado) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimAtual}º Trimestre de ${anoLetivo} está TRANCADO. Edição bloqueada.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     setPresencas(prev => {
       const novo = { ...prev };
       alunosAtivos.forEach(aluno => {
@@ -326,6 +350,15 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
 
   // Marcar todo o mês como 100% presente para os alunos ativos
   function marcarMesInteiroPresente() {
+    if (isFechado) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimAtual}º Trimestre de ${anoLetivo} está TRANCADO. Edição bloqueada.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     setPresencas(prev => {
       const novo = { ...prev };
       alunosAtivos.forEach(aluno => {
@@ -345,6 +378,15 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
   }
 
   function salvarDiario() {
+    if (isFechado) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimAtual}º Trimestre de ${anoLetivo} está TRANCADO. Não é possível alterar o diário.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     localStorage.setItem(storageKeyPresencas, JSON.stringify(presencas));
     localStorage.setItem(storageKeyConteudos, JSON.stringify(conteudos));
     if (onToast) {
@@ -356,6 +398,15 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
   }
 
   function adicionarConteudo() {
+    if (isFechado) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimAtual}º Trimestre de ${anoLetivo} está TRANCADO. Não é possível registrar novas aulas neste período.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     if (!novoRegistro.objetoConhecimento || !novoRegistro.data) {
       if (onToast) onToast({ message: 'Preencha ao menos a data e o objeto de conhecimento.', type: 'error' });
       return;
@@ -583,7 +634,7 @@ export const DiarioClasse: React.FC<DiarioClasseProps> = ({ onToast }) => {
           <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
           <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO &bull; SIGP EDUCAÇÃO</h4>
           <h2>{escolaAtiva}</h2>
-          <p>DIÁRIO DE CLASSE &bull; ANO LETIVO 2026 &bull; {abaAtiva === 'frequencia' ? 'FOLHA DE FREQUÊNCIA' : 'REGISTRO DE CONTEÚDOS'}</p>
+          <p>DIÁRIO DE CLASSE &bull; ANO LETIVO {anoLetivo} &bull; {abaAtiva === 'frequencia' ? 'FOLHA DE FREQUÊNCIA' : 'REGISTRO DE CONTEÚDOS'}</p>
         </div>
         <div className="diario-print-meta">
           <div><strong>TURMA:</strong> {turmaSelecionada} ({turmaObj?.Período})</div>

@@ -12,6 +12,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useSchool } from '../context/SchoolContext';
+import { useAnoLetivo } from '../context/AnoLetivoContext';
 import './BoletimEscolar.css';
 
 interface BoletimEscolarProps {
@@ -90,7 +91,9 @@ function gerarNotasIniciais(codMatricula: string, situacao: string): Record<stri
 }
 
 export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
-  const { escolaAtiva, turmasEscola, matriculasEscola } = useSchool();
+  const { escolaAtiva, turmasEscola, matriculasEscola, dadosEscolaAtiva } = useSchool();
+  const { anoLetivo, isTrimFechado } = useAnoLetivo();
+  const codigoInep = dadosEscolaAtiva?.['Identificação CENSO'] || '31054366';
 
   // Lista de turmas oficiais válidas da escola ativa
   const turmasValidas = useMemo(() => {
@@ -193,6 +196,15 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
 
   // Função para salvar alterações no localStorage
   function salvarAlteracoes() {
+    if (isTrimFechado(trimestreFiltro)) {
+      if (onToast) {
+        onToast({
+          message: `O ${trimestreFiltro}º Trimestre de ${anoLetivo} está TRANCADO. Não é possível alterar notas desse período.`,
+          type: 'error'
+        });
+      }
+      return;
+    }
     localStorage.setItem(`guia_escolar_notas_${turmaSelecionada}`, JSON.stringify(notasTurma));
     if (onToast) {
       onToast({
@@ -503,9 +515,9 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
                 <h3>ESTADO DE MINAS GERAIS &bull; PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
                 <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO &bull; SIGP EDUCAÇÃO</h4>
                 <h2>{escolaAtiva}</h2>
-                <p>ENSINO FUNDAMENTAL &bull; CÓDIGO INEP: 31054366 &bull; RECONHECIMENTO LEGAL</p>
+                <p>ENSINO FUNDAMENTAL &bull; CÓDIGO INEP: {codigoInep} &bull; RECONHECIMENTO LEGAL</p>
                 <div className="doc-titulo-faixa">
-                  BOLETIM ESCOLAR OFICIAL &bull; ANO LETIVO 2026
+                  BOLETIM ESCOLAR OFICIAL &bull; ANO LETIVO {anoLetivo}
                 </div>
               </div>
             </div>
@@ -759,8 +771,9 @@ export const BoletimEscolar: React.FC<BoletimEscolarProps> = ({ onToast }) => {
                                 handleNotaChange(aluno.Código, disc, campoNota, e.target.value)
                               }
                               placeholder="—"
-                              disabled={isTransf && trimestreFiltro === 3}
+                              disabled={(isTransf && trimestreFiltro === 3) || isTrimFechado(trimestreFiltro)}
                               className={notaVal !== null && notaVal < (trimestreFiltro === 3 ? 24 : 18) ? 'input-baixo' : ''}
+                              title={isTrimFechado(trimestreFiltro) ? `${trimestreFiltro}º Trimestre TRANCADO. Edição bloqueada.` : undefined}
                             />
                           </td>
                         );

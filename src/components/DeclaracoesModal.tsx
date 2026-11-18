@@ -11,7 +11,8 @@ import {
   Eye
 } from 'lucide-react';
 import type { AlunoArquivo } from '../types/database';
-import matriculasData from '../data/matriculas.json';
+import { useSchool } from '../context/SchoolContext';
+import { useAnoLetivo } from '../context/AnoLetivoContext';
 import './DeclaracoesModal.css';
 
 export type TipoDeclaracao =
@@ -34,6 +35,8 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
   onClose,
   alunos
 }) => {
+  const { escolaAtiva, matriculasEscola, dadosEscolaAtiva } = useSchool();
+  const { anoLetivo: anoLetivoCtx } = useAnoLetivo();
   const [tipo, setTipo] = useState<TipoDeclaracao>('matricula');
   const [buscaAluno, setBuscaAluno] = useState('');
   
@@ -47,7 +50,7 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
   const [anoSerie, setAnoSerie] = useState('9º Ano do Ensino Fundamental');
   const [turma, setTurma] = useState('901');
   const [turno, setTurno] = useState('Matutino');
-  const [anoLetivo, setAnoLetivo] = useState('2026');
+  const [anoLetivo, setAnoLetivo] = useState(String(anoLetivoCtx));
   
   // Campos específicos
   const [finalidade, setFinalidade] = useState('fins de comprovação junto a órgãos públicos e programas sociais');
@@ -76,11 +79,11 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
         .trim();
     const termo = normalizarBusca(buscaAluno);
 
-    // 1. Busca nas matrículas ativas da escola
-    const resultadosMatriculas = matriculasData
-      .filter(m => normalizarBusca(m.Nome).includes(termo))
+    // 1. Busca nas matrículas ativas da escola ativa
+    const resultadosMatriculas = (matriculasEscola as any[])
+      .filter((m: any) => normalizarBusca(m.Nome).includes(termo))
       .slice(0, 6)
-      .map(m => ({
+      .map((m: any) => ({
         id: `matr-${m.Código}`,
         nome: m.Nome,
         dataNasc: m['Data de Nascimento'] || '',
@@ -160,7 +163,7 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
       }
 
       case 'escolaridade':
-        return `Declaramos, para os devidos fins de comprovação de escolaridade, que o(a) estudante ${nome}, nascido(a) em ${nasc}${fil}${identMatr}${identPasta}, cursou e obteve aproveitamento escolar correspondente ao ${serie}${t}, no turno ${tur}, na Escola Municipal Maria Geralda Miranda Brito Salomão, no Ano Letivo de ${letivo}, estando apto(a) a prosseguir seus estudos na etapa subsequente, conforme registros do arquivo escolar.`;
+        return `Declaramos, para os devidos fins de comprovação de escolaridade, que o(a) estudante ${nome}, nascido(a) em ${nasc}${fil}${identMatr}${identPasta}, cursou e obteve aproveitamento escolar correspondente ao ${serie}${t}, no turno ${tur}, na instituição ${escolaAtiva}, no Ano Letivo de ${letivo}, estando apto(a) a prosseguir seus estudos na etapa subsequente, conforme registros do arquivo escolar.`;
 
       case 'conclusao':
         return `Declaramos, para os devidos fins a que se fizerem necessários, que o(a) educando(a) ${nome}, nascido(a) em ${nasc}${fil}${identMatr}, CONCLUIU com aproveitamento satisfatório o 9º Ano do Ensino Fundamental Regular nesta instituição de ensino no Ano Letivo de ${letivo}, cumprindo 200 dias letivos e carga horária superior a 800 horas, nos termos da Lei de Diretrizes e Bases da Educação Nacional (LDB 9.394/96).`;
@@ -556,12 +559,12 @@ export const DeclaracoesModal: React.FC<DeclaracoesModalProps> = ({
                   <h2>ESTADO DE MINAS GERAIS</h2>
                   <h3>PREFEITURA MUNICIPAL DE PONTO DOS VOLANTES</h3>
                   <h4>SECRETARIA MUNICIPAL DE EDUCAÇÃO</h4>
-                  <h1>ESCOLA MUNICIPAL MARIA GERALDA MIRANDA BRITO SALOMÃO</h1>
+                  <h1>{escolaAtiva}</h1>
                   <p className="timbre-codigo">
-                    CÓDIGO INEP: 31054366 &bull; RECONHECIMENTO: PORTARIA SEE/MG &bull; ENSINO FUNDAMENTAL
+                    CÓDIGO INEP: {dadosEscolaAtiva?.['Identificação CENSO'] || '31054366'} &bull; RECONHECIMENTO: PORTARIA SEE/MG &bull; ENSINO FUNDAMENTAL
                   </p>
                   <p className="timbre-endereco">
-                    Praça Central, S/N &bull; Ponto dos Volantes — MG &bull; CEP: 39.615-000
+                    {dadosEscolaAtiva?.Logradouro || 'Praça Central, S/N'} &bull; Ponto dos Volantes — MG &bull; CEP: {dadosEscolaAtiva?.Cep || '39.615-000'}
                   </p>
                 </div>
               </div>

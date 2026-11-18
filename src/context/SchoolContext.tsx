@@ -4,6 +4,7 @@ import matriculasData from '../data/matriculas.json';
 import turmasData from '../data/turmas.json';
 import profissionaisData from '../data/profissionais.json';
 import movimentacoesData from '../data/movimentacoes.json';
+import { useAnoLetivo } from './AnoLetivoContext';
 
 export interface EscolaItem {
   Código: string;
@@ -43,14 +44,27 @@ interface SchoolContextType {
   profissionaisEscola: typeof profissionaisData;
   movimentacoesEscola: typeof movimentacoesData;
   metricasEscola: MetricasEscola;
+  anoLetivo: number;
 }
 
 const STORAGE_KEY = 'guia_escolar_escola_ativa';
 export const ESCOLA_PADRAO = 'EM MARIA GERALDA MIRANDA BRITO SALOMÃO';
 
+function extrairAno(dataStr?: string | null): number | null {
+  if (!dataStr) return null;
+  const str = String(dataStr).trim();
+  const br = str.match(/(\d{2})[/.-](\d{2})[/.-](\d{4})/);
+  if (br) return parseInt(br[3], 10);
+  const iso = str.match(/^(\d{4})[/.-]/);
+  if (iso) return parseInt(iso[1], 10);
+  return null;
+}
+
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { anoLetivo } = useAnoLetivo();
+
   const [escolaAtiva, setEscolaAtivaState] = useState<string>(() => {
     try {
       const salva = localStorage.getItem(STORAGE_KEY);
@@ -82,14 +96,26 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const codigoEscolaAtiva = dadosEscolaAtiva?.Código || '22';
 
-  // Matrículas da escola ativa
+  // Matrículas da escola ativa filtradas com isolamento temporal por Ano Letivo
   const matriculasEscola = useMemo(() => {
     const nomeNorm = escolaAtiva.trim().toUpperCase();
     return (matriculasData as any[]).filter((m) => {
       const esc = (m['Escola'] || ESCOLA_PADRAO).trim().toUpperCase();
-      return esc === nomeNorm;
+      if (esc !== nomeNorm) return false;
+
+      // Filtro de isolamento temporal por ano letivo
+      const dataMatr = m['Data da matrícula'] || m['Data da movimentação'] || '';
+      const anoReg = extrairAno(dataMatr);
+
+      if (anoLetivo === 2026) {
+        // Ano base do arquivo/dump: aceita registros de 2026 ou sem ano explícito
+        return !anoReg || anoReg === 2026;
+      } else {
+        // Anos anteriores ou futuros: apenas registros cujo ano corresponda exatamente
+        return anoReg === anoLetivo;
+      }
     });
-  }, [escolaAtiva]);
+  }, [escolaAtiva, anoLetivo]);
 
   // Turmas da escola ativa
   const turmasEscola = useMemo(() => {
@@ -109,24 +135,29 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [escolaAtiva]);
 
-  // Movimentações da escola ativa
+  // Movimentações da escola ativa com isolamento por ano letivo
   const movimentacoesEscola = useMemo(() => {
     const nomeNorm = escolaAtiva.trim().toUpperCase();
     return (movimentacoesData as any[]).filter((m) => {
       const esc = (m['Escola'] || ESCOLA_PADRAO).trim().toUpperCase();
-      return esc === nomeNorm;
+      if (esc !== nomeNorm) return false;
+
+      const dataMov = m['Data da Movimentação'] || '';
+      const anoMov = extrairAno(dataMov);
+      if (anoLetivo === 2026) {
+        return !anoMov || anoMov === 2026;
+      } else {
+        return anoMov === anoLetivo;
+      }
     });
-  }, [escolaAtiva]);
+  }, [escolaAtiva, anoLetivo]);
 
   // Métricas com respeito cronológico aos alunos que saíram e voltaram
   const metricasEscola = useMemo<MetricasEscola>(() => {
     const totalMatriculas = matriculasEscola.length;
 
-    // Agrupa por estudante para analisar ordem cronológica da última situação
-    // Cada estudante terá seu último registro de movimentação/matrícula analisado
     const ultimasSituacoes = new Map<string, string>();
 
-    // Ordena cópia local por data da matrícula
     const ordenados = [...matriculasEscola].sort((a, b) => {
       const dataA = a['Data da matrícula'] || '';
       const dataB = b['Data da matrícula'] || '';
@@ -136,7 +167,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     for (const m of ordenados) {
       const idEstudante = m['Código do estudante'] || m['Nome'] || m['Código'];
       const sit = (m['Situação'] || 'NORMAL').trim().toUpperCase();
-      // O último registro no tempo define a situação atual do aluno
       ultimasSituacoes.set(String(idEstudante), sit);
     }
 
@@ -178,6 +208,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         profissionaisEscola,
         movimentacoesEscola,
         metricasEscola,
+        anoLetivo,
       }}
     >
       {children}
