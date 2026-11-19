@@ -1,7 +1,7 @@
 {
   "35144": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ADRIELLE BATISTA SOUZA",
@@ -9,7 +9,7 @@
   },
   "34689": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ADRIELLY GIL FERRAZ",
@@ -17,7 +17,7 @@
   },
   "34649": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ALANA PEREIRA ANDRADE",
@@ -25,7 +25,7 @@
   },
   "35079": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALANE LOPES FIRMINO",
@@ -33,7 +33,7 @@
   },
   "34509": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALICE ALVES DE JESUS",
@@ -41,7 +41,7 @@
   },
   "34374": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALICE LIMA RAMALHO",
@@ -49,7 +49,7 @@
   },
   "34691": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ALICE NASCIMENTO ALCÂNTARA",
@@ -57,7 +57,7 @@
   },
   "34758": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALICE NUNES BARROS DE JESUS",
@@ -65,7 +65,7 @@
   },
   "34728": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALISSON PEREIRA SILVA",
@@ -73,15 +73,23 @@
   },
   "34547": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ALLEF FILHO NUNES DE SOUSA",
     "codigo": "34547"
   },
+  "35222": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "9º ANO (2027)",
+    "turno2027": "VESP",
+    "nome": "AMANDA CAMPOS MENDES",
+    "codigo": "35222"
+  },
   "34729": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA CLARA GONÇALVES SOARES",
@@ -89,7 +97,7 @@
   },
   "34373": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA JÚLIA RODRIGUES GUSMAO",
@@ -97,7 +105,7 @@
   },
   "34992": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA LARA ANTUNES FLESCH",
@@ -105,7 +113,7 @@
   },
   "35670": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA LARA ANTUNES FLESCH",
@@ -113,7 +121,7 @@
   },
   "34722": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ANA LAURA NUNES SANTOS",
@@ -121,7 +129,7 @@
   },
   "34570": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA LIS SOUZA CALDEIRA",
@@ -129,7 +137,7 @@
   },
   "34580": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA LÍVIA SALOMÃO SICUPIRA",
@@ -137,7 +145,7 @@
   },
   "34444": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ANA LUIZA NUNES SANTOS",
@@ -145,7 +153,7 @@
   },
   "34759": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANA SOPHIA ALVES CARDOSO",
@@ -153,7 +161,7 @@
   },
   "34760": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANANDA GONÇALVES DA COSTA",
@@ -161,7 +169,7 @@
   },
   "34730": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANNA JULLIA ANDRADE SANTOS",
@@ -169,7 +177,7 @@
   },
   "34595": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANNA LAURA GOMES DA SILVA",
@@ -177,7 +185,7 @@
   },
   "34338": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANNA LUÍZA SILVA SOUZA",
@@ -185,7 +193,7 @@
   },
   "35103": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ANTONIO NETO BORGES SANTOS",
@@ -193,7 +201,7 @@
   },
   "35246": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ARIELLY GONÇALVES NUNES",
@@ -201,7 +209,7 @@
   },
   "34446": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ARTHUR BRENDHEL SANTOS EMMERICK",
@@ -209,7 +217,7 @@
   },
   "35210": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ARTHUR GONÇALVES AGUILAR",
@@ -217,7 +225,7 @@
   },
   "35669": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ARTHUR GONÇALVES AGUILAR",
@@ -225,7 +233,7 @@
   },
   "34593": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ARTHUR GONÇALVES SANTOS",
@@ -233,7 +241,7 @@
   },
   "34510": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "AURORA ONORIO CHAVES",
@@ -241,7 +249,7 @@
   },
   "34447": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "AURORA RAMALHO SICUPIRA",
@@ -249,7 +257,7 @@
   },
   "35128": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "AVANILZA PEREIRA DA SILVA AGUIAR",
@@ -257,7 +265,7 @@
   },
   "34731": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "BEATRIZ PEREIRA CÃNDIDO",
@@ -265,7 +273,7 @@
   },
   "34676": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "BENEDITO BRENNER LOPES FIRMINO",
@@ -273,7 +281,7 @@
   },
   "34511": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "BENJAMIN ALMEIDA SANTOS",
@@ -281,7 +289,7 @@
   },
   "34557": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "BERNARDO GIL PINHEIRO",
@@ -289,7 +297,7 @@
   },
   "34552": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "BRYAN ANDRADE AGUILAR",
@@ -297,7 +305,7 @@
   },
   "34560": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "VESP",
     "nome": "CAIO JUNIO DIAS DOS SANTOS",
@@ -305,7 +313,7 @@
   },
   "35081": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "CAMILA LUIZ DA SILVA",
@@ -313,7 +321,7 @@
   },
   "35160": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "VESP",
     "nome": "CARLOS DANIEL NUNES SANTOS",
@@ -321,7 +329,7 @@
   },
   "34665": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "CECÍLIA CAMPOS SANTOS",
@@ -329,7 +337,7 @@
   },
   "34612": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "CECÍLIA CARLOS LOPES",
@@ -337,7 +345,7 @@
   },
   "34723": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "CECILIA FERREIRA LEAL",
@@ -345,7 +353,7 @@
   },
   "35251": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "CLARA ATHAIDE MALPARTIDA GUADIO",
@@ -353,7 +361,7 @@
   },
   "35178": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DANIEL MONTEIRO DE SOUSA",
@@ -361,7 +369,7 @@
   },
   "34429": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DANIELA GONÇALVES DIAS",
@@ -369,7 +377,7 @@
   },
   "34761": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVI ADRIAN RODRIGUES LIMA",
@@ -377,7 +385,7 @@
   },
   "35111": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVI LUCAS SOUZA NUNES",
@@ -385,7 +393,7 @@
   },
   "35193": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVI LUCCAS PEREIRA COSTA",
@@ -393,7 +401,7 @@
   },
   "35090": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVI LUIZ PINHEIRO JUSTINO",
@@ -401,7 +409,7 @@
   },
   "35179": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVI MONTEIRO DE SOUSA",
@@ -409,7 +417,7 @@
   },
   "34724": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "DAVI NYCOLAS SANTOS PEREIRA",
@@ -417,7 +425,7 @@
   },
   "35240": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "DAVI THALLES ARAUJO SANTOS",
@@ -425,7 +433,7 @@
   },
   "34732": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "DAVID NICOLLAS SANTOS XAVIER",
@@ -433,7 +441,7 @@
   },
   "35091": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "VESP",
     "nome": "DAYVID LUIZ SANTOS EMMERICK",
@@ -441,7 +449,7 @@
   },
   "34513": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EDGARDE ANTHONY PINHEIRO SALOMÃO",
@@ -449,7 +457,7 @@
   },
   "35082": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EDUARDA BATISTA ALVES",
@@ -457,7 +465,7 @@
   },
   "34379": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EDUARDO BORGES MIRANDA",
@@ -465,7 +473,7 @@
   },
   "35225": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "EDUARDO BRAGA RODRIGUES",
@@ -473,7 +481,7 @@
   },
   "36010": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "EFRAYM ANTONIO NUNES MARQUES DE SOUZA",
@@ -481,7 +489,7 @@
   },
   "34651": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ELIABE LOPES DE JESUS",
@@ -489,7 +497,7 @@
   },
   "34764": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ELIANA ALVES DE SOUZA",
@@ -497,7 +505,7 @@
   },
   "35297": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ELOÁ RAMALHO SOUZA",
@@ -505,7 +513,7 @@
   },
   "34765": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ELOAH ABRANTES SOUZA",
@@ -513,7 +521,7 @@
   },
   "35096": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EMANUELI FERREIRA DA SILVA",
@@ -521,7 +529,7 @@
   },
   "35226": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "EMANUELLE VIEIRA GOMES",
@@ -529,7 +537,7 @@
   },
   "35279": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "EMILLY VITÓRIA GOMES FAGUNDES",
@@ -537,7 +545,7 @@
   },
   "34608": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EMILLY VITÓRIA RAMALHO SILVA",
@@ -545,7 +553,7 @@
   },
   "34514": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ENZO GABRIEL AGUILAR DA SILVA",
@@ -553,7 +561,7 @@
   },
   "35000": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ENZO GABRIEL ANTUNES RODRIGUES",
@@ -561,7 +569,7 @@
   },
   "35671": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ENZO GABRIEL ANTUNES RODRIGUES",
@@ -569,7 +577,7 @@
   },
   "35035": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ENZO GABRIEL GONÇALVES DUARTE",
@@ -577,7 +585,7 @@
   },
   "34351": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ENZO RIBEIRO DE SOUZA",
@@ -585,7 +593,7 @@
   },
   "35404": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ESTER ALVES SANTOS",
@@ -593,7 +601,7 @@
   },
   "34725": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "EVELLY VICTORIA SANTOS EMMERICK",
@@ -601,7 +609,7 @@
   },
   "34382": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "EVELLYN SOUZA CHAVES",
@@ -609,7 +617,7 @@
   },
   "34352": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GABRIEL GONÇALVES NUNES",
@@ -617,7 +625,7 @@
   },
   "35195": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GABRIEL JUNIOR GONÇALVES GOMES",
@@ -625,7 +633,7 @@
   },
   "34733": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GABRIELLY MIRANDA DA CRUZ",
@@ -633,7 +641,7 @@
   },
   "34354": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GAEL GONÇALVES COSTA",
@@ -641,7 +649,7 @@
   },
   "34515": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GENIVALDO DA SILVA OLIVEIRA",
@@ -649,7 +657,7 @@
   },
   "34782": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "VESP",
     "nome": "GEOVANA PEREIRA DA SILVA",
@@ -657,7 +665,7 @@
   },
   "34734": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GIULIA BRANDÃO SILVA",
@@ -665,7 +673,7 @@
   },
   "34383": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GIUSEPPE LOPES RIBEIRO",
@@ -673,7 +681,7 @@
   },
   "35655": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUILHERME AGUILAR TRINDADE",
@@ -681,7 +689,7 @@
   },
   "34616": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUILHERME BORGES SANTOS",
@@ -689,7 +697,7 @@
   },
   "34582": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUILHERME GONÇALVES AGUILAR SANTOS",
@@ -697,7 +705,7 @@
   },
   "34355": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUILHERME JUNIOR GONÇALVES SOUZA",
@@ -705,7 +713,7 @@
   },
   "34583": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUILHERME RODRIGUES MIRANDA",
@@ -713,7 +721,7 @@
   },
   "34617": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUSTAVO FRANCISCO DE OLIVEIRA",
@@ -721,7 +729,7 @@
   },
   "35229": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "GUSTAVO RAMALHO SOUZA",
@@ -729,7 +737,7 @@
   },
   "34618": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUSTAVO RODRIGUES DA ROCHA",
@@ -737,7 +745,7 @@
   },
   "34526": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "GUSTAVO SANTOS MATOS",
@@ -745,7 +753,7 @@
   },
   "34652": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "HEITOR ALVES DE JESUS",
@@ -753,7 +761,7 @@
   },
   "34356": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "HELOYZE SICUPIRA FRANÇA",
@@ -761,7 +769,7 @@
   },
   "34601": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "HENRIQUE BORGES ANDRADE",
@@ -769,7 +777,7 @@
   },
   "35196": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "HENRIQUE GONÇALVES TRAJANO",
@@ -777,7 +785,7 @@
   },
   "34541": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "VESP",
     "nome": "HÍTALO RAMALHO DOS SANTOS",
@@ -785,7 +793,7 @@
   },
   "35250": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "IGOR ATHAIDE MALPARTIDA GAUDIO",
@@ -793,7 +801,7 @@
   },
   "34432": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ISAAC COIMBRA SANTOS",
@@ -801,7 +809,7 @@
   },
   "35860": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "VESP",
     "nome": "ISABELA VIEIRA SANTOS",
@@ -809,7 +817,7 @@
   },
   "34584": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "ISIS GONÇALVES RUFINO",
@@ -817,15 +825,23 @@
   },
   "34645": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "JAMILE ROSA DE JESUS",
     "codigo": "34645"
   },
+  "34786": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "6º ANO (2027)",
+    "turno2027": "VESP",
+    "nome": "JAMILLY OLIVEIRA FERNANDES",
+    "codigo": "34786"
+  },
   "34433": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "JOÃO GABRIEL FERREIRA PEREIRA",
@@ -833,7 +849,7 @@
   },
   "34668": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOÃO GABRIEL PEREIRA LUIZ",
@@ -841,7 +857,7 @@
   },
   "35119": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOÃO LAZARO FERREIRA SANTANA",
@@ -849,7 +865,7 @@
   },
   "34619": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOÃO LUCAS RIBEIRO GOMES",
@@ -857,7 +873,7 @@
   },
   "34567": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "VESP",
     "nome": "JOÃO PAULO VIEIRA DE ANDRADE",
@@ -865,7 +881,7 @@
   },
   "34707": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "JOÃO PEDRO MOREIRA ANDRADE",
@@ -873,7 +889,7 @@
   },
   "34366": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOÃO PEDRO RAMALHO SANTOS",
@@ -881,7 +897,7 @@
   },
   "34549": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOÃO VÍTOR MOREIRA RAMALHO",
@@ -889,7 +905,7 @@
   },
   "34677": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOSÉ HENRIQUE CARDOSO AGUILAR",
@@ -897,15 +913,23 @@
   },
   "34516": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "JOSÉ NILSON PEREIRA FERREIRA",
     "codigo": "34516"
   },
+  "33033": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "2º ANO (2027)",
+    "turno2027": "VESP",
+    "nome": "KAILLANY RENATA GOMES DE FREITAS",
+    "codigo": "33033"
+  },
   "35131": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KAROL GONÇALVES VIEIRA",
@@ -913,7 +937,7 @@
   },
   "34793": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "VESP",
     "nome": "KASLLON NUNES DA SILVA",
@@ -921,7 +945,7 @@
   },
   "35405": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KATHARINE LIMA DE MATOS",
@@ -929,7 +953,7 @@
   },
   "35408": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KATLLYN VICTÓRIA GONÇALVES SANTOS",
@@ -937,7 +961,7 @@
   },
   "34635": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KAUAN NUNES SILVA",
@@ -945,7 +969,7 @@
   },
   "34736": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KAUANY SILVA DIAS",
@@ -953,7 +977,7 @@
   },
   "34594": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KELVIN DIAS DA SILVA",
@@ -961,7 +985,7 @@
   },
   "34627": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "KEMILLY SOFYA SILVA FERNANDES",
@@ -969,7 +993,7 @@
   },
   "35684": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LARA VITORIA GONÇALVES SOUZA",
@@ -977,7 +1001,7 @@
   },
   "35406": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LARISSA VEIGA REIS",
@@ -985,7 +1009,7 @@
   },
   "34737": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LAURA MENDES SILVA",
@@ -993,7 +1017,7 @@
   },
   "35140": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LAVÍNIA ROBERTA SOUZA SANTOS",
@@ -1001,7 +1025,7 @@
   },
   "34576": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LAYLA VITÓRIA MOREIRA SILVA",
@@ -1009,7 +1033,7 @@
   },
   "35243": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "LÁZARO GONÇALVES SANTOS",
@@ -1017,7 +1041,7 @@
   },
   "34597": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LÁZARO MARTINS SANTOS",
@@ -1025,7 +1049,7 @@
   },
   "35766": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LÁZARO RODRIGUES DOS SANTOS",
@@ -1033,7 +1057,7 @@
   },
   "34388": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LEANDRO PINHEIRO JUSTINO",
@@ -1041,7 +1065,7 @@
   },
   "34387": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LEVI GONÇALVES CARDOSO",
@@ -1049,7 +1073,7 @@
   },
   "35185": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LÍDIA NOVAIS ASCENÇÃO",
@@ -1057,7 +1081,7 @@
   },
   "34678": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LÍVIA CAMPOS LIMA",
@@ -1065,31 +1089,31 @@
   },
   "34575": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LIZ GONÇALVES LEAL",
     "codigo": "34575"
   },
-  "35836": {
-    "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
-    "turma2027": "2º ANO (2027)",
-    "turno2027": "MAT",
-    "nome": "LOREN GOMES CAMPOS",
-    "codigo": "35836"
-  },
   "34389": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LOREN GOMES CAMPOS",
     "codigo": "34389"
   },
+  "35836": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "2º ANO (2027)",
+    "turno2027": "MAT",
+    "nome": "LOREN GOMES CAMPOS",
+    "codigo": "35836"
+  },
   "34738": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LORENA CARDOSO SILVA",
@@ -1097,7 +1121,7 @@
   },
   "34598": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LORENA NUNES ROCHA",
@@ -1105,7 +1129,7 @@
   },
   "35220": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LORENNA PACHECO SANTOS",
@@ -1113,15 +1137,15 @@
   },
   "34719": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
-    "nome": "LORENZO ANDRADE  AGUILAR",
+    "nome": "LORENZO ANDRADE AGUILAR",
     "codigo": "34719"
   },
   "34599": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LORENZO GOMES SILVA",
@@ -1129,7 +1153,7 @@
   },
   "34672": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LUCAS CHAVES MORAES",
@@ -1137,7 +1161,7 @@
   },
   "34641": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "LUCAS HENRIQUE ANDRADE SANTOS",
@@ -1145,7 +1169,7 @@
   },
   "35105": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LUCAS NUNES DOS SANTOS",
@@ -1153,7 +1177,7 @@
   },
   "34637": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "LUIZ OTAVIO RODRIGUES DA SILVA",
@@ -1161,7 +1185,7 @@
   },
   "35132": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "LUNA GONÇALVES CARDOSO",
@@ -1169,7 +1193,7 @@
   },
   "35186": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MÁINNY VITHÓRIA GIL PINHEIRO",
@@ -1177,7 +1201,7 @@
   },
   "34625": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA ALICE ALMEIDA GOMES",
@@ -1185,7 +1209,7 @@
   },
   "34697": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MARIA ALICE GONÇALVES DE JESUS",
@@ -1193,7 +1217,7 @@
   },
   "34713": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MARIA CECÍLIA GOMES RODRIGUES",
@@ -1201,7 +1225,7 @@
   },
   "34756": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA CECILIA NUNES TENORIO MELO DE ALMEIDA",
@@ -1209,31 +1233,31 @@
   },
   "34794": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA CECILIA RIBEIRO ALVES",
     "codigo": "34794"
   },
-  "36067": {
-    "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
-    "turma2027": "5º ANO (2027)",
-    "turno2027": "MAT",
-    "nome": "MARIA CECÍLIA RODRIGUES SALOMÃO",
-    "codigo": "36067"
-  },
   "34705": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA CECÍLIA RODRIGUES SALOMÃO",
     "codigo": "34705"
   },
+  "36067": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "5º ANO (2027)",
+    "turno2027": "MAT",
+    "nome": "MARIA CECÍLIA RODRIGUES SALOMÃO",
+    "codigo": "36067"
+  },
   "34757": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA CLARA GONÇALVES SANTOS",
@@ -1241,31 +1265,31 @@
   },
   "34770": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA CLARA GONÇALVES SILVA",
     "codigo": "34770"
   },
-  "36068": {
-    "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
-    "turma2027": "5º ANO (2027)",
-    "turno2027": "VESP",
-    "nome": "MARIA CLARA RODRIGUES SALOMÃO",
-    "codigo": "36068"
-  },
   "34706": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MARIA CLARA RODRIGUES SALOMÃO",
     "codigo": "34706"
   },
+  "36068": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "5º ANO (2027)",
+    "turno2027": "VESP",
+    "nome": "MARIA CLARA RODRIGUES SALOMÃO",
+    "codigo": "36068"
+  },
   "34558": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA EDUARDA RODRIGUES DE OLIVEIRA",
@@ -1273,7 +1297,7 @@
   },
   "35663": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MARIA FERNANDA QUEIROZ DA SILVA",
@@ -1281,7 +1305,7 @@
   },
   "34673": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA ISIS MENEZES LIMA",
@@ -1289,7 +1313,7 @@
   },
   "34571": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA LÚCIA RODRIGUES SANTOS",
@@ -1297,7 +1321,7 @@
   },
   "35097": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA LUIZA FERREIRA DA SILVA",
@@ -1305,7 +1329,7 @@
   },
   "34565": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MARIA VITÓRIA PEREIRA ALMEIDA",
@@ -1313,7 +1337,7 @@
   },
   "35143": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARIA VITÓRIA PEREIRA LEÃO",
@@ -1321,7 +1345,7 @@
   },
   "35098": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MARINA GONÇALVES GOMES",
@@ -1329,15 +1353,23 @@
   },
   "34773": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MATUSALÉM ALVES CARDOSO",
     "codigo": "34773"
   },
+  "34568": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "3º ANO (2027)",
+    "turno2027": "VESP",
+    "nome": "MELISSA GONÇALVES LEAL",
+    "codigo": "34568"
+  },
   "34741": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MICAEL NUNES FRANCA",
@@ -1345,7 +1377,7 @@
   },
   "34699": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MIGUEL BARBOZA ANDRADE",
@@ -1353,7 +1385,7 @@
   },
   "34674": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MIGUEL GIL ANDRADE",
@@ -1361,7 +1393,7 @@
   },
   "34626": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MIGUEL GOMES LOPES",
@@ -1369,7 +1401,7 @@
   },
   "34590": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MIGUEL PEREIRA DA CRUZ",
@@ -1377,7 +1409,7 @@
   },
   "34369": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MIGUEL SOUZA SILVA",
@@ -1385,7 +1417,7 @@
   },
   "35134": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MILENA GONÇALVES SILVA",
@@ -1393,7 +1425,7 @@
   },
   "34661": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MIRELLA PEREIRA RAMALHO",
@@ -1401,7 +1433,7 @@
   },
   "34520": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MIRIAN NUNES PEREIRA",
@@ -1409,7 +1441,7 @@
   },
   "35689": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "MOÍSES CRISTHIAN ANDRADE DE MELO",
@@ -1417,7 +1449,7 @@
   },
   "34620": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "MURILO GOMES GONÇALVES",
@@ -1425,7 +1457,7 @@
   },
   "35188": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "NANÁ VITÓRIA FERREIRA DA SILVA",
@@ -1433,7 +1465,7 @@
   },
   "34727": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "NÁTALLY MOREIRA SANTOS",
@@ -1441,7 +1473,7 @@
   },
   "35166": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "VESP",
     "nome": "NATAN GOMES DA SILVA",
@@ -1449,7 +1481,7 @@
   },
   "35155": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "NATÃNAEL SOUZA AMORIM",
@@ -1457,7 +1489,7 @@
   },
   "34995": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "NICOLAS GABRIEL RODRIGUES GONÇALVES",
@@ -1465,7 +1497,7 @@
   },
   "34587": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "OLIVER VIEIRA GERVÁSIO",
@@ -1473,7 +1505,7 @@
   },
   "34648": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "OTÁVIO RAMALHO SOUZA",
@@ -1481,7 +1513,7 @@
   },
   "35110": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "OTÁVIO RODRIGUES DE OLIVEIRA",
@@ -1489,7 +1521,7 @@
   },
   "35234": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "VESP",
     "nome": "PAULO HENRIQUE PEREIRA ALMEIDA",
@@ -1497,7 +1529,7 @@
   },
   "34742": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "PEDRO ANTONIO ALVES GONÇALVES",
@@ -1505,7 +1537,7 @@
   },
   "34656": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "VESP",
     "nome": "PEDRO EMANUEL GONÇALVES FERREIRA",
@@ -1513,7 +1545,7 @@
   },
   "34716": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "VESP",
     "nome": "PEDRO HENRIQUE FERREIRA DE ABREU",
@@ -1521,7 +1553,7 @@
   },
   "35749": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "PEDRO RODRIGUES SANTOS",
@@ -1529,7 +1561,7 @@
   },
   "35087": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "PEDRO VITOR BATISTA VITAL",
@@ -1537,7 +1569,7 @@
   },
   "34437": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "PIETRO GIL AMARAL",
@@ -1545,7 +1577,7 @@
   },
   "34431": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "PIETRO VALENTIM MEIRELES GONÇALVES",
@@ -1553,31 +1585,31 @@
   },
   "35198": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "9º ANO (2027)",
     "turno2027": "MAT",
     "nome": "RAFAEL PEREIRA JARDIM",
     "codigo": "35198"
   },
-  "35824": {
-    "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
-    "turma2027": "2º ANO (2027)",
-    "turno2027": "MAT",
-    "nome": "REBECA RAMALHO BRAGA",
-    "codigo": "35824"
-  },
   "34392": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "REBECA RAMALHO BRAGA",
     "codigo": "34392"
   },
+  "35824": {
+    "confirmado": true,
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
+    "turma2027": "2º ANO (2027)",
+    "turno2027": "MAT",
+    "nome": "REBECA RAMALHO BRAGA",
+    "codigo": "35824"
+  },
   "34743": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "REBECA ROSA SOUZA REIMÃO",
@@ -1585,7 +1617,7 @@
   },
   "34744": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "RODRIGO MARQUES BORGES",
@@ -1593,7 +1625,7 @@
   },
   "34687": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "RUTHE GONÇALVES SILVA",
@@ -1601,7 +1633,7 @@
   },
   "35095": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SAMUEL ALVES SANTOS",
@@ -1609,7 +1641,7 @@
   },
   "35407": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SARAH BORGES SANTOS",
@@ -1617,7 +1649,7 @@
   },
   "35100": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SAYMON ALVES FERRAZ",
@@ -1625,7 +1657,7 @@
   },
   "34556": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SELENE VITÓRIA DIAS DA SILVA",
@@ -1633,7 +1665,7 @@
   },
   "35158": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "8º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SOFHIA CAMPOS NOVAIS",
@@ -1641,7 +1673,7 @@
   },
   "35088": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SOFIA NEVES RODRIGUES",
@@ -1649,7 +1681,7 @@
   },
   "35653": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SOFIA PEREIRA DA SILVA",
@@ -1657,7 +1689,7 @@
   },
   "34795": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "VESP",
     "nome": "SOPHIA ANDRADE PRATES",
@@ -1665,7 +1697,7 @@
   },
   "34523": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "SOPHIA SOUZA RAMALHO",
@@ -1673,7 +1705,7 @@
   },
   "34555": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "STEFANY COIMBRA AVELAR",
@@ -1681,7 +1713,7 @@
   },
   "34456": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "VESP",
     "nome": "STHEFANY FERREIRA DE ABREU",
@@ -1689,7 +1721,7 @@
   },
   "34792": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "VESP",
     "nome": "THALES LÁZARO GIL FERRAZ",
@@ -1697,7 +1729,7 @@
   },
   "34371": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "2º ANO (2027)",
     "turno2027": "MAT",
     "nome": "THÉO GONÇALVES DUARTE",
@@ -1705,7 +1737,7 @@
   },
   "35107": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "7º ANO (2027)",
     "turno2027": "MAT",
     "nome": "THIFANY RAMALHO DOS SANTOS",
@@ -1713,7 +1745,7 @@
   },
   "34682": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "5º ANO (2027)",
     "turno2027": "MAT",
     "nome": "VALDECI JUNIOR GOMES ARAÚJO",
@@ -1721,7 +1753,7 @@
   },
   "34524": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "VALENTINA ESTEVES RAMALHO",
@@ -1729,7 +1761,7 @@
   },
   "34621": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "VALENTINA RESENDE CRUZ",
@@ -1737,7 +1769,7 @@
   },
   "34747": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "6º ANO (2027)",
     "turno2027": "MAT",
     "nome": "VITÓRIA CRISTINA GONÇALVES RIBEIRO",
@@ -1745,7 +1777,7 @@
   },
   "34622": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "WALLYSSON PEREIRA BATISTA",
@@ -1753,7 +1785,7 @@
   },
   "34589": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "4º ANO (2027)",
     "turno2027": "MAT",
     "nome": "YASMIN FERREIRA ALMEIDA",
@@ -1761,7 +1793,7 @@
   },
   "34525": {
     "confirmado": true,
-    "dataConfirmacao": "2026-11-19T12:09:00.000Z",
+    "dataConfirmacao": "2026-11-19T12:55:00.000Z",
     "turma2027": "3º ANO (2027)",
     "turno2027": "MAT",
     "nome": "YASMIN RODRIGUES GIL",
