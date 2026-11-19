@@ -30,6 +30,7 @@ import { useSchool } from '../context/SchoolContext';
 import { carregarAlunosSecretaria } from '../lib/alunosSecretaria';
 import { supabase } from '../lib/supabase';
 import { gerarDocxRematricula } from '../lib/gerarDocxRematricula';
+import rematriculasOficiaisData from '../data/rematriculas_2027_oficiais.json';
 import type { ToastData } from './Toast';
 
 export interface AlunoRematriculaItem {
@@ -268,8 +269,13 @@ export default function ControleRematricula({ onToast }: Props) {
     async function carregar() {
       setCarregando(true);
       try {
-        // Recupera tudo que existe no localStorage (chaves atuais e legadas)
-        const mapRematriculas: Record<string, RegistroRematriculaStorage> = recuperarTudoLocalStorage();
+        // 0. Base oficial incondicional (221 alunos confirmados do relatório oficial) + histórico do navegador
+        const oficiais = (rematriculasOficiaisData || {}) as Record<string, RegistroRematriculaStorage>;
+        const doStorage = recuperarTudoLocalStorage();
+        const mapRematriculas: Record<string, RegistroRematriculaStorage> = {
+          ...oficiais,
+          ...doStorage
+        };
 
         // 1. Busca registros salvos na tabela alunos_secretaria do Supabase
         try {
@@ -754,7 +760,12 @@ export default function ControleRematricula({ onToast }: Props) {
 
   // Varredura profunda em todas as chaves do navegador para resgatar rematrículas
   function recuperarAutomaticamente() {
-    const achados = recuperarTudoLocalStorage();
+    const oficiais = (rematriculasOficiaisData || {}) as Record<string, RegistroRematriculaStorage>;
+    const doStorage = recuperarTudoLocalStorage();
+    const achados: Record<string, RegistroRematriculaStorage> = {
+      ...oficiais,
+      ...doStorage
+    };
     const totalAchados = Object.values(achados).filter((r) => r && r.confirmado).length;
 
     if (totalAchados === 0) {
