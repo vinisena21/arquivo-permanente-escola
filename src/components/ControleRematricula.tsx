@@ -341,7 +341,7 @@ export default function ControleRematricula({ onToast }: Props) {
 
         // Se o banco estiver vazio ou offline para esta escola, carrega as matrículas da escola ativa
         if (listaBase.length === 0) {
-          listaBase = (matriculasEscola as Array<Record<string, string>>).map((m, idx) => {
+          listaBase = (matriculasEscola as unknown as Array<Record<string, string>>).map((m, idx) => {
             const codigo = String(
               m['Código'] ||
               m['codigo_matricula'] ||
