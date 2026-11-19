@@ -8,10 +8,12 @@ import {
   Download,
   Building,
   FileText,
-  MapPin
+  MapPin,
+  UserCheck
 } from 'lucide-react';
 import { useSchool } from '../context/SchoolContext';
 import escolasData from '../data/escolas.json';
+import ImportarAlunoMunicipal from './ImportarAlunoMunicipal';
 import './RemanejamentoAlunos.css';
 
 interface RemanejamentoAlunosProps {
@@ -40,6 +42,7 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'transferencia' | 'remanejamento'>('todos');
   const [modalNovo, setModalNovo] = useState(false);
+  const [modalImportar, setModalImportar] = useState(false);
   const [guiaSelecionada, setGuiaSelecionada] = useState<MovimentacaoRegistro | null>(null);
 
   // Carrega movimentações customizadas do localStorage
@@ -199,6 +202,14 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
         </div>
 
         <div className="remanejamento-actions">
+          <button
+            type="button"
+            className="btn-secundario"
+            onClick={() => setModalImportar(true)}
+            style={{ background: '#f0fdf4', borderColor: '#86efac', color: '#166534', fontWeight: 600 }}
+          >
+            <UserCheck size={16} /> Importar de Outra Escola
+          </button>
           <button type="button" className="btn-secundario" onClick={exportarCSV}>
             <Download size={16} /> Exportar CSV
           </button>
@@ -639,6 +650,24 @@ export const RemanejamentoAlunos: React.FC<RemanejamentoAlunosProps> = ({ onToas
                 Registrar Movimentação
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de Importar Aluno de Outra Escola */}
+      {modalImportar && (
+        <div className="modal-overlay" onClick={() => setModalImportar(false)}>
+          <div
+            className="modal-content modal-largo"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '1000px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}
+          >
+            <ImportarAlunoMunicipal
+              onFechar={() => setModalImportar(false)}
+              onSucesso={(msg) => {
+                setModalImportar(false);
+                if (onToast) onToast({ message: msg, type: 'success' });
+              }}
+            />
           </div>
         </div>
       )}

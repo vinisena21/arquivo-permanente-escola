@@ -231,6 +231,13 @@ export const FichaIndividualAluno: React.FC<FichaIndividualAlunoProps> = ({ onTo
               <span className="label">CPF do Aluno:</span>
               <span className="valor">{aluno.CPF || '—'}</span>
             </div>
+
+            <div className="grid-item span-4">
+              <span className="label">Endereço Residencial Cadastrado:</span>
+              <span className="valor">
+                {aluno['Tipo Logradouro'] || 'Rua'} {aluno['Logradouro'] || 'Zona Rural'}, Nº {aluno['Número'] || 'SN'} &bull; Bairro: {aluno['Bairro'] || 'Zona Rural'} &bull; CEP: {aluno['Cep'] || '39.615-000'} &bull; {aluno['Município'] || 'PONTO DOS VOLANTES'} - {aluno['Estado'] || 'MG'}
+              </span>
+            </div>
           </div>
         </div>
 

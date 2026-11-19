@@ -60,6 +60,20 @@ function extrairAno(dataStr?: string | null): number | null {
   return null;
 }
 
+function converterParaTimestamp(dataStr?: string | null): number {
+  if (!dataStr) return 0;
+  const str = String(dataStr).trim();
+  const br = str.match(/^(\d{2})[/.-](\d{2})[/.-](\d{4})/);
+  if (br) {
+    return new Date(`${br[3]}-${br[2]}-${br[1]}T00:00:00`).getTime() || 0;
+  }
+  const iso = str.match(/^(\d{4})[/.-](\d{2})[/.-](\d{2})/);
+  if (iso) {
+    return new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`).getTime() || 0;
+  }
+  return 0;
+}
+
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -159,9 +173,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const ultimasSituacoes = new Map<string, string>();
 
     const ordenados = [...matriculasEscola].sort((a, b) => {
-      const dataA = a['Data da matrícula'] || '';
-      const dataB = b['Data da matrícula'] || '';
-      return dataA.localeCompare(dataB);
+      const tsA = converterParaTimestamp(a['Data da matrícula'] || a['Data da movimentação']);
+      const tsB = converterParaTimestamp(b['Data da matrícula'] || b['Data da movimentação']);
+      if (tsA !== tsB) {
+        return tsA - tsB;
+      }
+      const codA = parseInt(a['Código'], 10) || 0;
+      const codB = parseInt(b['Código'], 10) || 0;
+      return codA - codB;
     });
 
     for (const m of ordenados) {

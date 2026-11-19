@@ -45,6 +45,16 @@ export default function EditarAlunoSecretariaModal({
   const [identidade, setIdentidade] = useState(aluno.identidade ?? '');
   const [filiacao1, setFiliacao1] = useState(aluno.filiacao_1 ?? '');
   const [filiacao2, setFiliacao2] = useState(aluno.filiacao_2 ?? '');
+  
+  // Endereço residencial
+  const dadosIniciais = (typeof aluno.dados === 'object' && aluno.dados !== null ? aluno.dados : {}) as Record<string, any>;
+  const [tipoLogradouro, setTipoLogradouro] = useState(dadosIniciais['Tipo Logradouro'] ?? 'RUA');
+  const [logradouro, setLogradouro] = useState(dadosIniciais['Logradouro'] ?? '');
+  const [numeroEnd, setNumeroEnd] = useState(dadosIniciais['Número'] ?? '');
+  const [bairro, setBairro] = useState(dadosIniciais['Bairro'] ?? '');
+  const [cep, setCep] = useState(dadosIniciais['Cep'] ?? '39.615-000');
+  const [municipio, setMunicipio] = useState(dadosIniciais['Município'] ?? 'PONTO DOS VOLANTES');
+
   const [salvando, setSalvando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
   const [erroNome, setErroNome] = useState('');
@@ -93,9 +103,20 @@ export default function EditarAlunoSecretariaModal({
         filiacao_2: filiacao2 || null,
       };
 
+      const dadosAtuais = (typeof aluno.dados === 'object' && aluno.dados !== null ? aluno.dados : {}) as Record<string, any>;
+      const dadosAtualizados = {
+        ...dadosAtuais,
+        'Tipo Logradouro': tipoLogradouro,
+        'Logradouro': logradouro,
+        'Número': numeroEnd,
+        'Bairro': bairro,
+        'Cep': cep,
+        'Município': municipio,
+      };
+
       const atualizado = await atualizarAlunoSecretaria(
         editavel,
-        aluno.dados as Json
+        dadosAtualizados as Json
       );
       aoSalvar(atualizado);
     } catch (erro) {
@@ -305,6 +326,72 @@ export default function EditarAlunoSecretariaModal({
               type="text"
               value={filiacao2}
               onChange={(e) => setFiliacao2(e.target.value)}
+            />
+          </div>
+
+          {/* Seção de Endereço Residencial */}
+          <div className="modal-campo" style={{ gridColumn: '1 / -1', borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>Endereço Residencial</h4>
+          </div>
+
+          <div className="modal-campo">
+            <label htmlFor="sec-tipo-logra">Tipo Logradouro</label>
+            <input
+              id="sec-tipo-logra"
+              type="text"
+              placeholder="RUA, AVENIDA, POVOADO..."
+              value={tipoLogradouro}
+              onChange={(e) => setTipoLogradouro(e.target.value.toUpperCase())}
+            />
+          </div>
+
+          <div className="modal-campo modal-campo-largo">
+            <label htmlFor="sec-logradouro">Logradouro / Nome da Rua / Comunidade</label>
+            <input
+              id="sec-logradouro"
+              type="text"
+              value={logradouro}
+              onChange={(e) => setLogradouro(e.target.value.toUpperCase())}
+            />
+          </div>
+
+          <div className="modal-campo">
+            <label htmlFor="sec-numero-end">Número</label>
+            <input
+              id="sec-numero-end"
+              type="text"
+              value={numeroEnd}
+              onChange={(e) => setNumeroEnd(e.target.value)}
+            />
+          </div>
+
+          <div className="modal-campo">
+            <label htmlFor="sec-bairro">Bairro / Distrito</label>
+            <input
+              id="sec-bairro"
+              type="text"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value.toUpperCase())}
+            />
+          </div>
+
+          <div className="modal-campo">
+            <label htmlFor="sec-cep">CEP</label>
+            <input
+              id="sec-cep"
+              type="text"
+              value={cep}
+              onChange={(e) => setCep(e.target.value)}
+            />
+          </div>
+
+          <div className="modal-campo">
+            <label htmlFor="sec-municipio">Município</label>
+            <input
+              id="sec-municipio"
+              type="text"
+              value={municipio}
+              onChange={(e) => setMunicipio(e.target.value.toUpperCase())}
             />
           </div>
 

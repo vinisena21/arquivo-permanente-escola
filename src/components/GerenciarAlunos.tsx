@@ -18,6 +18,7 @@ import {
   validarNumeroArquivo,
   validarPasta
 } from '../lib/validacao';
+import ImportarAlunoMunicipal from './ImportarAlunoMunicipal';
 import './GerenciarAlunos.css';
 
 interface AlunoResumo {
@@ -29,7 +30,7 @@ interface AlunoResumo {
 /** @deprecated Use AlunoArquivo from types/database */
 export type AlunoCadastrado = AlunoArquivo;
 
-type DestinoCadastro = 'arquivo' | 'secretaria';
+type DestinoCadastro = 'arquivo' | 'secretaria' | 'importar';
 
 interface GerenciarAlunosProps {
   alunos: AlunoResumo[];
@@ -361,32 +362,50 @@ export default function GerenciarAlunos({
         >
           Secretaria (matrícula)
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={destino === 'importar'}
+          className={destino === 'importar' ? 'ativo' : ''}
+          onClick={() => trocarDestino('importar')}
+        >
+          Importar de Outra Escola
+        </button>
       </div>
 
-      {destino === 'arquivo' && pastaRecomendada && (
-        <div className="recomendacao-card">
-          <div className="recomendacao-icone">
-            <Sparkles size={24} />
-          </div>
+      {destino === 'importar' ? (
+        <ImportarAlunoMunicipal
+          onSucesso={(msg) => {
+            setMensagem(msg);
+            onAlunoSecretariaCadastrado?.();
+          }}
+        />
+      ) : (
+        <>
+          {destino === 'arquivo' && pastaRecomendada && (
+            <div className="recomendacao-card">
+              <div className="recomendacao-icone">
+                <Sparkles size={24} />
+              </div>
 
-          <div>
-            <span>Recomendação inteligente</span>
-            <strong>Pasta {pastaRecomendada.codigo}</strong>
-            <p>
-              Para nomes começando com{' '}
-              <strong>
-                {nome.trim().charAt(0).toLocaleUpperCase('pt-BR')}
-              </strong>
-              , esta é a pasta com menos registros: {pastaRecomendada.quantidade}{' '}
-              alunos.
-            </p>
-          </div>
+              <div>
+                <span>Recomendação inteligente</span>
+                <strong>Pasta {pastaRecomendada.codigo}</strong>
+                <p>
+                  Para nomes começando com{' '}
+                  <strong>
+                    {nome.trim().charAt(0).toLocaleUpperCase('pt-BR')}
+                  </strong>
+                  , esta é a pasta com menos registros: {pastaRecomendada.quantidade}{' '}
+                  alunos.
+                </p>
+              </div>
 
-          <button type="button" onClick={usarRecomendacao}>
-            Usar pasta
-          </button>
-        </div>
-      )}
+              <button type="button" onClick={usarRecomendacao}>
+                Usar pasta
+              </button>
+            </div>
+          )}
 
       <form className="gerenciar-formulario" onSubmit={cadastrarAluno} noValidate>
         <div className="campo campo-largo">
@@ -577,6 +596,8 @@ export default function GerenciarAlunos({
           )}
         </button>
       </form>
-    </section>
+    </>
+  )}
+</section>
   );
 }
