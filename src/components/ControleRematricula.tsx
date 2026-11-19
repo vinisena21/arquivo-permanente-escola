@@ -133,6 +133,38 @@ function formatarDataHora(dataISO: string | null): string {
 /**
  * Varre profundamente todo o localStorage buscando quaisquer dados de rematrícula salvos anteriormente
  */
+function mesclarNoMapa(destino: Record<string, RegistroRematriculaStorage>, dados: any) {
+  if (!dados) return;
+  if (Array.isArray(dados)) {
+    dados.forEach((item, idx) => {
+      if (item && typeof item === 'object') {
+        const cod = String(item.codigo || item.codigo_matricula || item.id || item.nome || `item_${idx}`);
+        destino[cod] = {
+          confirmado: item.confirmado !== undefined ? Boolean(item.confirmado) : Boolean(item.rematriculado),
+          dataConfirmacao: item.dataConfirmacao || item.dataRematricula || item.confirmado_em || new Date().toISOString(),
+          turma2027: item.turma2027 || item.turma2027Prevista,
+          turno2027: item.turno2027 === 'VESP' ? 'VESP' : 'MAT',
+          nome: item.nome,
+          codigo: cod
+        };
+      }
+    });
+  } else if (typeof dados === 'object') {
+    Object.entries(dados).forEach(([k, v]: [string, any]) => {
+      if (v && typeof v === 'object') {
+        destino[k] = {
+          confirmado: v.confirmado !== undefined ? Boolean(v.confirmado) : Boolean(v.rematriculado),
+          dataConfirmacao: v.dataConfirmacao || v.dataRematricula || v.confirmado_em || new Date().toISOString(),
+          turma2027: v.turma2027 || v.turma2027Prevista,
+          turno2027: v.turno2027 === 'VESP' ? 'VESP' : 'MAT',
+          nome: v.nome,
+          codigo: v.codigo || k
+        };
+      }
+    });
+  }
+}
+
 function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage> {
   const achados: Record<string, RegistroRematriculaStorage> = {};
   if (typeof window === 'undefined' || !window.localStorage) return achados;
@@ -142,7 +174,8 @@ function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage>
     'guia_escolar_rematriculas_2027',
     'guia_rematriculas_2027',
     'rematriculas_2027',
-    'rematriculas'
+    'rematriculas',
+    'guia_escolar_rematriculas'
   ];
 
   chavesConhecidas.forEach((chave) => {
@@ -150,26 +183,23 @@ function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage>
       const val = localStorage.getItem(chave);
       if (val) {
         const parsed = JSON.parse(val);
-        if (parsed && typeof parsed === 'object') {
-          Object.assign(achados, parsed);
-        }
+        mesclarNoMapa(achados, parsed);
       }
     } catch {}
   });
 
-  // Varredura de segurança em todas as chaves
+  // Varredura de segurança em todas as chaves do navegador
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || chavesConhecidas.includes(k)) continue;
-      if (k.toLowerCase().includes('rematricul')) {
+      const kLower = k.toLowerCase();
+      if (kLower.includes('rematr') || kLower.includes('2027')) {
         try {
           const val = localStorage.getItem(k);
           if (val) {
             const parsed = JSON.parse(val);
-            if (parsed && typeof parsed === 'object') {
-              Object.assign(achados, parsed);
-            }
+            mesclarNoMapa(achados, parsed);
           }
         } catch {}
       }
@@ -180,7 +210,7 @@ function recuperarTudoLocalStorage(): Record<string, RegistroRematriculaStorage>
 }
 
 export default function ControleRematricula({ onToast }: Props) {
-  const { matriculasEscola, escolaAtiva } = useSchool();
+  const { matriculasEscola, todasMatriculasEscola, escolaAtiva } = useSchool();
   const [alunos, setAlunos] = useState<AlunoRematriculaItem[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState('');
@@ -341,7 +371,11 @@ export default function ControleRematricula({ onToast }: Props) {
 
         // Se o banco estiver vazio ou offline para esta escola, carrega as matrículas da escola ativa
         if (listaBase.length === 0) {
-          listaBase = (matriculasEscola as unknown as Array<Record<string, string>>).map((m, idx) => {
+          const fonteMatriculas = (todasMatriculasEscola && todasMatriculasEscola.length > 0)
+            ? todasMatriculasEscola
+            : matriculasEscola;
+
+          listaBase = (fonteMatriculas as unknown as Array<Record<string, string>>).map((m, idx) => {
             const codigo = String(
               m['Código'] ||
               m['codigo_matricula'] ||
@@ -352,13 +386,31 @@ export default function ControleRematricula({ onToast }: Props) {
             );
             const nome = m['Nome'] || 'Sem Nome';
 
-            // Busca inteligente por código E com fallback por nome
+            // Busca hiper-resiliente no mapa de rematrículas salvas
             let saved = mapRematriculas[codigo];
-            if (!saved) {
-              const porNome = Object.values(mapRematriculas).find(
-                (r: any) => r && r.nome && normalizarBusca(r.nome) === normalizarBusca(nome)
-              );
-              if (porNome) saved = porNome;
+
+            if (!saved && m['Código do estudante']) {
+              saved = mapRematriculas[String(m['Código do estudante'])];
+            }
+
+            if (!saved && m['Registro do estudante (RA)']) {
+              saved = mapRematriculas[String(m['Registro do estudante (RA)'])];
+            }
+
+            if (!saved && nome) {
+              saved = mapRematriculas[nome] || mapRematriculas[nome.trim().toUpperCase()];
+            }
+
+            if (!saved && nome) {
+              const nomeNorm = normalizarBusca(nome);
+              const achado = Object.entries(mapRematriculas).find(([chave, r]) => {
+                if (!r) return false;
+                if (r.nome && normalizarBusca(r.nome) === nomeNorm) return true;
+                if (normalizarBusca(chave) === nomeNorm) return true;
+                if (r.codigo && String(r.codigo) === codigo) return true;
+                return false;
+              });
+              if (achado) saved = achado[1];
             }
 
             const turma = m['Descrição'] || m['Turma'] || m['Período'] || '1º ANO';
@@ -392,7 +444,7 @@ export default function ControleRematricula({ onToast }: Props) {
     }
 
     void carregar();
-  }, [matriculasEscola, escolaAtiva]);
+  }, [matriculasEscola, todasMatriculasEscola, escolaAtiva]);
 
   // Lista única de turmas para o filtro
   const turmasDisponiveis = useMemo(() => {
@@ -698,6 +750,57 @@ export default function ControleRematricula({ onToast }: Props) {
         type: 'error'
       });
     }
+  }
+
+  // Varredura profunda em todas as chaves do navegador para resgatar rematrículas
+  function recuperarAutomaticamente() {
+    const achados = recuperarTudoLocalStorage();
+    const totalAchados = Object.values(achados).filter((r) => r && r.confirmado).length;
+
+    if (totalAchados === 0) {
+      onToast?.({
+        message: 'Nenhum registro prévio de rematrícula encontrado no armazenamento deste navegador.',
+        type: 'info'
+      });
+      return;
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(achados));
+
+    setAlunos((atuais) =>
+      atuais.map((aluno) => {
+        let saved: RegistroRematriculaStorage | undefined = achados[aluno.codigo];
+        if (!saved && aluno.codigoEstudante) {
+          saved = achados[aluno.codigoEstudante];
+        }
+        if (!saved && aluno.nome) {
+          const nomeNorm = normalizarBusca(aluno.nome);
+          const f = Object.entries(achados).find(([k, r]) => {
+            if (!r) return false;
+            if (r.nome && normalizarBusca(r.nome) === nomeNorm) return true;
+            if (normalizarBusca(k) === nomeNorm) return true;
+            if (r.codigo && String(r.codigo) === aluno.codigo) return true;
+            return false;
+          });
+          if (f) saved = f[1];
+        }
+        if (saved && saved.confirmado) {
+          return {
+            ...aluno,
+            rematriculado: true,
+            turno2027: saved.turno2027 || aluno.turno2027,
+            dataRematricula: saved.dataConfirmacao || aluno.dataRematricula || new Date().toISOString()
+          };
+        }
+        return aluno;
+      })
+    );
+
+    setModalBackupAberta(false);
+    onToast?.({
+      message: `${totalAchados} aluno(s) rematriculado(s) recuperados com sucesso!`,
+      type: 'success'
+    });
   }
 
   // Sincroniza todos os alunos confirmados com o Supabase
@@ -1412,6 +1515,25 @@ export default function ControleRematricula({ onToast }: Props) {
                     <p>
                       Existem <strong>{totalConfirmados}</strong> aluno(s) marcados como confirmados para 2027 nesta aba.
                     </p>
+                  </div>
+                </div>
+
+                {/* Opção 0: Resgate Automático */}
+                <div className="backup-action-box" style={{ background: '#ecfdf5', borderColor: '#a7f3d0' }}>
+                  <h5 style={{ color: '#065f46' }}>⚡ Recuperação Automática das Minhas Rematrículas</h5>
+                  <p style={{ color: '#047857' }}>
+                    Clique no botão abaixo para escanear todas as chaves de histórico deste navegador e reconectar instantaneamente todas as rematrículas feitas:
+                  </p>
+                  <div style={{ marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn-backup-item restore"
+                      style={{ background: '#059669', color: '#fff', borderColor: '#047857' }}
+                      onClick={recuperarAutomaticamente}
+                    >
+                      <RotateCcw size={16} />
+                      <span>Escanear e Restaurar Minhas Rematrículas Agora</span>
+                    </button>
                   </div>
                 </div>
 

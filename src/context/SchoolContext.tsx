@@ -40,6 +40,7 @@ interface SchoolContextType {
   dadosEscolaAtiva: EscolaItem | undefined;
   setEscolaAtiva: (nome: string) => void;
   matriculasEscola: typeof matriculasData;
+  todasMatriculasEscola: typeof matriculasData;
   turmasEscola: typeof turmasData;
   profissionaisEscola: typeof profissionaisData;
   movimentacoesEscola: typeof movimentacoesData;
@@ -109,6 +110,15 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [escolas, escolaAtiva]);
 
   const codigoEscolaAtiva = dadosEscolaAtiva?.Código || '22';
+
+  // Todas as matrículas da escola ativa (base permanente sem restrição de ano letivo)
+  const todasMatriculasEscola = useMemo(() => {
+    const nomeNorm = escolaAtiva.trim().toUpperCase();
+    return (matriculasData as any[]).filter((m) => {
+      const esc = (m['Escola'] || ESCOLA_PADRAO).trim().toUpperCase();
+      return esc === nomeNorm;
+    });
+  }, [escolaAtiva]);
 
   // Matrículas da escola ativa filtradas com isolamento temporal por Ano Letivo
   const matriculasEscola = useMemo(() => {
@@ -223,6 +233,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         dadosEscolaAtiva,
         setEscolaAtiva,
         matriculasEscola,
+        todasMatriculasEscola,
         turmasEscola,
         profissionaisEscola,
         movimentacoesEscola,

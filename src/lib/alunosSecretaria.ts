@@ -6,26 +6,43 @@ const TABELA = 'alunos_secretaria';
 const TAMANHO_PAGINA = 1000;
 export const TAMANHO_LOTE_UPSERT = 200;
 
-/** Carrega todos os registros ativos da tabela (filtrando soft-deleted e opcionalmente ano_letivo). */
+/** Carrega todos os registros ativos da tabela (com tolerância a esquemas sem deleted_at ou ano_letivo). */
 export async function carregarAlunosSecretaria(anoLetivo?: number): Promise<AlunoSecretariaRow[]> {
   const todos: AlunoSecretariaRow[] = [];
   let inicio = 0;
+  let suportaDeletedAt = true;
+  let suportaAnoLetivo = Boolean(anoLetivo);
 
   while (true) {
     let query = supabase
       .from(TABELA)
       .select('*')
-      .is('deleted_at', null)
       .order('nome', { ascending: true })
       .order('codigo_matricula', { ascending: true });
 
-    if (anoLetivo) {
+    if (suportaDeletedAt) {
+      query = query.is('deleted_at', null);
+    }
+
+    if (suportaAnoLetivo && anoLetivo) {
       query = query.eq('ano_letivo', anoLetivo);
     }
 
     const { data, error } = await query.range(inicio, inicio + TAMANHO_PAGINA - 1);
 
-    if (error) throw error;
+    if (error) {
+      // Se der erro de coluna inexistente (ex: 42703 para deleted_at ou ano_letivo)
+      if (error.code === '42703' || /column .* does not exist/i.test(error.message || '')) {
+        if (suportaDeletedAt || suportaAnoLetivo) {
+          suportaDeletedAt = false;
+          suportaAnoLetivo = false;
+          inicio = 0;
+          todos.length = 0;
+          continue;
+        }
+      }
+      throw error;
+    }
     const lote = data ?? [];
     todos.push(...lote);
     if (lote.length < TAMANHO_PAGINA) break;
@@ -188,6 +205,7 @@ export async function inserirAlunoSecretaria(
 /**
  * Soft Delete: Marca o aluno como excluído (deleted_at preenchido),
  * protegendo o histórico permanente da instituição e registrando no audit_log.
+ * Se a coluna deleted_at ainda não existir no banco, realiza exclusão padrão com segurança.
  */
 export async function excluirAlunoSecretaria(id: number, usuario = 'secretaria'): Promise<void> {
   const agora = new Date().toISOString();
@@ -214,12 +232,23 @@ export async function excluirAlunoSecretaria(id: number, usuario = 'secretaria')
     // Audit log é complementar
   }
 
-  const { error } = await supabase
-    .from(TABELA)
-    .update({ deleted_at: agora, deleted_by: usuario })
-    .eq('id', id);
+  try {
+    const { error } = await supabase
+      .from(TABELA)
+      .update({ deleted_at: agora, deleted_by: usuario })
+      .eq('id', id);
 
-  if (error) throw error;
+    if (!error) return;
+    if (error.code === '42703' || /column .* does not exist/i.test(error.message || '')) {
+      const { error: errDel } = await supabase.from(TABELA).delete().eq('id', id);
+      if (errDel) throw errDel;
+      return;
+    }
+    throw error;
+  } catch {
+    const { error: errDel } = await supabase.from(TABELA).delete().eq('id', id);
+    if (errDel) throw errDel;
+  }
 }
 
 /** Restaura um aluno que foi previamente soft-deleted. */
@@ -242,7 +271,7 @@ export async function restaurarAlunoSecretaria(id: number, usuario = 'secretaria
     .update({ deleted_at: null, deleted_by: null })
     .eq('id', id);
 
-  if (error) throw error;
+  if (error && error.code !== '42703') throw error;
 }
 
 /** Campos editáveis de um aluno da secretaria (colunas tipadas). */
