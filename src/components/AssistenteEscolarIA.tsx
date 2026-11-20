@@ -80,8 +80,17 @@ export const AssistenteEscolarIA: React.FC<AssistenteEscolarIAProps> = ({
   const [painelMemoriaAberto, setPainelMemoriaAberto] = useState(false);
   const [copiadoSql, setCopiadoSql] = useState(false);
   
-  // Chave opcional de IA (Gemini)
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('guia_gemini_api_key') || '');
+  // Chave oficial de IA (Google Gemini)
+  const chavePadraoEnv = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || '';
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    const salva = localStorage.getItem('guia_gemini_api_key');
+    if (salva && salva.trim()) return salva.trim();
+    if (chavePadraoEnv && chavePadraoEnv.trim()) {
+      localStorage.setItem('guia_gemini_api_key', chavePadraoEnv.trim());
+      return chavePadraoEnv.trim();
+    }
+    return '';
+  });
   const [salvandoKey, setSalvandoKey] = useState(false);
 
   // Memória & Supabase
@@ -746,8 +755,7 @@ A partir de agora, lembrarei desse fato em todas as futuras consultas e resposta
 
       // Monta a memória aprendida no prompt do sistema
       const memoriaFormatada = formatarMemoriaParaPrompt(fatosMemoria);
-      const systemInstructionCompleto = `Você é o Assistente de Inteligência Artificial Oficial da Escola Municipal Maria Geralda Miranda Brito Salomão, localizada em Ponto dos Volantes - MG.
-Sua inteligência é de altíssimo nível, atuando como um especialista sênior em legislação educacional brasileira (LDB 9.394/96, CNE, SEE/MG), gestão de secretaria escolar, pedagogia contemporânea e operação do sistema "Guia Escolar".
+      const systemInstructionCompleto = `Você é o Assistente Oficial de Inteligência Artificial da Escola Municipal Maria Geralda Miranda Brito Salomão (Ponto dos Volantes - MG), alimentado pelo Google Gemini com capacidade avançada para atender e executar qualquer solicitação administrativa, pedagógica ou regimental que o usuário pedir.
 
 DADOS OFICIAIS DA ESCOLA:
 - Instituição: Escola Municipal Maria Geralda Miranda Brito Salomão
@@ -757,6 +765,7 @@ DADOS OFICIAIS DA ESCOLA:
 - Turno Matutino: 07:00 às 11:30 (Anos Finais: 6º ao 9º Ano)
 - Turno Vespertino: 12:30 às 17:00 (Anos Iniciais: 1º ao 5º Ano)
 - Censo Escolar Atual: ${totalAlunos} estudantes matriculados, ${totalTurmas} turmas ativas e ${totalProfissionais} servidores da educação.
+- Rematrículas Oficiais 2027: 225 estudantes confirmados no sistema (168 no turno Matutino e 57 no turno Vespertino), todos integrados ao banco de dados Supabase.
 - Carga Horária e Calendário: 200 dias de efetivo trabalho escolar e 800 horas anuais.
 
 REGRAS DE AVALIAÇÃO E NOTAS (OFICIAL DA ESCOLA):
@@ -774,13 +783,13 @@ GUIA DE OPERAÇÃO DO SISTEMA GUIA ESCOLAR:
 - Para Ficha Individual e Ata Final: Menu "Pedagógico (SIGP)" > "Ficha Individual & Ata Final". Emissão anual para o livro de atas.
 - Para Transferências: Menu "Pedagógico (SIGP)" > "Remanejamento & Transferências".
 - Para Auditoria de Cadastros: Menu "Cadastros" > "Detector de Duplicados".
+- Para Rematrículas 2027: Botão "Rematrícula 2027" no cabeçalho.
 
 ${memoriaFormatada}
 
-ESTILO DE RESPOSTA:
-- Extremamente inteligente, estruturada, clara, atenciosa e profissional.
-- Se pedirem modelos de documentos (ofícios, convocações, ocorrências, comunicados, atas, relatórios), forneça o texto completo e formal pronto para uso.
-- Se pedirem passo a passo de como fazer algo no sistema, explique com clareza sequencial.` ;
+DIRETRIZ DE ATENDIMENTO TOTAL ("FAZER O QUE O USUÁRIO PEDIR"):
+- Você deve atender prontamente a qualquer solicitação do usuário: redigir textos formais, ofícios, circulares, convocações, atas, notificações, justificativas, mensagens para grupos de pais ou professores, projetos pedagógicos, planos de aula alinhados à BNCC, cálculos de notas e médias, pareceres descritivos e orientações do regimento escolar.
+- Seja extremamente proativo, estruturado, formal e resolutivo. Nunca recuse um pedido e nunca dê respostas genéricas quando puder entregar o documento ou resposta prontos para copiar e usar.` ;
 
       // Prepara as últimas 6 mensagens para manter o contexto multi-turn da conversa
       const historicoRecente = mensagens.slice(-6).map((m) => ({
@@ -788,8 +797,9 @@ ESTILO DE RESPOSTA:
         content: m.texto
       }));
 
-      // Opção A: Se o usuário configurou chave Gemini no navegador
-      if (geminiApiKey.trim()) {
+      // Opção A: Executar via Google Gemini oficial (com cascata de modelos de alta velocidade)
+      const chaveAtiva = (geminiApiKey || chavePadraoEnv || '').trim();
+      if (chaveAtiva) {
         const contentsGemini = [
           ...mensagens.slice(-6).map((m) => ({
             role: m.remetente === 'usuario' ? 'user' : 'model',
@@ -798,18 +808,42 @@ ESTILO DE RESPOSTA:
           { role: 'user', parts: [{ text: texto }] }
         ];
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey.trim()}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstructionCompleto }] },
-            contents: contentsGemini
-          })
-        });
+        const modelosTentativa = [
+          'gemini-3.1-flash-lite',
+          'gemini-flash-lite-latest',
+          'gemini-3.8-flash',
+          'gemini-flash-latest'
+        ];
 
-        if (res.ok) {
-          const data = await res.json();
-          respostaTexto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        for (const modelo of modelosTentativa) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${encodeURIComponent(chaveAtiva)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstructionCompleto }] },
+                contents: contentsGemini
+              }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const data = await res.json();
+              const txt = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (txt && txt.trim()) {
+                respostaTexto = txt.trim();
+                break;
+              }
+            } else {
+              console.warn(`[Assistente IA] Modelo ${modelo} retornou HTTP ${res.status}`);
+            }
+          } catch (err) {
+            console.warn(`[Assistente IA] Falha ao consultar modelo ${modelo}:`, err);
+          }
         }
       }
 
@@ -1175,12 +1209,20 @@ Como estou em **modo autônomo com memória local e regras da escola**:
                 </button>
               </div>
               <p className="ia-config-desc">
-                O assistente opera automaticamente com o <strong>Motor Gratuito Ilimitado (Sem gasto de tokens)</strong>. Se preferir usar sua própria chave Google Gemini 2.0 Flash oficial:
+                {geminiApiKey ? (
+                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
+                    ✨ Chave Google Gemini Oficial Ativa! Respostas de altíssima velocidade prontas para qualquer demanda.
+                  </span>
+                ) : (
+                  <span>
+                    O assistente opera automaticamente com o motor gratuito. Para ativar o poder máximo do <strong>Google Gemini</strong>, informe sua chave:
+                  </span>
+                )}
               </p>
               <div className="ia-key-input-row">
                 <input
                   type="password"
-                  placeholder="Cole sua Gemini API Key (Opcional)"
+                  placeholder="Cole sua Gemini API Key"
                   value={geminiApiKey}
                   onChange={(e) => setGeminiApiKey(e.target.value)}
                 />
@@ -1189,7 +1231,7 @@ Como estou em **modo autônomo com memória local e regras da escola**:
                 </button>
               </div>
               <span className="ia-config-note">
-                💡 Pode deixar em branco para continuar usando o motor 100% gratuito sem tokens.
+                💡 A chave é salva com segurança no seu navegador e utilizada diretamente para processar todas as suas solicitações com o modelo Gemini Flash.
               </span>
             </div>
           )}

@@ -142,7 +142,7 @@ async function analisar(pedido: PedidoAnalise, modelo: string, chave: string, pr
 function modeloPadrao(provedor: ProvedorIA, env: Record<string, string | undefined>): string {
   if (provedor === 'groq') return env.GROQ_MODEL || 'llama-3.3-70b-versatile';
   if (provedor === 'openrouter') return env.OPENROUTER_MODEL || 'openrouter/free';
-  if (provedor === 'gemini') return env.GEMINI_MODEL || 'gemini-2.0-flash';
+  if (provedor === 'gemini') return env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
   return env.OPENAI_MODEL || 'gpt-4o-mini';
 }
 
