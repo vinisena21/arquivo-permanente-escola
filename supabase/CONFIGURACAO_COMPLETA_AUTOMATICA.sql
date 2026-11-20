@@ -2,7 +2,7 @@
 -- CONFIGURAÇÃO COMPLETA E PERMISSÕES DIRETAS NO SUPABASE
 -- Execute este script no SQL Editor do Supabase (apenas 1 clique em Run)
 -- Ele cria todas as tabelas, libera as permissões de gravação direta e
--- já insere permanentemente os 221 alunos rematriculados oficiais de 2027!
+-- já insere permanentemente os 225 alunos rematriculados oficiais de 2027!
 -- ====================================================================
 
 -- 1. TABELA rematriculas_2027
@@ -96,7 +96,7 @@ ALTER TABLE public.fechamento_periodos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Permissao_Geral_fechamento_periodos" ON public.fechamento_periodos;
 CREATE POLICY "Permissao_Geral_fechamento_periodos" ON public.fechamento_periodos FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- 4. CARGA PERMANENTE DOS 221 ALUNOS REMATRICULADOS DE 2027
+-- 4. CARGA PERMANENTE DOS 225 ALUNOS REMATRICULADOS DE 2027
 INSERT INTO public.rematriculas_2027 (codigo_matricula, nome, turma_2027, turno_2027, confirmado, confirmado_em)
 VALUES
   ('35144', 'ADRIELLE BATISTA SOUZA', '8º ANO (2027)', 'MAT', true, '2026-11-19 12:09:00+00'),
@@ -333,4 +333,4 @@ ON CONFLICT (codigo_matricula) DO UPDATE SET
   updated_at = NOW();
 
 -- Mensagem de confirmação
-SELECT 'Configuração e carga de 221 rematrículas 2027 concluída com sucesso!' AS status;
+SELECT 'Configuração e carga de 225 rematrículas 2027 concluída com sucesso!' AS status;

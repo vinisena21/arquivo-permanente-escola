@@ -5,11 +5,12 @@ oficiais_path = r'C:\Users\USER\OneDrive\Área de Trabalho\Site Arquivo Permanen
 with open(oficiais_path, 'r', encoding='utf-8') as f:
     oficiais = json.load(f)
 
-sql = """-- ====================================================================
+total_oficiais = len(oficiais)
+sql = f"""-- ====================================================================
 -- CONFIGURAÇÃO COMPLETA E PERMISSÕES DIRETAS NO SUPABASE
 -- Execute este script no SQL Editor do Supabase (apenas 1 clique em Run)
 -- Ele cria todas as tabelas, libera as permissões de gravação direta e
--- já insere permanentemente os 221 alunos rematriculados oficiais de 2027!
+-- já insere permanentemente os {total_oficiais} alunos rematriculados oficiais de 2027!
 -- ====================================================================
 
 -- 1. TABELA rematriculas_2027
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS public.alunos_secretaria (
   filiacao_1 TEXT,
   filiacao_2 TEXT,
   escola TEXT,
-  dados JSONB NOT NULL DEFAULT '{}'::jsonb,
+  dados JSONB NOT NULL DEFAULT '{{}}'::jsonb,
   deleted_at TIMESTAMPTZ DEFAULT NULL,
   deleted_by TEXT DEFAULT NULL,
   ano_letivo INTEGER DEFAULT 2026,
@@ -103,7 +104,7 @@ ALTER TABLE public.fechamento_periodos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Permissao_Geral_fechamento_periodos" ON public.fechamento_periodos;
 CREATE POLICY "Permissao_Geral_fechamento_periodos" ON public.fechamento_periodos FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- 4. CARGA PERMANENTE DOS 221 ALUNOS REMATRICULADOS DE 2027
+-- 4. CARGA PERMANENTE DOS {total_oficiais} ALUNOS REMATRICULADOS DE 2027
 """
 
 valores = []
@@ -123,8 +124,8 @@ sql += """\nON CONFLICT (codigo_matricula) DO UPDATE SET
   confirmado_em = EXCLUDED.confirmado_em,
   updated_at = NOW();\n\n"""
 
-sql += """-- Mensagem de confirmação
-SELECT 'Configuração e carga de 221 rematrículas 2027 concluída com sucesso!' AS status;
+sql += f"""-- Mensagem de confirmação
+SELECT 'Configuração e carga de {total_oficiais} rematrículas 2027 concluída com sucesso!' AS status;
 """
 
 out_path = r'C:\Users\USER\OneDrive\Área de Trabalho\Site Arquivo Permanente\supabase\CONFIGURACAO_COMPLETA_AUTOMATICA.sql'
