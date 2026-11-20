@@ -214,6 +214,16 @@ export default function ControleRematricula({ onToast }: Props) {
   const { matriculasEscola, todasMatriculasEscola, escolaAtiva } = useSchool();
   const [alunos, setAlunos] = useState<AlunoRematriculaItem[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState(0);
+
+  // Escuta atualizações de rematrícula disparadas em tempo real pela IA
+  useEffect(() => {
+    const handleAtualizacao = () => {
+      setVersaoAtualizacao((v) => v + 1);
+    };
+    window.addEventListener('guia_rematricula_atualizada', handleAtualizacao);
+    return () => window.removeEventListener('guia_rematricula_atualizada', handleAtualizacao);
+  }, []);
   const [busca, setBusca] = useState('');
   const [turmaFiltro, setTurmaFiltro] = useState<string>('todas');
   const [statusFiltro, setStatusFiltro] = useState<'todos' | 'confirmados' | 'pendentes'>('todos');
@@ -450,7 +460,7 @@ export default function ControleRematricula({ onToast }: Props) {
     }
 
     void carregar();
-  }, [matriculasEscola, todasMatriculasEscola, escolaAtiva]);
+  }, [matriculasEscola, todasMatriculasEscola, escolaAtiva, versaoAtualizacao]);
 
   // Lista única de turmas para o filtro
   const turmasDisponiveis = useMemo(() => {

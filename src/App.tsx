@@ -1244,6 +1244,12 @@ export default function App() {
         abertoExterno={assistenteIaAberto}
         onFecharExterno={() => setAssistenteIaAberto(false)}
         onAbrirDeclaracao={() => setModalDeclaracoesAberta(true)}
+        onNavegarAba={(aba) => setAbaAtiva(aba as AbaAtiva)}
+        onBuscarAluno={(termo) => {
+          setBusca(termo);
+          setAbaAtiva('consulta');
+        }}
+        abaAtual={abaAtiva}
       />
 
       <SeletorEscolaModal

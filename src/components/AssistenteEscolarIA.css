@@ -981,6 +981,118 @@
   color: #334155;
 }
 
+/* Card de Ação Executada em Tempo Real no Sistema */
+.ia-card-acao-executada {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.84rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: mini-pill-enter 0.25s ease-out;
+}
+
+.ia-card-acao-executada.sucesso {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #14532d;
+}
+
+.ia-card-acao-executada.falha {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #7f1d1d;
+}
+
+.acao-icon-wrap {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.acao-conteudo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acao-header-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-acao-tipo {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #15803d;
+}
+
+.badge-status-acao {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  letter-spacing: 0.5px;
+}
+
+.acao-desc {
+  margin: 0;
+  color: #166534;
+  line-height: 1.4;
+}
+
+.acao-aluno-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #15803d;
+  width: fit-content;
+}
+
+.acao-aluno-pill .pill-turma {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.acao-botoes-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-acao-rapida {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-acao-rapida:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
 /* Oculta o widget flutuante e a janela de chat da IA durante qualquer impressão */
 @media print {
   .ia-floating-wrapper,
